@@ -1,0 +1,22 @@
+.authForm {
+  display: grid;
+  gap: 20px;
+}
+
+.inputRow {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.statusBox {
+  border: 1px solid var(--border);
+  background: var(--surface-muted);
+  color: #334155;
+  padding: 14px 16px;
+  border-radius: 24px;
+}
+
+.inputBox {
+  width: 100%;
+}

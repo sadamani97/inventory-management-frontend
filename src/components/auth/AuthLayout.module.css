@@ -1,0 +1,154 @@
+.pageShell {
+  min-height: 100vh;
+  padding: 40px;
+  background: var(--background);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.pageContainer {
+  display: grid;
+  grid-template-columns: 660px 660px;
+  gap: 45px;
+  width: 1365px;
+  height: 944px;
+}
+
+.authPanel {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 944px;
+  background: white;
+  padding: 40px;
+  border-radius: 32px;
+  box-shadow: var(--shadow);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+}
+
+.brandPill {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.brandLogoText {
+  color: var(--primary);
+  font-weight: 800;
+  font-size: 20px;
+}
+
+.heroCopy {
+  width: 100%;
+  max-width: 436px;     
+  margin: 90px auto 0;  
+  display: flex;
+  flex-direction: column;
+  align-items: center;   
+  text-align: center; 
+}
+
+.heroTitle {
+  margin: 0;
+  font-family: "Manrope", sans-serif;
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 58px;
+  color: #111827;
+}
+
+.heroDesc {
+  margin: 0;
+  font-family: "Manrope", sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  color: #9CA3AF;
+}
+
+.formCard {
+  margin-top: 46px;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  
+}
+
+.authFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--muted);
+  font-size: 14px;
+  border-top: 1px solid var(--border);
+  padding-top: 20px;
+  margin-top: 16px;
+}
+
+.ctaLink {
+  color: var(--primary);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.ctaLink:hover {
+  text-decoration: underline;
+}
+
+.imgPanel {
+  position: relative;
+  border-radius: 32px;
+  width: 660px;
+  height: 944px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.imgPanel img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+@media (max-width: 1400px) {
+  .pageContainer {
+    grid-template-columns: 1fr;
+    width: 100%;
+    max-width: 660px;
+    height: auto;
+    gap: 32px;
+  }
+
+  .authPanel {
+    height: auto;
+    min-height: 944px;
+  }
+
+  .imgPanel {
+    height: 944px;
+  }
+}
+
+@media (max-width: 768px) {
+  .pageShell {
+    padding: 20px 16px;
+  }
+
+  .authPanel {
+    padding: 24px;
+    min-height: auto;
+  }
+
+  .imgPanel {
+    height: 480px;
+    width: 100%;
+  }
+}
