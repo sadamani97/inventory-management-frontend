@@ -3,8 +3,9 @@ import StatCards from "@/components/dashboard/StatCards";
 import RevenueTrendChart from "@/components/dashboard/RevenueTrendChart";
 import TopSellingChart from "@/components/dashboard/TopSellingChart";
 import RecentActivitiesTable from "@/components/dashboard/RecentActivitiesTable";
+import CustomDatePicker from "@/components/dashboard/CustomDatePicker";
 import styles from "@/styles/pages/dashboard.module.css";
-import { FiCalendar, FiPlus } from "react-icons/fi";
+import { FiPlus } from "react-icons/fi";
 
 export default function DashboardPage() {
   return (
@@ -12,10 +13,7 @@ export default function DashboardPage() {
       <div className={styles.pageHeader}>
         <h1 className={styles.pageTitle}>Dashboard</h1>
         <div className={styles.headerRight}>
-          <div className={styles.datePill}>
-            <span>June 11, 2026</span>
-            <FiCalendar style={{ color: "#64748b" }} />
-          </div>
+          <CustomDatePicker />
           <button className={styles.createPoBtn}>
             <FiPlus /> Create Purchase Order
           </button>
