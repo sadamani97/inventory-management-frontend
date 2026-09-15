@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { FiCalendar, FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import { FiCalendar, FiChevronDown, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { HiSelector } from "react-icons/hi";
 import styles from "./CustomDatePicker.module.css";
 
@@ -18,9 +18,18 @@ const WEEK_DAYS = ["S", "M", "T", "W", "T", "F", "S"];
 interface CustomDatePickerProps {
   value?: Date;
   onChange?: (date: Date) => void;
+  variant?: "default" | "blue";
+  icon?: "calendar" | "chevron";
+  formatLabel?: (date: Date) => string;
 }
 
-export default function CustomDatePicker({ value, onChange }: CustomDatePickerProps) {
+export default function CustomDatePicker({
+  value,
+  onChange,
+  variant = "default",
+  icon = "calendar",
+  formatLabel,
+}: CustomDatePickerProps) {
   // Default to June 11, 2026 if no initial value provided (matches demo mockup)
   const [selectedDate, setSelectedDate] = useState<Date>(
     value || new Date(2026, 5, 11)
@@ -36,15 +45,16 @@ export default function CustomDatePicker({ value, onChange }: CustomDatePickerPr
 
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Sync state when popover opens or prop changes
-  useEffect(() => {
-    if (isOpen) {
+  // Reset state when opening popover
+  const toggleOpen = () => {
+    if (!isOpen) {
       setTempDate(selectedDate);
       setViewMonth(selectedDate.getMonth());
       setViewYear(selectedDate.getFullYear());
       setViewMode("calendar");
     }
-  }, [isOpen, selectedDate]);
+    setIsOpen(!isOpen);
+  };
 
   // Handle click outside to close popover
   useEffect(() => {
@@ -63,6 +73,9 @@ export default function CustomDatePicker({ value, onChange }: CustomDatePickerPr
 
   // Format header button text e.g. "June 11, 2026"
   const formatPillDate = (date: Date) => {
+    if (formatLabel) {
+      return formatLabel(date);
+    }
     const month = MONTH_FULL_NAMES[date.getMonth()];
     const day = date.getDate();
     const year = date.getFullYear();
@@ -132,12 +145,18 @@ export default function CustomDatePicker({ value, onChange }: CustomDatePickerPr
       {/* Trigger Date Pill Button */}
       <button
         type="button"
-        className={`${styles.datePill} ${isOpen ? styles.datePillActive : ""}`}
-        onClick={() => setIsOpen(!isOpen)}
+        className={`${styles.datePill} ${variant === "blue" ? styles.datePillBlue : ""} ${
+          isOpen ? styles.datePillActive : ""
+        }`}
+        onClick={toggleOpen}
         aria-label="Select Date"
       >
         <span>{formatPillDate(selectedDate)}</span>
-        <FiCalendar className={styles.calendarIcon} />
+        {icon === "chevron" ? (
+          <FiChevronDown className={styles.calendarIcon} />
+        ) : (
+          <FiCalendar className={styles.calendarIcon} />
+        )}
       </button>
 
       {/* Popover */}

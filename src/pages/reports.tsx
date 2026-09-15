@@ -31,11 +31,11 @@ export default function ReportsPage() {
                 <div style={{ fontSize: "20px", fontWeight: 800, color: "#2563eb" }}>₹ {Number(kpi?.inventoryValue || 0).toLocaleString()}</div>
               </div>
               <div style={{ background: "#ffffff", padding: "16px", borderRadius: "10px", border: "1px solid #eaecf0" }}>
-                <div style={{ color: "#64748b", fontSize: "12px" }}>Today's Revenue</div>
+                <div style={{ color: "#64748b", fontSize: "12px" }}>Today&apos;s Revenue</div>
                 <div style={{ fontSize: "20px", fontWeight: 800, color: "#16a34a" }}>₹ {Number(kpi?.todaysRevenue || 0).toLocaleString()}</div>
               </div>
               <div style={{ background: "#ffffff", padding: "16px", borderRadius: "10px", border: "1px solid #eaecf0" }}>
-                <div style={{ color: "#64748b", fontSize: "12px" }}>Today's Orders</div>
+                <div style={{ color: "#64748b", fontSize: "12px" }}>Today&apos;s Orders</div>
                 <div style={{ fontSize: "20px", fontWeight: 800, color: "#0f172a" }}>{kpi?.todaysTotalOrders || 0}</div>
               </div>
               <div style={{ background: "#ffffff", padding: "16px", borderRadius: "10px", border: "1px solid #eaecf0" }}>

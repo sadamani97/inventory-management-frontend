@@ -38,14 +38,18 @@ export default function LoginPage() {
       const response = await api.post("/login", values);
       const result = response.data;
       if (result.success) {
+        const tokenStr = result.token || "authenticated_user_token";
+        const userData = {
+          firstname: result.data?.firstname ?? "",
+          lastname: result.data?.lastname ?? "",
+          email: result.data?.email ?? values.email,
+        };
+        localStorage.setItem("token", tokenStr);
+        localStorage.setItem("user", JSON.stringify(userData));
         dispatch(
           setAuthUser({
-            user: {
-              firstname: result.data.firstname ?? "",
-              lastname: result.data.lastname ?? "",
-              email: result.data.email,
-            },
-            token: result.token,
+            user: userData,
+            token: tokenStr,
             message: result.message,
           }),
         );

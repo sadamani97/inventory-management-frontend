@@ -14,6 +14,7 @@ import {
   CategoryItem,
   VendorItem,
   BrandItem,
+  UnitItem,
 } from "@/lib/dashboardApi";
 import api from "@/lib/api";
 import styles from "@/styles/pages/addProduct.module.css";
@@ -26,7 +27,7 @@ export default function AddProductPage() {
   const editId = router.query.id ? String(router.query.id) : "";
   const isEditMode = Boolean(editId);
 
-  // Form State matching backend Product model attributes - empty initial values
+  // Form State matching backend Product model attributes
   const [productName, setProductName] = useState("");
   const [sku, setSku] = useState("");
   const [barcode, setBarcode] = useState("");
@@ -46,50 +47,73 @@ export default function AddProductPage() {
   const [categories, setCategories] = useState<CategoryItem[]>([]);
   const [vendors, setVendors] = useState<VendorItem[]>([]);
   const [brands, setBrands] = useState<BrandItem[]>([]);
+  const [units, setUnits] = useState<UnitItem[]>([]);
 
   // UI Feedback State
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
 
+  // Fetch dropdown data on mount
   useEffect(() => {
+    let isMounted = true;
     Promise.all([
       fetchCategories(),
       fetchVendorsList(),
       fetchBrands(),
       fetchUnits(),
     ]).then(([cats, vends, brs, uns]) => {
-      setCategories(cats);
-      setVendors(vends);
-      setBrands(brs);
-      if (cats && cats.length > 0 && !categoryId) setCategoryId(String(cats[0].categoryId || cats[0].id));
-      if (vends && vends.length > 0 && !vendorId) setVendorId(String(vends[0].id));
-      if (uns && uns.length > 0 && !unitId) setUnitId(String(uns[0].unitId || uns[0].id));
+      if (!isMounted) return;
+      setCategories(cats || []);
+      setVendors(vends || []);
+      setBrands(brs || []);
+      setUnits(uns || []);
+
+      if (cats && cats.length > 0) {
+        const firstCatId = String(cats[0].categoryId || cats[0].id || 1);
+        setCategoryId((prev) => prev || firstCatId);
+      }
+      if (vends && vends.length > 0) {
+        const firstVendId = String(vends[0].id || 1);
+        setVendorId((prev) => prev || firstVendId);
+      }
+      if (uns && uns.length > 0) {
+        const firstUnitId = String(uns[0].unitId || uns[0].id || 1);
+        setUnitId((prev) => prev || firstUnitId);
+      }
     });
-  }, [categoryId, vendorId, unitId]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Load existing product details if editing
   useEffect(() => {
-    if (!editId) return;
+    if (!router.isReady || !editId) return;
+    let isMounted = true;
     fetchProductById(editId).then((prod) => {
-      if (prod) {
-        setProductName(prod.productName || "");
-        setSku(prod.sku || "");
-        setBarcode(prod.barcode || "");
-        if (prod.categoryId) setCategoryId(String(prod.categoryId));
-        if (prod.brand?.brandName) setBrandName(prod.brand.brandName);
-        else if (prod.brandId) setBrandName(String(prod.brandId));
-        if (prod.unitId) setUnitId(String(prod.unitId));
-        if (prod.quantity !== undefined) setQuantity(String(prod.quantity));
-        if (prod.purchaseRate !== undefined) setPurchaseRate(String(prod.purchaseRate));
-        if (prod.sellingPrice !== undefined) setSellingPrice(String(prod.sellingPrice));
-        if (prod.lowStockLimit !== undefined) setLowStockLimit(String(prod.lowStockLimit));
-        if (prod.description) setDescription(prod.description);
-        if (prod.addVarient) setAddVarient(prod.addVarient);
-        if (prod.imageUrl) setImages([prod.imageUrl]);
-      }
+      if (!isMounted || !prod) return;
+      setProductName(prod.productName || "");
+      setSku(prod.sku || "");
+      setBarcode(prod.barcode || "");
+      if (prod.categoryId) setCategoryId(String(prod.categoryId));
+      if (prod.brand?.brandName) setBrandName(prod.brand.brandName);
+      else if (prod.brandId) setBrandName(String(prod.brandId));
+      if (prod.unitId) setUnitId(String(prod.unitId));
+      if (prod.quantity !== undefined) setQuantity(String(prod.quantity));
+      if (prod.purchaseRate !== undefined) setPurchaseRate(String(prod.purchaseRate));
+      if (prod.sellingPrice !== undefined) setSellingPrice(String(prod.sellingPrice));
+      if (prod.lowStockLimit !== undefined) setLowStockLimit(String(prod.lowStockLimit));
+      if (prod.description) setDescription(prod.description);
+      if (prod.addVarient) setAddVarient(prod.addVarient);
+      if (prod.imageUrl) setImages([prod.imageUrl]);
     });
-  }, [editId]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [router.isReady, editId]);
 
   // Image Upload Handler
   const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -107,7 +131,7 @@ export default function AddProductPage() {
         } else {
           setImages((prev) => [...prev, base64Image]);
         }
-      } catch (err) {
+      } catch {
         setImages((prev) => [...prev, base64Image]);
       }
     };
@@ -127,7 +151,7 @@ export default function AddProductPage() {
       setErrorMsg("Product Name must be at least 3 characters long.");
       return;
     }
-    if (!sku) {
+    if (!sku || !sku.trim()) {
       setErrorMsg("SKU is required.");
       return;
     }
@@ -141,13 +165,13 @@ export default function AddProductPage() {
         barcode: barcode.trim() || `BC-${Date.now()}`,
         categoryId: Number(categoryId) || 1,
         brandName: brandName.trim() || "Generic",
-        purchaseRate: Math.round(Number(purchaseRate) || 0),
-        sellingPrice: Math.round(Number(sellingPrice) || 0),
-        quantity: Math.round(Number(quantity) || 0),
-        lowStockLimit: Math.round(Number(lowStockLimit) || 10),
+        purchaseRate: Math.max(0, Number(purchaseRate) || 0),
+        sellingPrice: Math.max(0, Number(sellingPrice) || 0),
+        quantity: Math.max(0, Number(quantity) || 0),
+        lowStockLimit: Math.max(0, Number(lowStockLimit) || 10),
         unitId: Number(unitId) || 1,
         status: "Active" as const,
-        description: description || `${productName} - SKU: ${sku}`,
+        description: description.trim() || `${productName} - SKU: ${sku}`,
         imageUrl: images[0] || "",
         addVarient: addVarient || "",
       };
@@ -189,14 +213,14 @@ export default function AddProductPage() {
           </Link>
           <div className={styles.headerCopy}>
             <span className={styles.backSubtitle}>Back to product list</span>
-            <h1 className={styles.pageTitle}>{isEditMode ? "View Product in detail" : "Add Product"}</h1>
+            <h1 className={styles.pageTitle}>{isEditMode ? "Edit Product" : "Add Product"}</h1>
           </div>
         </div>
 
         {errorMsg ? <div className={styles.errorBanner}>{errorMsg}</div> : null}
         {successMsg ? <div className={styles.successBanner}>{successMsg}</div> : null}
 
-        <div className={styles.formGrid}>
+        <form onSubmit={handleSubmit} className={styles.formGrid}>
           <div className={styles.leftColumn}>
             <div className={`${styles.card} ${styles.highlightCard}`}>
               <h3 className={styles.cardTitle}>Basic information</h3>
@@ -209,6 +233,7 @@ export default function AddProductPage() {
                     type="text"
                     value={productName}
                     onChange={(e) => setProductName(e.target.value)}
+                    placeholder="Enter product name"
                     required
                     className={styles.inputControl}
                   />
@@ -267,11 +292,18 @@ export default function AddProductPage() {
                   </label>
                   <input
                     type="text"
+                    list="brandOptions"
                     value={brandName}
                     onChange={(e) => setBrandName(e.target.value)}
+                    placeholder="Enter or select brand"
                     required
                     className={styles.inputControl}
                   />
+                  <datalist id="brandOptions">
+                    {brands.map((b) => (
+                      <option key={b.brandId || b.id} value={b.brandName || b.name} />
+                    ))}
+                  </datalist>
                 </div>
               </div>
             </div>
@@ -283,18 +315,24 @@ export default function AddProductPage() {
                   <label className={styles.label}>Quantity</label>
                   <input
                     type="number"
+                    min="0"
                     value={quantity}
                     onChange={(e) => setQuantity(e.target.value)}
+                    placeholder="0"
                     className={styles.inputControl}
                   />
                 </div>
 
                 <div className={styles.fieldGroup}>
-                  <label className={styles.label}>SKU</label>
+                  <label className={styles.label}>
+                    SKU <span className={styles.required}>*</span>
+                  </label>
                   <input
                     type="text"
                     value={sku}
                     onChange={(e) => setSku(e.target.value)}
+                    placeholder="Enter SKU e.g. PROD-001"
+                    required
                     className={styles.inputControl}
                   />
                 </div>
@@ -305,6 +343,7 @@ export default function AddProductPage() {
                     type="text"
                     value={barcode}
                     onChange={(e) => setBarcode(e.target.value)}
+                    placeholder="Barcode number"
                     className={styles.inputControl}
                   />
                 </div>
@@ -313,24 +352,52 @@ export default function AddProductPage() {
                   <label className={styles.label}>Low Stock Limit</label>
                   <input
                     type="number"
+                    min="0"
                     value={lowStockLimit}
                     onChange={(e) => setLowStockLimit(e.target.value)}
+                    placeholder="10"
                     className={styles.inputControl}
                   />
+                </div>
+
+                <div className={styles.fieldGroup}>
+                  <label className={styles.label}>Unit</label>
+                  <select
+                    value={unitId}
+                    onChange={(e) => setUnitId(e.target.value)}
+                    className={`${styles.inputControl} ${styles.selectControl}`}
+                  >
+                    {units.length > 0 ? (
+                      units.map((u) => (
+                        <option key={u.unitId || u.id} value={u.unitId || u.id}>
+                          {u.unitName}
+                        </option>
+                      ))
+                    ) : (
+                      <>
+                        <option value="1">piece</option>
+                        <option value="2">box</option>
+                        <option value="3">kg</option>
+                        <option value="4">liter</option>
+                      </>
+                    )}
+                  </select>
                 </div>
               </div>
             </div>
 
             <div className={styles.card}>
-              <h3 className={styles.cardTitle}>Pricing</h3>
+              <h3 className={styles.cardTitle}>Pricing & Description</h3>
               <div className={styles.inputGrid2}>
                 <div className={styles.fieldGroup}>
                   <label className={styles.label}>Purchase Price (₹)</label>
                   <input
                     type="number"
                     step="0.01"
+                    min="0"
                     value={purchaseRate}
                     onChange={(e) => setPurchaseRate(e.target.value)}
+                    placeholder="0.00"
                     className={styles.inputControl}
                   />
                 </div>
@@ -340,11 +407,24 @@ export default function AddProductPage() {
                   <input
                     type="number"
                     step="0.01"
+                    min="0"
                     value={sellingPrice}
                     onChange={(e) => setSellingPrice(e.target.value)}
+                    placeholder="0.00"
                     className={styles.inputControl}
                   />
                 </div>
+              </div>
+              <div className={styles.fieldGroup} style={{ marginTop: 16 }}>
+                <label className={styles.label}>Description</label>
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Enter product description..."
+                  rows={3}
+                  className={styles.inputControl}
+                  style={{ resize: "vertical" }}
+                />
               </div>
             </div>
           </div>
@@ -417,8 +497,7 @@ export default function AddProductPage() {
                 Discard
               </Link>
               <button
-                type="button"
-                onClick={() => handleSubmit()}
+                type="submit"
                 disabled={submitting}
                 className={styles.submitBtn}
               >
@@ -426,7 +505,7 @@ export default function AddProductPage() {
               </button>
             </div>
           </div>
-        </div>
+        </form>
       </div>
     </DashboardLayout>
   );

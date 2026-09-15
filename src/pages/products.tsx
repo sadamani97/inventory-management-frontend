@@ -3,9 +3,10 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import Image from "next/image";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import CustomDatePicker from "@/components/dashboard/CustomDatePicker";
 import { fetchProductsList, ProductItem } from "@/lib/dashboardApi";
 import styles from "@/styles/pages/products.module.css";
-import { FiSearch, FiUpload, FiPlus, FiChevronDown } from "react-icons/fi";
+import { FiSearch, FiUpload, FiPlus } from "react-icons/fi";
 
 export default function ProductsPage() {
   const router = useRouter();
@@ -72,10 +73,7 @@ export default function ProductsPage() {
                 <FiSearch className={styles.searchIcon} />
               </div>
 
-              <div className={styles.datePill}>
-                <span>11 Jun - 17 Jun 2026</span>
-                <FiChevronDown />
-              </div>
+              <CustomDatePicker variant="blue" icon="chevron" />
             </div>
 
             <select
@@ -168,7 +166,7 @@ export default function ProductsPage() {
                         No products stored in database.
                       </p>
                       <p style={{ fontSize: "13px", margin: 0 }}>
-                        Click <strong>"+ New Product"</strong> to add products to your backend database.
+                        Click <strong>&quot;+ New Product&quot;</strong> to add products to your backend database.
                       </p>
                     </td>
                   </tr>

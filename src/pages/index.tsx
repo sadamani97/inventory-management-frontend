@@ -5,8 +5,13 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace("/dashboard");
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    if (token) {
+      router.replace("/dashboard");
+    } else {
+      router.replace("/login");
+    }
   }, [router]);
 
-  return <p className="redirect-text">Redirecting to dashboard...</p>;
+  return <p className="redirect-text">Loading...</p>;
 }
