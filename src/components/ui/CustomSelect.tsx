@@ -13,6 +13,8 @@ interface CustomSelectProps {
   onChange: (value: string) => void;
   placeholder?: string;
   width?: string;
+  height?: string;
+  className?: string;
 }
 
 export default function CustomSelect({
@@ -21,6 +23,8 @@ export default function CustomSelect({
   onChange,
   placeholder = "Select...",
   width = "140px",
+  height = "38px",
+  className = "",
 }: CustomSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -47,10 +51,11 @@ export default function CustomSelect({
   };
 
   return (
-    <div className={styles.selectContainer} ref={containerRef} style={{ width }}>
+    <div className={`${styles.selectContainer} ${className}`} ref={containerRef} style={{ width }}>
       <button
         type="button"
         className={`${styles.triggerBtn} ${isOpen ? styles.triggerActive : ""}`}
+        style={{ height }}
         onClick={() => setIsOpen(!isOpen)}
         aria-haspopup="listbox"
         aria-expanded={isOpen}

@@ -1,20 +1,69 @@
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
 
 :root {
+  /* Core Backgrounds & Surfaces */
   --background: #f8fafc;
   --surface: #ffffff;
   --surface-muted: #f8fafc;
-  --border: #e2e8f0;
-  --border-hover: #cbd5e1;
-  --text: #0f172a;
-  --text-secondary: #1e293b;
-  --text-muted: #475569;
-  --text-light: #94a3b8;
+  --surface-alt: #fafafa;
   --hover-bg: #f1f5f9;
+
+  /* Primary Brand Colors */
   --primary: #2563eb;
   --primary-dark: #1d4ed8;
+  --primary-light: #eff6ff;
+  --primary-subtle: #dbeafe;
+  --primary-border: #bfdbfe;
+  --primary-gradient: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
+  --primary-avatar-gradient: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+
+  /* Typography Colors */
+  --text: #0f172a;
+  --text-dark: #111827;
+  --text-secondary: #1e293b;
+  --text-body: #334155;
+  --text-muted: #475569;
+  --text-subtle: #64748b;
+  --text-light: #94a3b8;
+  --text-light-gray: #9ca3af;
+  --text-inverse: #ffffff;
+
+  /* Borders */
+  --border: #e2e8f0;
+  --border-hover: #cbd5e1;
+  --border-subtle: #eaecf0;
+  --border-faint: #f1f5f9;
+  --border-translucent: rgba(148, 163, 184, 0.2);
+
+  /* Functional & Status Colors */
   --danger: #dc2626;
+  --danger-dark: #b91c1c;
+  --danger-light: #fef2f2;
+  --danger-border: #fee2e2;
+
+  --success: #16a34a;
+  --success-dark: #15803d;
+  --success-light: #f0fdf4;
+  --success-badge-bg: #dcfce7;
+  --success-border: #bbf7d0;
+
+  --warning: #d97706;
+  --warning-light: #fffbeb;
+  --warning-badge-bg: #fef3c7;
+
+  --info: #0284c7;
+  --info-light: #e0f2fe;
+
+  --selected-option-bg: #e8f0fe;
+
+  /* Shadows & Overlays */
   --shadow: 0 24px 80px rgba(15, 23, 42, 0.08);
+  --shadow-sm: 0 1px 3px rgba(16, 24, 40, 0.05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --shadow-hover: 0 6px 16px rgba(16, 24, 40, 0.08);
+  --shadow-primary: 0 4px 12px rgba(37, 99, 235, 0.25);
+  --shadow-popover: 0 16px 36px -6px rgba(15, 23, 42, 0.12), 0 6px 16px -4px rgba(15, 23, 42, 0.08);
+  --overlay-gradient: linear-gradient(to top, rgba(15, 23, 42, 0.6), transparent);
 }
 
 * {
@@ -26,7 +75,7 @@ body {
   margin: 0;
   min-height: 100%;
   width: 100%;
-  color: #1d4ed8;
+  color: var(--primary-dark);
 }
 
 body {
@@ -59,21 +108,17 @@ button {
   height: 660px;
   width: 944px;
   max-width: 100%;
-  top:40px;
+  top: 40px;
   left: 40px;
 }
 
-
-
-.input-box{
-    width: 436px;
-    height: 50px;
-    top: 23px;
-    border-radius: 8px;
-    color: blue;
-
+.input-box {
+  width: 436px;
+  height: 50px;
+  top: 23px;
+  border-radius: 8px;
+  color: var(--primary);
 }
-
 
 .auth-layout {
   display: grid;
@@ -84,7 +129,7 @@ button {
   border-radius: 32px;
   padding: 40px;
   box-shadow: var(--shadow);
-  border: 1px solid rgba(148, 163, 184, 0.22);
+  border: 1px solid var(--border-translucent);
   min-height: 944px;
 }
 
@@ -106,7 +151,7 @@ button {
   width: 660px;
   top: 40px;
   border-radius: 32px;
-  background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
+  background: var(--primary-gradient);
   padding: 40px;
   display: flex;
   align-items: center;
@@ -119,11 +164,10 @@ button {
   gap: 0.75rem;
   width: 36px;
   height: 36px;
-  border-radius: 10px;
   padding: 12px 22px;
   border-radius: 999px;
   background: var(--primary);
-  color: white;
+  color: var(--text-inverse);
   font-size: 0.82rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -148,19 +192,19 @@ button {
   max-width: 540px;
   font-size: 1rem;
   line-height: 1.75;
-  color: var(--muted);
+  color: var(--text-muted);
 }
 
 .form-card {
   background: var(--surface);
   border-radius: 32px;
   border: 1px solid var(--border);
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  box-shadow: var(--shadow-sm);
   padding: 40px;
 }
 
 .auth-footer {
-  color: var(--muted);
+  color: var(--text-muted);
   font-size: 0.95rem;
 }
 
@@ -177,8 +221,6 @@ button {
   text-decoration: underline;
 }
 
-
-
 .img-panel::before {
   content: "";
   position: absolute;
@@ -186,19 +228,17 @@ button {
   background: radial-gradient(circle at top right, rgba(255, 255, 255, 0.16), transparent 30%);
 }
 
-
 .img-panel::after {
   content: "";
   position: absolute;
   inset: auto 0 0;
   height: 96px;
-  background: linear-gradient(to top, rgba(15, 23, 42, 0.6), transparent);
+  background: var(--overlay-gradient);
 }
 
 .auth-form {
   display: grid;
   gap: 10px;
-
 }
 
 .input-row {
@@ -238,7 +278,7 @@ button {
   border-radius: 16px;
   border: 1.5px solid var(--border);
   padding: 12px 20px;
-  background: white;
+  background: var(--surface);
   color: var(--text);
   font-size: 16px;
   outline: none;
@@ -290,7 +330,7 @@ button {
 
 .button-primary {
   background: var(--primary);
-  color: white;
+  color: var(--text-inverse);
 }
 
 .button-primary:hover {
@@ -298,12 +338,12 @@ button {
 }
 
 .button-secondary {
-  background: #f1f5f9;
+  background: var(--hover-bg);
   color: var(--text);
 }
 
 .button-outline {
-  background: white;
+  background: var(--surface);
   color: var(--text);
   border: 1px solid var(--border);
 }
@@ -316,7 +356,7 @@ button {
 .status-box {
   border: 1px solid var(--border);
   background: var(--surface-muted);
-  color: #334155;
+  color: var(--text-body);
   padding: 14px 16px;
   border-radius: 24px;
 }
@@ -326,7 +366,7 @@ button {
   border-radius: 32px;
   padding: 40px;
   box-shadow: var(--shadow);
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  border: 1px solid var(--border-translucent);
 }
 
 .dashboard-header {
@@ -389,7 +429,7 @@ button {
 
 .link-primary {
   background: var(--primary);
-  color: white;
+  color: var(--text-inverse);
 }
 
 .link-primary:hover {
@@ -397,13 +437,13 @@ button {
 }
 
 .link-secondary {
-  background: white;
+  background: var(--surface);
   color: var(--text);
   border: 1px solid var(--border);
 }
 
 .link-secondary:hover {
-  background: #f1f5f9;
+  background: var(--hover-bg);
 }
 
 .redirect-text {
@@ -411,7 +451,7 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #64748b;
+  color: var(--text-subtle);
   font-size: 1rem;
 }
 
@@ -458,7 +498,7 @@ button {
   cursor: pointer;
   user-select: none;
   font-size: 14px;
-  color: var(--muted);
+  color: var(--text-muted);
 }
 
 .checkbox-input {
@@ -493,7 +533,7 @@ button {
   display: flex;
   align-items: center;
   text-align: center;
-  color: var(--muted);
+  color: var(--text-muted);
   font-size: 14px;
   margin: 16px 0;
 }
@@ -528,7 +568,7 @@ button {
   height: 50px;
   border-radius: 16px;
   border: 1.5px solid var(--border);
-  background: white;
+  background: var(--surface);
   font-weight: 700;
   font-size: 16px;
   color: var(--text);
@@ -537,13 +577,13 @@ button {
 }
 
 .social-btn:hover {
-  background-color: #f8fafc;
+  background-color: var(--background);
 }
 
 .auth-redirect-text {
   text-align: center;
   font-size: 14px;
-  color: var(--muted);
+  color: var(--text-muted);
   margin-top: 24px;
 }
 
@@ -555,4 +595,3 @@ button {
 .auth-redirect-link:hover {
   text-decoration: underline;
 }
- 

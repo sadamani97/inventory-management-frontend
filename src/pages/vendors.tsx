@@ -3,7 +3,7 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import { fetchVendorsList } from "@/lib/dashboardApi";
 
 export default function VendorsPage() {
-  const [vendors, setVendors] = useState<any[]>([]);
+  const [vendors, setVendors] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -48,12 +48,12 @@ export default function VendorsPage() {
                 </tr>
               </thead>
               <tbody>
-                {vendors.map((v: any) => (
-                  <tr key={v.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                    <td style={{ padding: "12px", fontWeight: 600, color: "#64748b" }}>{v.id}</td>
-                    <td style={{ padding: "12px", fontWeight: 700, color: "#0f172a" }}>{v.vendorName || v.name || "N/A"}</td>
-                    <td style={{ padding: "12px", color: "#475569" }}>{v.email || "-"}</td>
-                    <td style={{ padding: "12px", color: "#475569" }}>{v.phone || v.mobile || "-"}</td>
+                {vendors.map((v) => (
+                  <tr key={String(v.id)} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                    <td style={{ padding: "12px", fontWeight: 600, color: "#64748b" }}>{String(v.id)}</td>
+                    <td style={{ padding: "12px", fontWeight: 700, color: "#0f172a" }}>{String(v.vendorName || v.name || "N/A")}</td>
+                    <td style={{ padding: "12px", color: "#475569" }}>{String(v.email || "-")}</td>
+                    <td style={{ padding: "12px", color: "#475569" }}>{String(v.phone || v.mobile || "-")}</td>
                     <td style={{ padding: "12px" }}>
                       <span style={{ background: "#dcfce7", color: "#16a34a", padding: "3px 10px", borderRadius: "999px", fontSize: "11px", fontWeight: 700 }}>
                         Active

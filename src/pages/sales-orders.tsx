@@ -3,7 +3,7 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import { fetchSalesOrdersList } from "@/lib/dashboardApi";
 
 export default function SalesOrdersPage() {
-  const [orders, setOrders] = useState<any[]>([]);
+  const [orders, setOrders] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -47,14 +47,14 @@ export default function SalesOrdersPage() {
                 </tr>
               </thead>
               <tbody>
-                {orders.map((so: any) => (
-                  <tr key={so.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                    <td style={{ padding: "12px", fontWeight: 700, color: "#0f172a" }}>{so.soNumber || `SO-#${so.id}`}</td>
-                    <td style={{ padding: "12px", color: "#475569" }}>{so.customerName || `Customer #${so.id}`}</td>
+                {orders.map((so) => (
+                  <tr key={String(so.id)} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                    <td style={{ padding: "12px", fontWeight: 700, color: "#0f172a" }}>{String(so.soNumber || `SO-#${so.id}`)}</td>
+                    <td style={{ padding: "12px", color: "#475569" }}>{String(so.customerName || `Customer #${so.id}`)}</td>
                     <td style={{ padding: "12px", fontWeight: 700, color: "#16a34a" }}>₹ {Number(so.totalAmount || 0).toLocaleString()}</td>
                     <td style={{ padding: "12px" }}>
                       <span style={{ background: "#dcfce7", color: "#16a34a", padding: "3px 10px", borderRadius: "999px", fontSize: "11px", fontWeight: 700 }}>
-                        {so.status || "Completed"}
+                        {String(so.status || "Completed")}
                       </span>
                     </td>
                   </tr>

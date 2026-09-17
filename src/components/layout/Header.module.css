@@ -1,7 +1,7 @@
 .header {
   height: 64px;
-  background-color: #ffffff;
-  border-bottom: 1px solid #eaecf0;
+  background-color: var(--surface);
+  border-bottom: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -21,7 +21,7 @@
 .searchIcon {
   position: absolute;
   left: 12px;
-  color: #94a3b8;
+  color: var(--text-light);
   font-size: 16px;
   pointer-events: none;
 }
@@ -30,18 +30,18 @@
   width: 100%;
   height: 40px;
   padding: 8px 60px 8px 36px;
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background-color: var(--background);
+  border: 1px solid var(--border);
   border-radius: 8px;
   font-size: 13px;
-  color: #1e293b;
+  color: var(--text-secondary);
   outline: none;
   transition: all 0.15s ease;
 }
 
 .searchInput:focus {
-  background-color: #ffffff;
-  border-color: #2563eb;
+  background-color: var(--surface);
+  border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
@@ -53,9 +53,9 @@
   gap: 2px;
   font-size: 11px;
   font-weight: 600;
-  color: #94a3b8;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+  color: var(--text-light);
+  background: var(--surface);
+  border: 1px solid var(--border);
   padding: 2px 6px;
   border-radius: 5px;
 }
@@ -76,14 +76,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #64748b;
+  color: var(--text-subtle);
   font-size: 18px;
   transition: background-color 0.15s ease;
 }
 
 .notificationBtn:hover {
-  background-color: #f1f5f9;
-  color: #1e293b;
+  background-color: var(--hover-bg);
+  color: var(--text-secondary);
 }
 
 .bellBadge {
@@ -92,15 +92,15 @@
   right: 6px;
   width: 16px;
   height: 16px;
-  background-color: #ef4444;
-  color: #ffffff;
+  background-color: var(--danger);
+  color: var(--text-inverse);
   border-radius: 50%;
   font-size: 10px;
   font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid #ffffff;
+  border: 2px solid var(--surface);
 }
 
 .profileContainer {
@@ -114,15 +114,15 @@
 }
 
 .profileContainer:hover {
-  background-color: #f8fafc;
+  background-color: var(--background);
 }
 
 .avatar {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #2563eb, #3b82f6);
-  color: #ffffff;
+  background: var(--primary-avatar-gradient);
+  color: var(--text-inverse);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -145,13 +145,13 @@
 .profileName {
   font-size: 13px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--text-secondary);
   margin: 0;
   line-height: 1.2;
 }
 
 .profileRole {
   font-size: 11px;
-  color: #64748b;
+  color: var(--text-subtle);
   margin: 0;
 }

@@ -183,11 +183,17 @@ export default function ProductsPage() {
           <div className={styles.paginationRow}>
             <div className={styles.rowsPerPage}>
               <span>Rows per page</span>
-              <select className={styles.rowsSelect} defaultValue="10">
-                <option value="10">10</option>
-                <option value="25">25</option>
-                <option value="50">50</option>
-              </select>
+              <CustomSelect
+                options={[
+                  { label: "10", value: "10" },
+                  { label: "25", value: "25" },
+                  { label: "50", value: "50" },
+                ]}
+                value="10"
+                onChange={() => {}}
+                width="70px"
+                height="32px"
+              />
             </div>
 
             <div className={styles.pageControls}>

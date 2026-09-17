@@ -30,13 +30,13 @@ export default function CustomDatePicker({
   icon = "calendar",
   formatLabel,
 }: CustomDatePickerProps) {
-  const [selectedDate, setSelectedDate] = useState<Date>(
-    value || new Date()
-  );
+  const [selectedDate, setSelectedDate] = useState<Date>(value || new Date());
 
   useEffect(() => {
     if (value) {
-      setSelectedDate(value);
+      queueMicrotask(() => {
+        setSelectedDate(value);
+      });
     }
   }, [value]);
 

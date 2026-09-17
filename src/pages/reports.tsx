@@ -3,8 +3,8 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import { fetchReportKpis, fetchSalesAnalytics } from "@/lib/dashboardApi";
 
 export default function ReportsPage() {
-  const [kpi, setKpi] = useState<any>(null);
-  const [analytics, setAnalytics] = useState<any>(null);
+  const [kpi, setKpi] = useState<Record<string, unknown> | null>(null);
+  const [analytics, setAnalytics] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -14,6 +14,8 @@ export default function ReportsPage() {
       setLoading(false);
     });
   }, []);
+
+  const chartDataList = (analytics?.chartData as Record<string, unknown>[] | undefined) || [];
 
   return (
     <DashboardLayout>
@@ -36,7 +38,7 @@ export default function ReportsPage() {
               </div>
               <div style={{ background: "#ffffff", padding: "16px", borderRadius: "10px", border: "1px solid #eaecf0" }}>
                 <div style={{ color: "#64748b", fontSize: "12px" }}>Today&apos;s Orders</div>
-                <div style={{ fontSize: "20px", fontWeight: 800, color: "#0f172a" }}>{kpi?.todaysTotalOrders || 0}</div>
+                <div style={{ fontSize: "20px", fontWeight: 800, color: "#0f172a" }}>{String(kpi?.todaysTotalOrders || 0)}</div>
               </div>
               <div style={{ background: "#ffffff", padding: "16px", borderRadius: "10px", border: "1px solid #eaecf0" }}>
                 <div style={{ color: "#64748b", fontSize: "12px" }}>Total Sales</div>
@@ -52,7 +54,7 @@ export default function ReportsPage() {
               boxShadow: "0 1px 3px rgba(16, 24, 40, 0.05)"
             }}>
               <h2 style={{ fontSize: "16px", fontWeight: 700, color: "#1e293b", marginBottom: "16px" }}>Backend Sales Trend Summary</h2>
-              {analytics?.chartData && analytics.chartData.length > 0 ? (
+              {chartDataList.length > 0 ? (
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
                   <thead>
                     <tr style={{ borderBottom: "1px solid #f1f5f9", background: "#fafafa" }}>
@@ -61,10 +63,10 @@ export default function ReportsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {analytics.chartData.map((cd: any, idx: number) => (
+                    {chartDataList.map((cd, idx) => (
                       <tr key={idx} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                        <td style={{ padding: "10px", fontWeight: 600 }}>{cd.date}</td>
-                        <td style={{ padding: "10px", textAlign: "right", fontWeight: 700, color: "#16a34a" }}>₹ {cd.sales.toLocaleString()}</td>
+                        <td style={{ padding: "10px", fontWeight: 600 }}>{String(cd.date)}</td>
+                        <td style={{ padding: "10px", textAlign: "right", fontWeight: 700, color: "#16a34a" }}>₹ {Number(cd.sales || 0).toLocaleString()}</td>
                       </tr>
                     ))}
                   </tbody>

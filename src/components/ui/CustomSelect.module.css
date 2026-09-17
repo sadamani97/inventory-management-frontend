@@ -11,24 +11,24 @@
   width: 100%;
   height: 38px;
   padding: 0 14px;
-  background-color: var(--surface, #ffffff);
-  border: 1px solid rgba(0, 0, 0, 0.15);
+  background-color: var(--surface);
+  border: 1px solid var(--border-translucent);
   border-radius: 8px;
   font-size: 13px;
   font-weight: 600;
-  color: var(--text-secondary, #334155);
+  color: var(--text-body);
   cursor: pointer;
   outline: none;
   transition: all 0.15s ease;
 }
 
 .triggerBtn:hover {
-  border-color: rgba(0, 0, 0, 0.3);
-  background-color: var(--background, #f8fafc);
+  border-color: var(--border-hover);
+  background-color: var(--background);
 }
 
 .triggerActive {
-  border-color: var(--primary, #2563eb);
+  border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
 
@@ -40,7 +40,7 @@
 
 .chevronIcon {
   font-size: 15px;
-  color: var(--text-muted, #64748b);
+  color: var(--text-subtle);
   transition: transform 0.2s ease;
   flex-shrink: 0;
   margin-left: 6px;
@@ -59,10 +59,10 @@
   width: 140px;
   max-height: 220px;
   overflow-y: auto;
-  background-color: var(--surface, #ffffff);
-  border: 1px solid rgba(0, 0, 0, 0.15);
+  background-color: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 8px;
-  box-shadow: 0 10px 25px -4px rgba(15, 23, 42, 0.12), 0 4px 10px -2px rgba(15, 23, 42, 0.06);
+  box-shadow: var(--shadow-popover);
   padding: 4px 0;
   animation: dropdownFadeIn 0.15s ease-out;
 }
@@ -84,19 +84,19 @@
   padding: 8px 14px;
   font-size: 13px;
   font-weight: 500;
-  color: var(--text-secondary, #334155);
+  color: var(--text-body);
   cursor: pointer;
   transition: background-color 0.12s ease, color 0.12s ease;
 }
 
 .optionItem:hover:not(.optionSelected) {
-  background-color: var(--hover-bg, #f1f5f9);
-  color: var(--text, #0f172a);
+  background-color: var(--hover-bg);
+  color: var(--text);
 }
 
 /* Soft blue highlight for selected option matching Figma spec */
 .optionSelected {
-  background-color: #e8f0fe !important;
-  color: #2563eb !important;
+  background-color: var(--selected-option-bg) !important;
+  color: var(--primary) !important;
   font-weight: 600;
 }

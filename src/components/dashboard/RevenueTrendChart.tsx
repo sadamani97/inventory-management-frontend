@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import styles from "./RevenueTrendChart.module.css";
+import CustomSelect from "@/components/ui/CustomSelect";
 import { fetchSalesAnalytics, SalesAnalyticsResponse } from "@/lib/dashboardApi";
 import { FiTrendingUp } from "react-icons/fi";
 
@@ -96,15 +97,17 @@ export default function RevenueTrendChart() {
         <h3 className={styles.title}>Revenue Trend</h3>
         <div className={styles.headerControls}>
           <span className={styles.selectedMonthLabel}>--- Selected month</span>
-          <select
+          <CustomSelect
+            options={[
+              { label: "Month", value: "Month" },
+              { label: "Quarter", value: "Quarter" },
+              { label: "Year", value: "Year" },
+            ]}
             value={selectedMonth}
-            onChange={(e) => setSelectedMonth(e.target.value)}
-            className={styles.monthSelect}
-          >
-            <option value="Month">Month</option>
-            <option value="Quarter">Quarter</option>
-            <option value="Year">Year</option>
-          </select>
+            onChange={setSelectedMonth}
+            width="100px"
+            height="32px"
+          />
         </div>
       </div>
 

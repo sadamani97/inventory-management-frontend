@@ -1,9 +1,9 @@
 .chartCard {
-  background-color: #ffffff;
+  background-color: var(--surface);
   border-radius: 14px;
   padding: 24px;
-  border: 1px solid #eaecf0;
-  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.05);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-sm);
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -12,7 +12,7 @@
 .title {
   font-size: 16px;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--text);
   margin: 0 0 24px 0;
 }
 
@@ -29,18 +29,18 @@
 }
 
 .gridLine {
-  stroke: #f1f5f9;
+  stroke: var(--border-faint);
 }
 
 .yAxisText {
   font-size: 10px;
-  fill: #94a3b8;
+  fill: var(--text-light);
   font-weight: 500;
 }
 
 .xAxisText {
   font-size: 11px;
-  fill: #64748b;
+  fill: var(--text-subtle);
   font-weight: 500;
   text-anchor: middle;
 }
@@ -51,6 +51,6 @@
 }
 
 .bar:hover {
-  fill: #1d4ed8;
+  fill: var(--primary-dark);
   filter: drop-shadow(0 4px 6px rgba(37, 99, 235, 0.2));
 }

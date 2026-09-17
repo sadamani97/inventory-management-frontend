@@ -3,7 +3,7 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import { fetchPurchaseOrdersList } from "@/lib/dashboardApi";
 
 export default function PurchaseOrdersPage() {
-  const [orders, setOrders] = useState<any[]>([]);
+  const [orders, setOrders] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -47,14 +47,14 @@ export default function PurchaseOrdersPage() {
                 </tr>
               </thead>
               <tbody>
-                {orders.map((po: any) => (
-                  <tr key={po.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                    <td style={{ padding: "12px", fontWeight: 700, color: "#0f172a" }}>{po.poNumber || `PO-#${po.id}`}</td>
-                    <td style={{ padding: "12px", color: "#475569" }}>Vendor #{po.vendorId || "-"}</td>
+                {orders.map((po) => (
+                  <tr key={String(po.id)} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                    <td style={{ padding: "12px", fontWeight: 700, color: "#0f172a" }}>{String(po.poNumber || `PO-#${po.id}`)}</td>
+                    <td style={{ padding: "12px", color: "#475569" }}>Vendor #{String(po.vendorId || "-")}</td>
                     <td style={{ padding: "12px", fontWeight: 700, color: "#16a34a" }}>₹ {Number(po.totalAmount || 0).toLocaleString()}</td>
                     <td style={{ padding: "12px" }}>
                       <span style={{ background: "#eff6ff", color: "#2563eb", padding: "3px 10px", borderRadius: "999px", fontSize: "11px", fontWeight: 700 }}>
-                        {po.status || "Pending"}
+                        {String(po.status || "Pending")}
                       </span>
                     </td>
                   </tr>

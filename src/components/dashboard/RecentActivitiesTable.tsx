@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import styles from "./RecentActivitiesTable.module.css";
+import CustomSelect from "@/components/ui/CustomSelect";
 import { fetchRecentActivities, fetchProductsList, ActivityItem, ProductItem, formatRelativeTime } from "@/lib/dashboardApi";
 import { FiSearch } from "react-icons/fi";
 
@@ -94,17 +95,19 @@ export default function RecentActivitiesTable() {
             <FiSearch className={styles.searchIcon} />
           </div>
 
-          <select
+          <CustomSelect
+            options={[
+              { label: "All Status", value: "All Status" },
+              { label: "Completed", value: "Completed" },
+              { label: "Warning", value: "Warning" },
+              { label: "Added", value: "Added" },
+              { label: "Delivered", value: "Delivered" },
+            ]}
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className={styles.statusSelect}
-          >
-            <option value="All Status">All Status</option>
-            <option value="Completed">Completed</option>
-            <option value="Warning">Warning</option>
-            <option value="Added">Added</option>
-            <option value="Delivered">Delivered</option>
-          </select>
+            onChange={setStatusFilter}
+            width="130px"
+            height="36px"
+          />
         </div>
       </div>
 

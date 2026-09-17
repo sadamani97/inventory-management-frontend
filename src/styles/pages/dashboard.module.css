@@ -10,7 +10,7 @@
 .pageTitle {
   font-size: 24px;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--text);
   margin: 0;
   letter-spacing: -0.4px;
 }
@@ -26,12 +26,12 @@
   align-items: center;
   gap: 8px;
   padding: 8px 14px;
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 8px;
   font-size: 13px;
   font-weight: 600;
-  color: #334155;
+  color: var(--text-body);
 }
 
 .createPoBtn {
@@ -39,19 +39,19 @@
   align-items: center;
   gap: 8px;
   padding: 10px 18px;
-  background-color: #2563eb;
-  color: #ffffff;
+  background-color: var(--primary);
+  color: var(--text-inverse);
   border: none;
   border-radius: 8px;
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+  box-shadow: var(--shadow-primary);
   transition: all 0.15s ease;
 }
 
 .createPoBtn:hover {
-  background-color: #1d4ed8;
+  background-color: var(--primary-dark);
   transform: translateY(-1px);
 }
 

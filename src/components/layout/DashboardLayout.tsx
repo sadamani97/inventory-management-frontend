@@ -41,7 +41,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             console.error("Error restoring user state:", e);
           }
         }
-        setCheckingAuth(false);
+        queueMicrotask(() => {
+          setCheckingAuth(false);
+        });
       }
     }
   }, [router, dispatch, user]);

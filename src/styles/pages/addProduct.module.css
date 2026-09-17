@@ -15,12 +15,12 @@
   width: 38px;
   height: 38px;
   border-radius: 10px;
-  background-color: #ffffff;
-  border: 1px solid #eaecf0;
+  background-color: var(--surface);
+  border: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #334155;
+  color: var(--text-body);
   cursor: pointer;
   text-decoration: none;
   font-size: 16px;
@@ -28,8 +28,8 @@
 }
 
 .backBtn:hover {
-  background-color: #f8fafc;
-  border-color: #cbd5e1;
+  background-color: var(--background);
+  border-color: var(--border-hover);
 }
 
 .headerCopy {
@@ -40,14 +40,14 @@
 .backSubtitle {
   font-size: 12px;
   font-weight: 600;
-  color: #94a3b8;
+  color: var(--text-light);
   margin: 0;
 }
 
 .pageTitle {
   font-size: 22px;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--text);
   margin: 0;
   letter-spacing: -0.3px;
 }
@@ -78,21 +78,21 @@
 }
 
 .card {
-  background-color: #ffffff;
+  background-color: var(--surface);
   border-radius: 14px;
   padding: 24px;
-  border: 1px solid #eaecf0;
-  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.05);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-sm);
 }
 
 .highlightCard {
-  border: 2px solid #2563eb;
+  border: 2px solid var(--primary);
 }
 
 .cardTitle {
   font-size: 16px;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--text);
   margin: 0 0 20px 0;
 }
 
@@ -117,28 +117,28 @@
 .label {
   font-size: 12.5px;
   font-weight: 600;
-  color: #64748b;
+  color: var(--text-subtle);
 }
 
 .required {
-  color: #ef4444;
+  color: var(--danger);
 }
 
 .inputControl {
   width: 100%;
   height: 42px;
   padding: 8px 14px;
-  background-color: #ffffff;
-  border: 1.5px solid #e2e8f0;
+  background-color: var(--surface);
+  border: 1.5px solid var(--border);
   border-radius: 8px;
   font-size: 13.5px;
-  color: #0f172a;
+  color: var(--text);
   outline: none;
   transition: all 0.15s ease;
 }
 
 .inputControl:focus {
-  border-color: #2563eb;
+  border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
@@ -159,8 +159,8 @@
 }
 
 .dropzone {
-  border: 2px dashed #bfdbfe;
-  background-color: #eff6ff;
+  border: 2px dashed var(--primary-border);
+  background-color: var(--primary-light);
   border-radius: 12px;
   padding: 24px 12px;
   display: flex;
@@ -173,23 +173,23 @@
 }
 
 .dropzone:hover {
-  background-color: #dbeafe;
-  border-color: #2563eb;
+  background-color: var(--primary-subtle);
+  border-color: var(--primary);
 }
 
 .uploadIcon {
   font-size: 24px;
-  color: #2563eb;
+  color: var(--primary);
   margin-bottom: 8px;
 }
 
 .uploadText {
   font-size: 11.5px;
-  color: #64748b;
+  color: var(--text-subtle);
 }
 
 .uploadLink {
-  color: #2563eb;
+  color: var(--primary);
   font-weight: 700;
 }
 
@@ -198,15 +198,15 @@
   height: 100px;
   border-radius: 10px;
   object-fit: cover;
-  border: 1px solid #eaecf0;
+  border: 1px solid var(--border-subtle);
 }
 
 .removeImgBtn {
   position: absolute;
   top: -6px;
   right: -6px;
-  background-color: #ef4444;
-  color: #ffffff;
+  background-color: var(--danger);
+  color: var(--text-inverse);
   border: none;
   border-radius: 50%;
   width: 20px;
@@ -222,22 +222,22 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 12px 16px;
-  background-color: #ffffff;
+  background-color: var(--surface);
 }
 
 .variantLabel {
   font-size: 13px;
   font-weight: 600;
-  color: #64748b;
+  color: var(--text-subtle);
 }
 
 .addVariantBtn {
   background: transparent;
   border: none;
-  color: #2563eb;
+  color: var(--primary);
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
@@ -250,8 +250,8 @@
   width: 100%;
   height: 40px;
   margin-top: 8px;
-  background-color: #2563eb;
-  color: #ffffff;
+  background-color: var(--primary);
+  color: var(--text-inverse);
   border: none;
   border-radius: 8px;
   font-size: 13px;
@@ -265,7 +265,7 @@
 }
 
 .addCategoryBtn:hover {
-  background-color: #1d4ed8;
+  background-color: var(--primary-dark);
 }
 
 .actionsRow {
@@ -278,34 +278,34 @@
 
 .discardBtn {
   padding: 10px 20px;
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 8px;
   font-size: 13.5px;
   font-weight: 700;
-  color: #475569;
+  color: var(--text-muted);
   cursor: pointer;
 }
 
 .discardBtn:hover {
-  background-color: #f8fafc;
+  background-color: var(--background);
 }
 
 .submitBtn {
   padding: 10px 24px;
-  background-color: #2563eb;
+  background-color: var(--primary);
   border: none;
   border-radius: 8px;
   font-size: 13.5px;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--text-inverse);
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+  box-shadow: var(--shadow-primary);
   transition: all 0.15s ease;
 }
 
 .submitBtn:hover {
-  background-color: #1d4ed8;
+  background-color: var(--primary-dark);
 }
 
 .submitBtn:disabled {
@@ -314,9 +314,9 @@
 }
 
 .errorBanner {
-  background-color: #fef2f2;
-  border: 1px solid #fee2e2;
-  color: #b91c1c;
+  background-color: var(--danger-light);
+  border: 1px solid var(--danger-border);
+  color: var(--danger-dark);
   padding: 12px 16px;
   border-radius: 8px;
   font-size: 13px;
@@ -324,9 +324,9 @@
 }
 
 .successBanner {
-  background-color: #f0fdf4;
-  border: 1px solid #bbf7d0;
-  color: #15803d;
+  background-color: var(--success-light);
+  border: 1px solid var(--success-border);
+  color: var(--success-dark);
   padding: 12px 16px;
   border-radius: 8px;
   font-size: 13px;

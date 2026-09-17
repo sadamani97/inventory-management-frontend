@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import Image from "next/image";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import CustomSelect from "@/components/ui/CustomSelect";
 import {
   createProduct,
   updateProduct,
@@ -243,47 +244,45 @@ export default function AddProductPage() {
                   <label className={styles.label}>
                     Vendor <span className={styles.required}>*</span>
                   </label>
-                  <select
+                  <CustomSelect
+                    options={
+                      vendors.length > 0
+                        ? vendors.map((v) => ({
+                            label: String(v.vendorName || v.name || "Vendor"),
+                            value: String(v.id),
+                          }))
+                        : [{ label: "Fresh Farm Suppliers", value: "1" }]
+                    }
                     value={vendorId}
-                    onChange={(e) => setVendorId(e.target.value)}
-                    className={`${styles.inputControl} ${styles.selectControl}`}
-                  >
-                    {vendors.length > 0 ? (
-                      vendors.map((v) => (
-                        <option key={v.id} value={v.id}>
-                          {v.vendorName || v.name}
-                        </option>
-                      ))
-                    ) : (
-                      <option value="1">Fresh Farm Suppliers</option>
-                    )}
-                  </select>
+                    onChange={setVendorId}
+                    width="100%"
+                    height="42px"
+                  />
                 </div>
 
                 <div className={styles.fieldGroup}>
                   <label className={styles.label}>
                     Category <span className={styles.required}>*</span>
                   </label>
-                  <select
+                  <CustomSelect
+                    options={
+                      categories.length > 0
+                        ? categories.map((c) => ({
+                            label: String(c.categoryName || c.name || "Category"),
+                            value: String(c.categoryId || c.id),
+                          }))
+                        : [
+                            { label: "Dairy", value: "1" },
+                            { label: "Beverages", value: "2" },
+                            { label: "Snacks", value: "3" },
+                            { label: "Grocery", value: "4" },
+                          ]
+                    }
                     value={categoryId}
-                    onChange={(e) => setCategoryId(e.target.value)}
-                    className={`${styles.inputControl} ${styles.selectControl}`}
-                  >
-                    {categories.length > 0 ? (
-                      categories.map((c) => (
-                        <option key={c.categoryId || c.id} value={c.categoryId || c.id}>
-                          {c.categoryName || c.name}
-                        </option>
-                      ))
-                    ) : (
-                      <>
-                        <option value="1">Dairy</option>
-                        <option value="2">Beverages</option>
-                        <option value="3">Snacks</option>
-                        <option value="4">Grocery</option>
-                      </>
-                    )}
-                  </select>
+                    onChange={setCategoryId}
+                    width="100%"
+                    height="42px"
+                  />
                 </div>
 
                 <div className={styles.fieldGroup}>
@@ -362,26 +361,25 @@ export default function AddProductPage() {
 
                 <div className={styles.fieldGroup}>
                   <label className={styles.label}>Unit</label>
-                  <select
+                  <CustomSelect
+                    options={
+                      units.length > 0
+                        ? units.map((u) => ({
+                            label: String(u.unitName),
+                            value: String(u.unitId || u.id),
+                          }))
+                        : [
+                            { label: "piece", value: "1" },
+                            { label: "box", value: "2" },
+                            { label: "kg", value: "3" },
+                            { label: "liter", value: "4" },
+                          ]
+                    }
                     value={unitId}
-                    onChange={(e) => setUnitId(e.target.value)}
-                    className={`${styles.inputControl} ${styles.selectControl}`}
-                  >
-                    {units.length > 0 ? (
-                      units.map((u) => (
-                        <option key={u.unitId || u.id} value={u.unitId || u.id}>
-                          {u.unitName}
-                        </option>
-                      ))
-                    ) : (
-                      <>
-                        <option value="1">piece</option>
-                        <option value="2">box</option>
-                        <option value="3">kg</option>
-                        <option value="4">liter</option>
-                      </>
-                    )}
-                  </select>
+                    onChange={setUnitId}
+                    width="100%"
+                    height="42px"
+                  />
                 </div>
               </div>
             </div>
