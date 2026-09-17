@@ -135,18 +135,7 @@
   cursor: pointer;
 }
 
-.categorySelect {
-  height: 38px;
-  padding: 0 14px;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  background-color: #ffffff;
-  font-size: 13px;
-  font-weight: 600;
-  color: #334155;
-  outline: none;
-  cursor: pointer;
-}
+
 
 .tableWrapper {
   width: 100%;

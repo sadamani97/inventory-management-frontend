@@ -142,7 +142,7 @@ export interface ReportKpis {
 export async function fetchProductStats(): Promise<ProductStatsResponse> {
   try {
     const response = await api.get("/api/products/stats");
-    if (response.data && response.data.success && response.data.data) {
+    if (response?.data?.success && response?.data?.data) {
       return response.data.data;
     }
   } catch (err) {
@@ -161,7 +161,7 @@ export async function fetchProductStats(): Promise<ProductStatsResponse> {
 export async function fetchSalesAnalytics(): Promise<SalesAnalyticsResponse> {
   try {
     const response = await api.get("/api/reports/sales-analytics");
-    if (response.data && response.data.success && response.data.data) {
+    if (response?.data?.success && response?.data?.data) {
       return response.data.data;
     }
   } catch (err) {
@@ -193,20 +193,20 @@ export function formatRelativeTime(dateStr?: string | Date): string {
 export async function fetchRecentActivities(): Promise<ActivityItem[]> {
   try {
     const response = await api.get("/api/reports/product-performance");
-    if (response.data && response.data.success && Array.isArray(response.data.data)) {
+    if (response?.data?.success && Array.isArray(response?.data?.data)) {
       return response.data.data.map((item: Record<string, unknown>, index: number) => ({
-        id: String(item.id || index + 1),
-        activity: Number(item.sold ?? 0) > 0 ? "Stock Out" : "Stock In",
-        product: String(item.productName || "Product"),
-        sku: String(item.sku || `SKU-${index + 1}`),
-        qty: Number(item.sold ?? 0) > 0 ? `-${item.sold}` : `+${item.currentStock || 0}`,
+        id: String(item?.id || index + 1),
+        activity: Number(item?.sold ?? 0) > 0 ? "Stock Out" : "Stock In",
+        product: String(item?.productName || "Product"),
+        sku: String(item?.sku || `SKU-${index + 1}`),
+        qty: Number(item?.sold ?? 0) > 0 ? `-${item.sold}` : `+${item?.currentStock || 0}`,
         status:
-          item.status === "Critical"
+          item?.status === "Critical"
             ? "Warning"
-            : item.status === "Fast Moving"
+            : item?.status === "Fast Moving"
             ? "Completed"
             : "Added",
-        time: formatRelativeTime(item.createdAt as string),
+        time: formatRelativeTime(item?.createdAt as string),
       }));
     }
   } catch (err) {
@@ -218,10 +218,10 @@ export async function fetchRecentActivities(): Promise<ActivityItem[]> {
 export async function fetchProductsList(): Promise<ProductItem[]> {
   try {
     const response = await api.get("/api/products");
-    if (response.data && response.data.success && Array.isArray(response.data.data)) {
+    if (response?.data?.success && Array.isArray(response?.data?.data)) {
       return response.data.data;
     }
-    if (Array.isArray(response.data)) {
+    if (Array.isArray(response?.data)) {
       return response.data;
     }
   } catch (err) {
@@ -233,7 +233,7 @@ export async function fetchProductsList(): Promise<ProductItem[]> {
 export async function fetchProductById(id: number | string): Promise<ProductItem | null> {
   try {
     const response = await api.get(`/api/products/${id}`);
-    if (response.data && response.data.success && response.data.data) {
+    if (response?.data?.success && response?.data?.data) {
       return response.data.data;
     }
   } catch (err) {
@@ -247,11 +247,11 @@ export async function createProduct(
 ): Promise<{ success: boolean; message?: string; data?: ProductItem; error?: unknown }> {
   try {
     const response = await api.post("/api/products", payload);
-    return response.data;
+    return response?.data || { success: false, message: "No data returned" };
   } catch (err: unknown) {
     const axiosErr = err as { response?: { data?: { message?: string; error?: unknown } }; message?: string };
-    const errorMessage = axiosErr.response?.data?.message || axiosErr.message || "Failed to create product";
-    const errorDetail = axiosErr.response?.data?.error;
+    const errorMessage = axiosErr?.response?.data?.message || axiosErr?.message || "Failed to create product";
+    const errorDetail = axiosErr?.response?.data?.error;
     return { success: false, message: errorMessage, error: errorDetail };
   }
 }
@@ -262,11 +262,11 @@ export async function updateProduct(
 ): Promise<{ success: boolean; message?: string; data?: ProductItem; error?: unknown }> {
   try {
     const response = await api.put(`/api/products/${id}`, payload);
-    return response.data;
+    return response?.data || { success: false, message: "No data returned" };
   } catch (err: unknown) {
     const axiosErr = err as { response?: { data?: { message?: string; error?: unknown } }; message?: string };
-    const errorMessage = axiosErr.response?.data?.message || axiosErr.message || "Failed to update product";
-    const errorDetail = axiosErr.response?.data?.error;
+    const errorMessage = axiosErr?.response?.data?.message || axiosErr?.message || "Failed to update product";
+    const errorDetail = axiosErr?.response?.data?.error;
     return { success: false, message: errorMessage, error: errorDetail };
   }
 }
@@ -274,10 +274,10 @@ export async function updateProduct(
 export async function fetchCategories(): Promise<CategoryItem[]> {
   try {
     const response = await api.get("/api/Categories");
-    if (response.data && response.data.success && Array.isArray(response.data.data)) {
+    if (response?.data?.success && Array.isArray(response?.data?.data)) {
       return response.data.data;
     }
-    if (Array.isArray(response.data)) return response.data;
+    if (Array.isArray(response?.data)) return response.data;
   } catch (err) {
     console.warn("Backend /api/Categories failed", err);
   }
@@ -287,20 +287,20 @@ export async function fetchCategories(): Promise<CategoryItem[]> {
 export async function createCategory(categoryName: string): Promise<{ success: boolean; data?: CategoryItem; message?: string }> {
   try {
     const response = await api.post("/api/Categories", { categoryName });
-    return response.data;
+    return response?.data || { success: false, message: "No response data" };
   } catch (err: unknown) {
     const axiosErr = err as { response?: { data?: { message?: string } }; message?: string };
-    return { success: false, message: axiosErr.response?.data?.message || axiosErr.message || "Failed to create category" };
+    return { success: false, message: axiosErr?.response?.data?.message || axiosErr?.message || "Failed to create category" };
   }
 }
 
 export async function fetchBrands(): Promise<BrandItem[]> {
   try {
     const response = await api.get("/api/brands");
-    if (response.data && response.data.success && Array.isArray(response.data.data)) {
+    if (response?.data?.success && Array.isArray(response?.data?.data)) {
       return response.data.data;
     }
-    if (Array.isArray(response.data)) return response.data;
+    if (Array.isArray(response?.data)) return response.data;
   } catch (err) {
     console.warn("Backend /api/brands failed", err);
   }
@@ -310,10 +310,10 @@ export async function fetchBrands(): Promise<BrandItem[]> {
 export async function fetchUnits(): Promise<UnitItem[]> {
   try {
     const response = await api.get("/api/units");
-    if (response.data && response.data.success && Array.isArray(response.data.data)) {
+    if (response?.data?.success && Array.isArray(response?.data?.data)) {
       return response.data.data;
     }
-    if (Array.isArray(response.data)) return response.data;
+    if (Array.isArray(response?.data)) return response.data;
   } catch (err) {
     console.warn("Backend /api/units failed", err);
   }
@@ -323,10 +323,10 @@ export async function fetchUnits(): Promise<UnitItem[]> {
 export async function fetchAlertsList(): Promise<AlertItem[]> {
   try {
     const response = await api.get("/api/alerts");
-    if (response.data && response.data.success && Array.isArray(response.data.data)) {
+    if (response?.data?.success && Array.isArray(response?.data?.data)) {
       return response.data.data;
     }
-    if (Array.isArray(response.data)) {
+    if (Array.isArray(response?.data)) {
       return response.data;
     }
   } catch (err) {
@@ -338,7 +338,7 @@ export async function fetchAlertsList(): Promise<AlertItem[]> {
 export async function fetchAlertSummary(): Promise<Record<string, unknown> | null> {
   try {
     const response = await api.get("/api/alerts/summary");
-    if (response.data && response.data.success) {
+    if (response?.data?.success) {
       return response.data.data;
     }
   } catch (err) {
@@ -350,10 +350,10 @@ export async function fetchAlertSummary(): Promise<Record<string, unknown> | nul
 export async function fetchVendorsList(): Promise<VendorItem[]> {
   try {
     const response = await api.get("/api/vendors");
-    if (response.data && response.data.success && Array.isArray(response.data.data)) {
+    if (response?.data?.success && Array.isArray(response?.data?.data)) {
       return response.data.data;
     }
-    if (Array.isArray(response.data)) {
+    if (Array.isArray(response?.data)) {
       return response.data;
     }
   } catch (err) {
@@ -365,10 +365,10 @@ export async function fetchVendorsList(): Promise<VendorItem[]> {
 export async function fetchPurchaseOrdersList(): Promise<PurchaseOrderItem[]> {
   try {
     const response = await api.get("/api/purchase-orders");
-    if (response.data && response.data.success && Array.isArray(response.data.data)) {
+    if (response?.data?.success && Array.isArray(response?.data?.data)) {
       return response.data.data;
     }
-    if (Array.isArray(response.data)) {
+    if (Array.isArray(response?.data)) {
       return response.data;
     }
   } catch (err) {
@@ -380,10 +380,10 @@ export async function fetchPurchaseOrdersList(): Promise<PurchaseOrderItem[]> {
 export async function fetchSalesOrdersList(): Promise<SalesOrderItem[]> {
   try {
     const response = await api.get("/api/sales-orders");
-    if (response.data && response.data.success && Array.isArray(response.data.data)) {
+    if (response?.data?.success && Array.isArray(response?.data?.data)) {
       return response.data.data;
     }
-    if (Array.isArray(response.data)) {
+    if (Array.isArray(response?.data)) {
       return response.data;
     }
   } catch (err) {
@@ -395,10 +395,10 @@ export async function fetchSalesOrdersList(): Promise<SalesOrderItem[]> {
 export async function fetchInvoicesList(): Promise<InvoiceItem[]> {
   try {
     const response = await api.get("/api/invoices");
-    if (response.data && response.data.success && Array.isArray(response.data.data)) {
+    if (response?.data?.success && Array.isArray(response?.data?.data)) {
       return response.data.data;
     }
-    if (Array.isArray(response.data)) {
+    if (Array.isArray(response?.data)) {
       return response.data;
     }
   } catch (err) {
@@ -410,7 +410,7 @@ export async function fetchInvoicesList(): Promise<InvoiceItem[]> {
 export async function fetchReportKpis(): Promise<ReportKpis | null> {
   try {
     const response = await api.get("/api/reports/kpi-summary");
-    if (response.data && response.data.success) {
+    if (response?.data?.success) {
       return response.data.data;
     }
   } catch (err) {

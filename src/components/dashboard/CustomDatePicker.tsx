@@ -30,22 +30,25 @@ export default function CustomDatePicker({
   icon = "calendar",
   formatLabel,
 }: CustomDatePickerProps) {
-  // Default to June 11, 2026 if no initial value provided (matches demo mockup)
   const [selectedDate, setSelectedDate] = useState<Date>(
-    value || new Date(2026, 5, 11)
+    value || new Date()
   );
+
+  useEffect(() => {
+    if (value) {
+      setSelectedDate(value);
+    }
+  }, [value]);
 
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [viewMode, setViewMode] = useState<"calendar" | "monthYear">("calendar");
 
-  // Temporary state inside popover before clicking "Ok"
   const [tempDate, setTempDate] = useState<Date>(selectedDate);
   const [viewMonth, setViewMonth] = useState<number>(selectedDate.getMonth());
   const [viewYear, setViewYear] = useState<number>(selectedDate.getFullYear());
 
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Reset state when opening popover
   const toggleOpen = () => {
     if (!isOpen) {
       setTempDate(selectedDate);
@@ -56,7 +59,6 @@ export default function CustomDatePicker({
     setIsOpen(!isOpen);
   };
 
-  // Handle click outside to close popover
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
@@ -71,7 +73,6 @@ export default function CustomDatePicker({
     };
   }, [isOpen]);
 
-  // Format header button text e.g. "June 11, 2026"
   const formatPillDate = (date: Date) => {
     if (formatLabel) {
       return formatLabel(date);
@@ -82,7 +83,6 @@ export default function CustomDatePicker({
     return `${month} ${day}, ${year}`;
   };
 
-  // Month navigation
   const handlePrevMonth = () => {
     if (viewMonth === 0) {
       setViewMonth(11);
@@ -101,27 +101,23 @@ export default function CustomDatePicker({
     }
   };
 
-  // Select day in calendar grid
   const handleDaySelect = (dayNumber: number) => {
     const newTemp = new Date(viewYear, viewMonth, dayNumber);
     setTempDate(newTemp);
   };
 
-  // Action buttons
   const handleCancel = () => {
     setIsOpen(false);
   };
 
   const handleOk = () => {
     if (viewMode === "monthYear") {
-      // In monthYear mode, pressing OK applies the month/year selection and returns to calendar view
       const daysInTargetMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
       const clampedDay = Math.min(tempDate.getDate(), daysInTargetMonth);
       const newTemp = new Date(viewYear, viewMonth, clampedDay);
       setTempDate(newTemp);
       setViewMode("calendar");
     } else {
-      // In calendar mode, pressing OK commits the selected date
       setSelectedDate(tempDate);
       if (onChange) {
         onChange(tempDate);
@@ -130,19 +126,19 @@ export default function CustomDatePicker({
     }
   };
 
-  // Calculate calendar grid days
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
-  const firstDayOfWeek = new Date(viewYear, viewMonth, 1).getDay(); // 0 = Sun, 1 = Mon...
+  const firstDayOfWeek = new Date(viewYear, viewMonth, 1).getDay();
 
-  // Generate Year options for MonthYear picker (e.g., 2020 to 2032)
   const yearsList: number[] = [];
-  for (let y = 2020; y <= 2032; y++) {
+  const currentYearNum = new Date().getFullYear();
+  const minYear = Math.min(2020, currentYearNum - 5);
+  const maxYear = Math.max(2032, currentYearNum + 10);
+  for (let y = minYear; y <= maxYear; y++) {
     yearsList.push(y);
   }
 
   return (
     <div className={styles.container} ref={containerRef}>
-      {/* Trigger Date Pill Button */}
       <button
         type="button"
         className={`${styles.datePill} ${variant === "blue" ? styles.datePillBlue : ""} ${
@@ -159,10 +155,8 @@ export default function CustomDatePicker({
         )}
       </button>
 
-      {/* Popover */}
       {isOpen && (
         <div className={styles.popover}>
-          {/* Popover Header */}
           <div className={styles.header}>
             <button
               type="button"
@@ -196,10 +190,8 @@ export default function CustomDatePicker({
             )}
           </div>
 
-          {/* VIEW MODE 1: CALENDAR DAY GRID (Image 1) */}
           {viewMode === "calendar" && (
             <>
-              {/* Day Headers Row */}
               <div className={styles.weekDaysRow}>
                 {WEEK_DAYS.map((day, idx) => (
                   <div key={idx} className={styles.weekDay}>
@@ -208,14 +200,11 @@ export default function CustomDatePicker({
                 ))}
               </div>
 
-              {/* Days Grid */}
               <div className={styles.daysGrid}>
-                {/* Empty offset cells before day 1 */}
                 {Array.from({ length: firstDayOfWeek }).map((_, idx) => (
                   <div key={`empty-${idx}`} className={styles.dayCell} />
                 ))}
 
-                {/* Days of current month */}
                 {Array.from({ length: daysInMonth }).map((_, idx) => {
                   const dayNum = idx + 1;
                   const isSelected =
@@ -247,10 +236,8 @@ export default function CustomDatePicker({
             </>
           )}
 
-          {/* VIEW MODE 2: MONTH & YEAR DUAL WHEEL PICKER (Image 2) */}
           {viewMode === "monthYear" && (
             <div className={styles.monthYearPickerContainer}>
-              {/* Months Column */}
               <div className={styles.pickerColumn}>
                 {MONTH_SHORT_NAMES.map((mName, mIdx) => {
                   const diff = Math.abs(mIdx - viewMonth);
@@ -271,7 +258,6 @@ export default function CustomDatePicker({
                 })}
               </div>
 
-              {/* Years Column */}
               <div className={styles.pickerColumn}>
                 {yearsList.map((yVal) => {
                   const diff = Math.abs(yVal - viewYear);
@@ -294,7 +280,6 @@ export default function CustomDatePicker({
             </div>
           )}
 
-          {/* Footer Actions (Cancel & Ok) */}
           <div className={styles.footer}>
             <button
               type="button"

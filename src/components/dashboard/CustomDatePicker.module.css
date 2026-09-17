@@ -8,12 +8,12 @@
   align-items: center;
   gap: 10px;
   padding: 8px 16px;
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 10px;
   font-size: 13.5px;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--text-secondary);
   cursor: pointer;
   user-select: none;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -21,34 +21,34 @@
 }
 
 .datePill:hover {
-  border-color: #cbd5e1;
-  background-color: #f8fafc;
+  border-color: var(--border-hover);
+  background-color: var(--background);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
 .datePillBlue {
-  background-color: #2563eb;
-  color: #ffffff;
-  border-color: #2563eb;
+  background-color: var(--primary);
+  color: var(--surface);
+  border-color: var(--primary);
 }
 
 .datePillBlue:hover {
-  background-color: #1d4ed8;
-  border-color: #1d4ed8;
+  background-color: var(--primary-dark);
+  border-color: var(--primary-dark);
   box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
 }
 
 .datePillBlue .calendarIcon {
-  color: #ffffff;
+  color: var(--surface);
 }
 
 .datePillActive {
-  border-color: #2563eb;
+  border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
 
 .calendarIcon {
-  color: #64748b;
+  color: var(--text-muted);
   font-size: 16px;
 }
 
@@ -59,8 +59,8 @@
   right: 0;
   z-index: 1000;
   width: 290px;
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 16px;
   box-shadow: 0 16px 36px -6px rgba(15, 23, 42, 0.12), 0 6px 16px -4px rgba(15, 23, 42, 0.08);
   padding: 16px;
@@ -92,7 +92,7 @@
   gap: 6px;
   font-size: 14px;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--text);
   background: none;
   border: none;
   padding: 4px 6px;
@@ -103,11 +103,11 @@
 }
 
 .monthYearSelector:hover {
-  background-color: #f1f5f9;
+  background-color: var(--hover-bg);
 }
 
 .selectorIcon {
-  color: #64748b;
+  color: var(--text-muted);
   font-size: 13px;
 }
 
@@ -126,15 +126,15 @@
   background: none;
   border: none;
   border-radius: 6px;
-  color: #475569;
+  color: var(--text-muted);
   font-size: 15px;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .navBtn:hover {
-  background-color: #f1f5f9;
-  color: #0f172a;
+  background-color: var(--hover-bg);
+  color: var(--text);
 }
 
 /* Calendar Days View */
@@ -148,7 +148,7 @@
 .weekDay {
   font-size: 12px;
   font-weight: 600;
-  color: #94a3b8;
+  color: var(--text-light);
   padding: 4px 0;
 }
 
@@ -176,25 +176,25 @@
   border-radius: 50%;
   font-size: 13px;
   font-weight: 500;
-  color: #1e293b;
+  color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .dayBtn:hover:not(.dayBtnSelected) {
-  background-color: #f1f5f9;
-  color: #0f172a;
+  background-color: var(--hover-bg);
+  color: var(--text);
 }
 
 .dayBtnSelected {
-  background-color: #2563eb !important;
-  color: #ffffff !important;
+  background-color: var(--primary) !important;
+  color: var(--surface) !important;
   font-weight: 700;
   box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
 }
 
 .dayBtnToday:not(.dayBtnSelected) {
-  color: #2563eb;
+  color: var(--primary);
   font-weight: 700;
   position: relative;
 }
@@ -206,10 +206,10 @@
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background-color: #2563eb;
+  background-color: var(--primary);
 }
 
-/* Month & Year Picker Dual Column View (Matching Image 2) */
+/* Month & Year Picker Column View */
 .monthYearPickerContainer {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -226,8 +226,8 @@
   justify-content: center;
   height: 100%;
   overflow-y: auto;
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE/Edge */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .pickerColumn::-webkit-scrollbar {
@@ -248,26 +248,26 @@
 .pickerItemActive {
   font-size: 18px;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--text);
   opacity: 1;
 }
 
 .pickerItemAdjacent {
   font-size: 15px;
   font-weight: 500;
-  color: #94a3b8;
+  color: var(--text-light);
   opacity: 0.6;
 }
 
 .pickerItemDistant {
   font-size: 13px;
   font-weight: 400;
-  color: #cbd5e1;
+  color: var(--border-hover);
   opacity: 0.3;
 }
 
 .pickerItem:hover:not(.pickerItemActive) {
-  color: #2563eb;
+  color: var(--primary);
   opacity: 0.9;
 }
 
@@ -279,41 +279,41 @@
   gap: 8px;
   margin-top: 14px;
   padding-top: 10px;
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid var(--hover-bg);
 }
 
 .cancelBtn {
   padding: 6px 16px;
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 8px;
   font-size: 13px;
   font-weight: 600;
-  color: #475569;
+  color: var(--text-muted);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .cancelBtn:hover {
-  background-color: #f8fafc;
-  border-color: #cbd5e1;
-  color: #1e293b;
+  background-color: var(--background);
+  border-color: var(--border-hover);
+  color: var(--text-secondary);
 }
 
 .okBtn {
   padding: 6px 18px;
-  background-color: #2563eb;
+  background-color: var(--primary);
   border: none;
   border-radius: 8px;
   font-size: 13px;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--surface);
   cursor: pointer;
   transition: all 0.15s ease;
   box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
 }
 
 .okBtn:hover {
-  background-color: #1d4ed8;
+  background-color: var(--primary-dark);
   box-shadow: 0 4px 10px rgba(37, 99, 235, 0.35);
 }

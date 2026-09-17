@@ -4,9 +4,20 @@ import { useRouter } from "next/router";
 import Image from "next/image";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import CustomDatePicker from "@/components/dashboard/CustomDatePicker";
+import CustomSelect, { CustomSelectOption } from "@/components/ui/CustomSelect";
 import { fetchProductsList, ProductItem } from "@/lib/dashboardApi";
 import styles from "@/styles/pages/products.module.css";
 import { FiSearch, FiUpload, FiPlus } from "react-icons/fi";
+
+const CATEGORY_OPTIONS: CustomSelectOption[] = [
+  { label: "All Category", value: "All Category" },
+  { label: "Dairy", value: "Dairy" },
+  { label: "Beverages", value: "Beverages" },
+  { label: "Snacks", value: "Snacks" },
+  { label: "Grocery", value: "Grocery" },
+  { label: "Cleaning", value: "Cleaning" },
+  { label: "Personal Care", value: "Personal Care" },
+];
 
 export default function ProductsPage() {
   const router = useRouter();
@@ -76,19 +87,12 @@ export default function ProductsPage() {
               <CustomDatePicker variant="blue" icon="chevron" />
             </div>
 
-            <select
+            <CustomSelect
+              options={CATEGORY_OPTIONS}
               value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              className={styles.categorySelect}
-            >
-              <option value="All Category">All Category</option>
-              <option value="Dairy">Dairy</option>
-              <option value="Beverages">Beverages</option>
-              <option value="Snacks">Snacks</option>
-              <option value="Grocery">Grocery</option>
-              <option value="Cleaning">Cleaning</option>
-              <option value="Personal Care">Personal Care</option>
-            </select>
+              onChange={setCategoryFilter}
+              width="140px"
+            />
           </div>
 
           <div className={styles.tableWrapper}>

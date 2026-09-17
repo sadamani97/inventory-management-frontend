@@ -46,8 +46,8 @@ export default function SignupPage() {
     setStatusMessage(null);
     try {
       const response = await api.post("/signup", values);
-      const result = response.data;
-      if (result.success) {
+      const result = response?.data;
+      if (result?.success) {
         dispatch(
           setAuthUser({
             user: {
@@ -55,15 +55,15 @@ export default function SignupPage() {
               lastname: values.lastname,
               email: values.email,
             },
-            token: result.token,
-            message: result.message,
+            token: result?.token,
+            message: result?.message,
           }),
         );
-        setStatusMessage(result.message || "Signup successful");
+        setStatusMessage(result?.message || "Signup successful");
         router.push("/login");
       } else {
         dispatch(setAuthError("Signup failed"));
-        setStatusMessage(result.message || "Signup failed");
+        setStatusMessage(result?.message || "Signup failed");
       }
     } catch (error: unknown) {
       const axiosError = error as AxiosError<{ message?: string }>;
