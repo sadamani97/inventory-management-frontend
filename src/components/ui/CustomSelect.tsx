@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { FiChevronDown } from "react-icons/fi";
+import { FiChevronDown, FiPlus } from "react-icons/fi";
 import styles from "./CustomSelect.module.css";
 
 export interface CustomSelectOption {
@@ -15,6 +15,9 @@ interface CustomSelectProps {
   width?: string;
   height?: string;
   className?: string;
+  onAddNew?: (newLabel: string) => Promise<string | void> | string | void;
+  addNewButtonText?: string;
+  addNewPlaceholder?: string;
 }
 
 export default function CustomSelect({
@@ -25,16 +28,24 @@ export default function CustomSelect({
   width = "140px",
   height = "38px",
   className = "",
+  onAddNew,
+  addNewButtonText = "+ Add new category",
+  addNewPlaceholder = "Enter new category",
 }: CustomSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
+  const [newItemText, setNewItemText] = useState("");
+  const [addingLoading, setAddingLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const selectedOption = options.find((opt) => opt.value === value) || options[0];
+  const selectedOption = options.find((opt) => String(opt.value) === String(value));
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setIsOpen(false);
+        setIsAdding(false);
+        setNewItemText("");
       }
     }
     if (isOpen) {
@@ -48,6 +59,24 @@ export default function CustomSelect({
   const handleSelect = (val: string) => {
     onChange(val);
     setIsOpen(false);
+  };
+
+  const handleAddNewSubmit = async () => {
+    if (!newItemText.trim() || !onAddNew) return;
+    setAddingLoading(true);
+    try {
+      const createdValue = await onAddNew(newItemText.trim());
+      if (createdValue) {
+        onChange(String(createdValue));
+      }
+      setNewItemText("");
+      setIsAdding(false);
+      setIsOpen(false);
+    } catch (err) {
+      console.error("Failed to add new item:", err);
+    } finally {
+      setAddingLoading(false);
+    }
   };
 
   return (
@@ -65,21 +94,63 @@ export default function CustomSelect({
       </button>
 
       {isOpen && (
-        <div className={styles.dropdownMenu} role="listbox">
-          {options.map((option) => {
-            const isSelected = option.value === value;
-            return (
-              <div
-                key={option.value}
-                role="option"
-                aria-selected={isSelected}
-                className={`${styles.optionItem} ${isSelected ? styles.optionSelected : ""}`}
-                onClick={() => handleSelect(option.value)}
-              >
-                {option.label}
-              </div>
-            );
-          })}
+        <div className={styles.dropdownMenu} style={{ width }} role="listbox">
+          <div className={styles.optionsList}>
+            {options.map((option, index) => {
+              const isSelected = String(option.value) === String(value);
+              const itemKey = option.value ? String(option.value) : `opt-${index}-${option.label}`;
+              return (
+                <div
+                  key={itemKey}
+                  role="option"
+                  aria-selected={isSelected}
+                  className={`${styles.optionItem} ${isSelected ? styles.optionSelected : ""}`}
+                  onClick={() => handleSelect(option.value)}
+                >
+                  {option.label}
+                </div>
+              );
+            })}
+          </div>
+
+          {onAddNew && (
+            <div className={styles.addNewContainer}>
+              {isAdding ? (
+                <div className={styles.inputAddBox}>
+                  <input
+                    type="text"
+                    className={styles.addInput}
+                    placeholder={addNewPlaceholder}
+                    value={newItemText}
+                    onChange={(e) => setNewItemText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleAddNewSubmit();
+                      }
+                    }}
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    className={styles.addBtnAction}
+                    onClick={handleAddNewSubmit}
+                    disabled={addingLoading || !newItemText.trim()}
+                  >
+                    {addingLoading ? "Adding..." : addNewButtonText}
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  className={styles.addBtnAction}
+                  onClick={() => setIsAdding(true)}
+                >
+                  <FiPlus style={{ marginRight: 4 }} /> {addNewButtonText.replace(/^\+\s*/, "")}
+                </button>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>

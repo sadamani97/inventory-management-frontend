@@ -47,6 +47,7 @@ export interface UnitItem {
 }
 
 export interface VendorItem {
+  vendorId?: number | string;
   id: number | string;
   vendorName?: string;
   name?: string;
@@ -61,6 +62,7 @@ export interface ProductItem {
   sku: string;
   barcode?: string;
   categoryId?: number;
+  vendorId?: number;
   brandId?: number;
   purchaseRate?: number;
   sellingPrice?: number;
@@ -74,6 +76,7 @@ export interface ProductItem {
   createdAt?: string;
   updatedAt?: string;
   category?: CategoryItem;
+  vendor?: VendorItem;
   brand?: BrandItem;
   unit?: UnitItem;
 }
@@ -83,6 +86,7 @@ export interface CreateProductPayload {
   sku: string;
   barcode?: string;
   categoryId: number;
+  vendorId?: number;
   brandId?: number;
   brandName?: string;
   purchaseRate: number;

@@ -116,7 +116,7 @@ export default function ProductsPage() {
                 ) : filteredProducts.length > 0 ? (
                   filteredProducts.map((p: ProductItem, idx: number) => {
                     const name = p.productName || "Product";
-                    const vendor = "Supplier";
+                    const vendor = p.vendor?.vendorName || p.vendor?.name || "No Vendor";
                     const sku = p.sku || `SKU-${idx + 1}`;
                     const category = p.category?.categoryName || "General";
                     const price = p.sellingPrice || 0;
