@@ -8,5 +8,5 @@ export default function Home() {
     router.replace("/login");
   }, [router]);
 
-  return <p className="redirect-text">Redirecting to login...</p>;
+  return <p className="redirect-text">Loading...</p>;
 }

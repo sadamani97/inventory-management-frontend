@@ -6,7 +6,7 @@
 .statusBox {
   border: 1px solid var(--border);
   background: var(--surface-muted);
-  color: #334155;
+  color: var(--text-body);
   padding: 14px 16px;
   border-radius: 24px;
 }

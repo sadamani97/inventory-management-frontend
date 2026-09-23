@@ -36,24 +36,28 @@ export default function LoginPage() {
     setStatusMessage(null);
     try {
       const response = await api.post("/login", values);
-      const result = response.data;
-      if (result.success) {
+      const result = response?.data;
+      if (result?.success) {
+        const tokenStr = result?.token || "authenticated_user_token";
+        const userData = {
+          firstname: result?.data?.firstname ?? "",
+          lastname: result?.data?.lastname ?? "",
+          email: result?.data?.email ?? values.email,
+        };
+        localStorage.setItem("token", tokenStr);
+        localStorage.setItem("user", JSON.stringify(userData));
         dispatch(
           setAuthUser({
-            user: {
-              firstname: result.data.firstname ?? "",
-              lastname: result.data.lastname ?? "",
-              email: result.data.email,
-            },
-            token: result.token,
-            message: result.message,
+            user: userData,
+            token: tokenStr,
+            message: result?.message,
           }),
         );
-        setStatusMessage(result.message || "Login successful");
+        setStatusMessage(result?.message || "Login successful");
         router.push("/dashboard");
       } else {
         dispatch(setAuthError("Login failed"));
-        setStatusMessage(result.message || "Login failed");
+        setStatusMessage(result?.message || "Login failed");
       }
     } catch (error: unknown) {
       const axiosError = error as AxiosError<{ message?: string }>;

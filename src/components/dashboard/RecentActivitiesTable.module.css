@@ -1,0 +1,164 @@
+.tableCard {
+  background-color: var(--surface);
+  border-radius: 14px;
+  padding: 24px;
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-sm);
+  margin-top: 24px;
+}
+
+.tableHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.searchWrapper {
+  position: relative;
+  width: 220px;
+}
+
+.searchInput {
+  width: 100%;
+  height: 36px;
+  padding: 6px 32px 6px 12px;
+  background-color: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  outline: none;
+}
+
+.searchInput:focus {
+  background-color: var(--surface);
+  border-color: var(--primary);
+}
+
+.searchIcon {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-light);
+  font-size: 14px;
+  pointer-events: none;
+}
+
+.statusSelect {
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background-color: var(--surface);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-body);
+  outline: none;
+  cursor: pointer;
+}
+
+.tableContainer {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.table th {
+  padding: 12px 16px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--primary);
+  border-bottom: 1px solid var(--border-faint);
+  background-color: var(--surface-alt);
+}
+
+.table td {
+  padding: 14px 16px;
+  font-size: 13px;
+  color: var(--text-body);
+  border-bottom: 1px solid var(--border-faint);
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.table tr:hover td {
+  background-color: var(--background);
+}
+
+.activityName {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.productName {
+  color: var(--text-body);
+}
+
+.skuCode {
+  font-family: monospace;
+  font-size: 12px;
+  color: var(--text-subtle);
+}
+
+.qtyVal {
+  font-weight: 600;
+}
+
+.timeText {
+  color: var(--text-subtle);
+  font-size: 12.5px;
+}
+
+/* Status Badges */
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.statusCompleted {
+  background-color: var(--success-badge-bg);
+  color: var(--success);
+}
+
+.statusWarning {
+  background-color: var(--warning-badge-bg);
+  color: var(--warning);
+}
+
+.statusAdded {
+  background-color: var(--primary-light);
+  color: var(--primary);
+}
+
+.statusDelivered {
+  background-color: var(--info-light);
+  color: var(--info);
+}

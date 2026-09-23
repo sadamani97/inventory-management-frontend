@@ -1,60 +1,33 @@
-import Link from "next/link";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { clearAuth } from "@/store/authSlice";
-import Button from "@/components/ui/Button";
+import DashboardLayout from "@/components/layout/DashboardLayout";
+import StatCards from "@/components/dashboard/StatCards";
+import RevenueTrendChart from "@/components/dashboard/RevenueTrendChart";
+import TopSellingChart from "@/components/dashboard/TopSellingChart";
+import RecentActivitiesTable from "@/components/dashboard/RecentActivitiesTable";
+import CustomDatePicker from "@/components/dashboard/CustomDatePicker";
 import styles from "@/styles/pages/dashboard.module.css";
+import { FiPlus } from "react-icons/fi";
 
 export default function DashboardPage() {
-  const user = useAppSelector((state) => state.auth.user);
-  const dispatch = useAppDispatch();
-
-  const handleLogout = () => {
-    dispatch(clearAuth());
-  };
-
   return (
-    <div className={styles.pageShell}>
-      <div className={styles.pageContainer}>
-        <div className={styles.dashboardCard}>
-          <div className={styles.dashboardHeader}>
-            <p className={styles.eyebrow}>Inventory Management</p>
-            <h1 className={styles.dashboardTitle}>Dashboard</h1>
-            <p className={styles.heroDesc}>
-              {user
-                ? `Welcome back, ${user.firstname} ${user.lastname}. Manage stock, view reports, and monitor your inventory from here.`
-                : "You are on the dashboard. Login or signup to access inventory features."}
-            </p>
-            {user ? (
-              <p className={styles.userDetails}>
-                Signed in as {user.firstname} {user.lastname} ({user.email})
-              </p>
-            ) : null}
-          </div>
-
-          <div className={`${styles.dashboardGrid} ${styles.dashboardGrid2}`}>
-            <div className={styles.dashboardItem}>
-              <h2>Sales overview</h2>
-              <p>Track your sales, orders, and inventory flow from one place.</p>
-            </div>
-            <div className={styles.dashboardItem}>
-              <h2>Product status</h2>
-              <p>Monitor stock levels, reorder alerts, and product availability.</p>
-            </div>
-          </div>
-
-          <div className={styles.dashboardActions}>
-            <Button variant="outline" type="button" onClick={handleLogout}>
-              Logout
-            </Button>
-            <Link href="/login" className={`${styles.linkButton} ${styles.linkPrimary}`}>
-              Login
-            </Link>
-            <Link href="/signup" className={`${styles.linkButton} ${styles.linkSecondary}`}>
-              Signup
-            </Link>
-          </div>
+    <DashboardLayout>
+      <div className={styles.pageHeader}>
+        <h1 className={styles.pageTitle}>Dashboard</h1>
+        <div className={styles.headerRight}>
+          <CustomDatePicker />
+          <button className={styles.createPoBtn}>
+            <FiPlus /> Create Purchase Order
+          </button>
         </div>
       </div>
-    </div>
+
+      <StatCards />
+
+      <div className={styles.chartsGrid}>
+        <RevenueTrendChart />
+        <TopSellingChart />
+      </div>
+
+      <RecentActivitiesTable />
+    </DashboardLayout>
   );
 }
