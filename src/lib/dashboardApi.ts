@@ -194,11 +194,40 @@ export function formatRelativeTime(dateStr?: string | Date): string {
   return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
+export function recordReorderActivity(prod: ProductItem, reorderQty: number) {
+  if (typeof window === "undefined") return;
+  try {
+    const existing: ActivityItem[] = JSON.parse(localStorage.getItem("reorder_activities") || "[]");
+    const newActivity: ActivityItem = {
+      id: `reorder-${Date.now()}`,
+      activity: "Reordered Stock",
+      product: String(prod.productName || "Product"),
+      sku: String(prod.sku || "-"),
+      qty: `+${reorderQty}`,
+      status: "Added",
+      time: "Just now",
+    };
+    localStorage.setItem("reorder_activities", JSON.stringify([newActivity, ...existing]));
+  } catch (err) {
+    console.warn("Failed to record reorder activity", err);
+  }
+}
+
 export async function fetchRecentActivities(): Promise<ActivityItem[]> {
+  let localActivities: ActivityItem[] = [];
+  if (typeof window !== "undefined") {
+    try {
+      const stored = localStorage.getItem("reorder_activities");
+      if (stored) localActivities = JSON.parse(stored);
+    } catch (err) {
+      console.warn("Failed to parse local reorder activities", err);
+    }
+  }
+
   try {
     const response = await api.get("/api/reports/product-performance");
     if (response?.data?.success && Array.isArray(response?.data?.data)) {
-      return response.data.data.map((item: Record<string, unknown>, index: number) => ({
+      const apiItems = response.data.data.map((item: Record<string, unknown>, index: number) => ({
         id: String(item?.id || index + 1),
         activity: Number(item?.sold ?? 0) > 0 ? "Stock Out" : "Stock In",
         product: String(item?.productName || "Product"),
@@ -212,9 +241,104 @@ export async function fetchRecentActivities(): Promise<ActivityItem[]> {
             : "Added",
         time: formatRelativeTime(item?.createdAt as string),
       }));
+      return [...localActivities, ...apiItems];
     }
   } catch (err) {
     console.warn("Backend /api/reports/product-performance failed", err);
+  }
+  return localActivities;
+}
+
+export interface StockFlowItem {
+  day: string;
+  stockAdded: number;
+  stockSold: number;
+}
+
+export async function fetchStockFlowChartData(daysCount: number = 10): Promise<StockFlowItem[]> {
+  try {
+    const [response, prods, purchaseOrders, salesOrders] = await Promise.all([
+      api.get("/api/reports/sales-vs-purchases").catch(() => null),
+      fetchProductsList().catch(() => []),
+      fetchPurchaseOrdersList().catch(() => []),
+      fetchSalesOrdersList().catch(() => []),
+    ]);
+
+    const now = new Date();
+    const dateMap: Record<string, { stockAdded: number; stockSold: number }> = {};
+
+    // Initialize dateMap for the requested number of days (5, 10, 30 days)
+    for (let i = daysCount - 1; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      const dayKey = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      dateMap[dayKey] = { stockAdded: 0, stockSold: 0 };
+    }
+
+    // 1. Populate from backend report endpoint if available
+    if (response?.data?.success && Array.isArray(response?.data?.data)) {
+      response.data.data.forEach((item: { date: string; purchase?: number; sales?: number }) => {
+        if (dateMap[item.date]) {
+          dateMap[item.date].stockAdded += Number(item.purchase || 0);
+          dateMap[item.date].stockSold += Number(item.sales || 0);
+        }
+      });
+    }
+
+    // 2. Add stock from backend Purchase Orders
+    if (purchaseOrders && purchaseOrders.length > 0) {
+      purchaseOrders.forEach((po) => {
+        if (po.createdAt) {
+          const poDate = new Date(po.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+          if (dateMap[poDate]) {
+            dateMap[poDate].stockAdded += Number(po.totalAmount || 0);
+          }
+        }
+      });
+    }
+
+    // 3. Add stock from backend Sales Orders
+    if (salesOrders && salesOrders.length > 0) {
+      salesOrders.forEach((so) => {
+        if (so.createdAt) {
+          const soDate = new Date(so.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+          if (dateMap[soDate]) {
+            dateMap[soDate].stockSold += Number(so.totalAmount || 0);
+          }
+        }
+      });
+    }
+
+    // 4. Add stock from backend Products list in DB
+    if (prods && prods.length > 0) {
+      prods.forEach((prod) => {
+        const prodDate = prod.createdAt || prod.updatedAt;
+        const qty = Number(prod.quantity || 0);
+        if (prodDate) {
+          const dayKey = new Date(prodDate).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+          if (dateMap[dayKey]) {
+            dateMap[dayKey].stockAdded += qty;
+          } else {
+            // Assign to today if outside range
+            const todayKey = now.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+            if (dateMap[todayKey]) dateMap[todayKey].stockAdded += qty;
+          }
+        } else {
+          const todayKey = now.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+          if (dateMap[todayKey]) dateMap[todayKey].stockAdded += qty;
+        }
+      });
+    }
+
+    const flowItems: StockFlowItem[] = Object.keys(dateMap).map((day) => ({
+      day,
+      stockAdded: dateMap[day].stockAdded,
+      stockSold: dateMap[day].stockSold,
+    }));
+
+    return flowItems;
+  } catch (err) {
+    console.warn("Backend fetchStockFlowChartData failed", err);
   }
   return [];
 }
