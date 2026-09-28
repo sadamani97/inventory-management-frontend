@@ -68,7 +68,7 @@ export default function InventoryPage() {
     d.setDate(d.getDate() + 1);
     return d;
   });
-  const [reorderNote, setReorderNote] = useState();
+  const [reorderNote, setReorderNote] = useState<string>("");
 
   // Modal State for "Placing Order" success confirmation toast
   const [showOrderModal, setShowOrderModal] = useState(false);
@@ -97,11 +97,9 @@ export default function InventoryPage() {
     switch (filterVal) {
       case "Last 5 days":
         return 5;
-      case "Last 30 days":
-        return 30;
       case "Last 10 days":
       default:
-        return 10;
+        return 5;
     }
   };
 
@@ -360,7 +358,6 @@ export default function InventoryPage() {
                   options={[
                     { label: "Last 5 days", value: "Last 5 days" },
                     { label: "Last 10 days", value: "Last 10 days" },
-                    { label: "Last 30 days", value: "Last 30 days" },
                   ]}
                   value={daysFilter}
                   onChange={handleDaysFilterChange}

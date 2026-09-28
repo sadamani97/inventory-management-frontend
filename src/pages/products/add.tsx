@@ -158,19 +158,27 @@ export default function AddProductPage() {
     setSuccessMsg("");
 
     if (!productName || productName.trim().length < 3) {
-      setErrorMsg("Product Name must be at least 3 characters long.");
+      const msg = "Product Name must be at least 3 characters long.";
+      setErrorMsg(msg);
+      toast.error(msg);
       return;
     }
     if (!vendorId) {
-      setErrorMsg("Please select a Vendor.");
+      const msg = "Please select a Vendor.";
+      setErrorMsg(msg);
+      toast.error(msg);
       return;
     }
     if (!categoryId) {
-      setErrorMsg("Please select a Category.");
+      const msg = "Please select a Category.";
+      setErrorMsg(msg);
+      toast.error(msg);
       return;
     }
     if (!sku || !sku.trim()) {
-      setErrorMsg("SKU is required.");
+      const msg = "SKU is required.";
+      setErrorMsg(msg);
+      toast.error(msg);
       return;
     }
 
