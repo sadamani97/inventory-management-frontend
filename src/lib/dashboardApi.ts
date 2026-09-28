@@ -310,21 +310,17 @@ export async function fetchStockFlowChartData(daysCount: number = 10): Promise<S
 
     // 4. Add stock from backend Products list in DB
     if (prods && prods.length > 0) {
+      const todayKey = now.toLocaleDateString("en-US", { month: "short", day: "numeric" });
       prods.forEach((prod) => {
         const prodDate = prod.createdAt || prod.updatedAt;
         const qty = Number(prod.quantity || 0);
-        if (prodDate) {
-          const dayKey = new Date(prodDate).toLocaleDateString("en-US", { month: "short", day: "numeric" });
-          if (dateMap[dayKey]) {
-            dateMap[dayKey].stockAdded += qty;
-          } else {
-            // Assign to today if outside range
-            const todayKey = now.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-            if (dateMap[todayKey]) dateMap[todayKey].stockAdded += qty;
-          }
-        } else {
-          const todayKey = now.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-          if (dateMap[todayKey]) dateMap[todayKey].stockAdded += qty;
+        const dayKey = prodDate
+          ? new Date(prodDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+          : todayKey;
+
+        const targetKey = dateMap[dayKey] ? dayKey : todayKey;
+        if (dateMap[targetKey]) {
+          dateMap[targetKey].stockAdded += qty;
         }
       });
     }
