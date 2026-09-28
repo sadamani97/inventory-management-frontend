@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { fetchSalesOrdersList } from "@/lib/dashboardApi";
+import { fetchSalesOrdersList, SalesOrderItem } from "@/lib/dashboardApi";
 
 export default function SalesOrdersPage() {
-  const [orders, setOrders] = useState<Record<string, unknown>[]>([]);
+  const [orders, setOrders] = useState<SalesOrderItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

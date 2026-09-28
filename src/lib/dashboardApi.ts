@@ -1,4 +1,5 @@
 import api from "./api";
+import { toast } from "react-toastify";
 
 export interface ProductStatsResponse {
   totalProducts: number;
@@ -116,6 +117,10 @@ export interface PurchaseOrderItem {
   vendorName?: string;
   totalAmount?: number;
   status?: string;
+  productId?: number;
+  productName?: string;
+  quantity?: number;
+  unitCost?: number;
   createdAt?: string;
 }
 
@@ -149,8 +154,8 @@ export async function fetchProductStats(): Promise<ProductStatsResponse> {
     if (response?.data?.success && response?.data?.data) {
       return response.data.data;
     }
-  } catch (err) {
-    console.warn("Backend /api/products/stats failed", err);
+  } catch {
+    toast.error("Failed to fetch product stats from backend.");
   }
   return {
     totalProducts: 0,
@@ -168,8 +173,8 @@ export async function fetchSalesAnalytics(): Promise<SalesAnalyticsResponse> {
     if (response?.data?.success && response?.data?.data) {
       return response.data.data;
     }
-  } catch (err) {
-    console.warn("Backend /api/reports/sales-analytics failed", err);
+  } catch {
+    toast.error("Failed to fetch sales analytics from backend.");
   }
   return {
     totalSales: 0,
@@ -184,7 +189,7 @@ export function formatRelativeTime(dateStr?: string | Date): string {
   const now = new Date();
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-  if (diffInSeconds < 60) return "Just now";
+  if (diffInSeconds < 60) return `${diffInSeconds} min${diffInSeconds > 1 ? "s" : ""} ago`;
   const diffInMinutes = Math.floor(diffInSeconds / 60);
   if (diffInMinutes < 60) return `${diffInMinutes} min${diffInMinutes > 1 ? "s" : ""} ago`;
   const diffInHours = Math.floor(diffInMinutes / 60);
@@ -194,59 +199,53 @@ export function formatRelativeTime(dateStr?: string | Date): string {
   return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-export function recordReorderActivity(prod: ProductItem, reorderQty: number) {
-  if (typeof window === "undefined") return;
-  try {
-    const existing: ActivityItem[] = JSON.parse(localStorage.getItem("reorder_activities") || "[]");
-    const newActivity: ActivityItem = {
-      id: `reorder-${Date.now()}`,
-      activity: "Reordered Stock",
-      product: String(prod.productName || "Product"),
-      sku: String(prod.sku || "-"),
-      qty: `+${reorderQty}`,
-      status: "Added",
-      time: "Just now",
-    };
-    localStorage.setItem("reorder_activities", JSON.stringify([newActivity, ...existing]));
-  } catch (err) {
-    console.warn("Failed to record reorder activity", err);
-  }
-}
-
 export async function fetchRecentActivities(): Promise<ActivityItem[]> {
-  let localActivities: ActivityItem[] = [];
-  if (typeof window !== "undefined") {
-    try {
-      const stored = localStorage.getItem("reorder_activities");
-      if (stored) localActivities = JSON.parse(stored);
-    } catch (err) {
-      console.warn("Failed to parse local reorder activities", err);
-    }
-  }
-
   try {
-    const response = await api.get("/api/reports/product-performance");
-    if (response?.data?.success && Array.isArray(response?.data?.data)) {
-      const apiItems = response.data.data.map((item: Record<string, unknown>, index: number) => ({
-        id: String(item?.id || index + 1),
-        activity: Number(item?.sold ?? 0) > 0 ? "Stock Out" : "Stock In",
-        product: String(item?.productName || "Product"),
-        sku: String(item?.sku || `SKU-${index + 1}`),
-        qty: Number(item?.sold ?? 0) > 0 ? `-${item.sold}` : `+${item?.currentStock || 0}`,
-        status:
-          item?.status === "Critical"
-            ? "Warning"
-            : item?.status === "Fast Moving"
-            ? "Completed"
-            : "Added",
-        time: formatRelativeTime(item?.createdAt as string),
-      }));
-      return [...localActivities, ...apiItems];
+    const [perfRes, poRes] = await Promise.all([
+      api.get("/api/reports/product-performance").catch(() => null),
+      api.get("/api/purchase-orders").catch(() => null),
+    ]);
+
+    const items: ActivityItem[] = [];
+
+    if (poRes?.data?.success && Array.isArray(poRes?.data?.data)) {
+      poRes.data.data.forEach((po: Record<string, unknown>, idx: number) => {
+        items.push({
+          id: `po-${po.id || idx}`,
+          activity: "Reordered Stock",
+          product: String(po.productName || po.vendorName || "Product Order"),
+          sku: String(po.sku || "PO-ORD"),
+          qty: po.quantity ? `+${po.quantity}` : `₹${po.totalAmount || 0}`,
+          status: "Added",
+          time: formatRelativeTime(po.createdAt as string),
+        });
+      });
     }
-  } catch (err) {
-    console.warn("Backend /api/reports/product-performance failed", err);
+
+    if (perfRes?.data?.success && Array.isArray(perfRes?.data?.data)) {
+      perfRes.data.data.forEach((item: Record<string, unknown>, index: number) => {
+        items.push({
+          id: String(item?.id || index + 1),
+          activity: Number(item?.sold ?? 0) > 0 ? "Stock Out" : "Stock In",
+          product: String(item?.productName || "Product"),
+          sku: String(item?.sku || `SKU-${index + 1}`),
+          qty: Number(item?.sold ?? 0) > 0 ? `-${item.sold}` : `+${item?.currentStock || 0}`,
+          status:
+            item?.status === "Critical"
+              ? "Warning"
+              : item?.status === "Fast Moving"
+                ? "Completed"
+                : "Added",
+          time: formatRelativeTime(item?.createdAt as string),
+        });
+      });
+    }
+
+    return items;
+  } catch {
+    toast.error("Failed to load recent activity data.");
   }
-  return localActivities;
+  return [];
 }
 
 export interface StockFlowItem {
@@ -337,8 +336,8 @@ export async function fetchStockFlowChartData(daysCount: number = 10): Promise<S
     }));
 
     return flowItems;
-  } catch (err) {
-    console.warn("Backend fetchStockFlowChartData failed", err);
+  } catch {
+    toast.error("Failed to load stock flow chart data.");
   }
   return [];
 }
@@ -352,8 +351,8 @@ export async function fetchProductsList(): Promise<ProductItem[]> {
     if (Array.isArray(response?.data)) {
       return response.data;
     }
-  } catch (err) {
-    console.warn("Backend /api/products failed", err);
+  } catch {
+    toast.error("Failed to fetch products list from backend.");
   }
   return [];
 }
@@ -364,8 +363,8 @@ export async function fetchProductById(id: number | string): Promise<ProductItem
     if (response?.data?.success && response?.data?.data) {
       return response.data.data;
     }
-  } catch (err) {
-    console.warn(`Backend /api/products/${id} failed`, err);
+  } catch {
+    toast.error(`Failed to fetch product details for ID: ${id}`);
   }
   return null;
 }
@@ -380,6 +379,7 @@ export async function createProduct(
     const axiosErr = err as { response?: { data?: { message?: string; error?: unknown } }; message?: string };
     const errorMessage = axiosErr?.response?.data?.message || axiosErr?.message || "Failed to create product";
     const errorDetail = axiosErr?.response?.data?.error;
+    toast.error(errorMessage);
     return { success: false, message: errorMessage, error: errorDetail };
   }
 }
@@ -395,6 +395,7 @@ export async function updateProduct(
     const axiosErr = err as { response?: { data?: { message?: string; error?: unknown } }; message?: string };
     const errorMessage = axiosErr?.response?.data?.message || axiosErr?.message || "Failed to update product";
     const errorDetail = axiosErr?.response?.data?.error;
+    toast.error(errorMessage);
     return { success: false, message: errorMessage, error: errorDetail };
   }
 }
@@ -406,8 +407,8 @@ export async function fetchCategories(): Promise<CategoryItem[]> {
       return response.data.data;
     }
     if (Array.isArray(response?.data)) return response.data;
-  } catch (err) {
-    console.warn("Backend /api/Categories failed", err);
+  } catch {
+    toast.error("Failed to fetch categories.");
   }
   return [];
 }
@@ -418,7 +419,9 @@ export async function createCategory(categoryName: string): Promise<{ success: b
     return response?.data || { success: false, message: "No response data" };
   } catch (err: unknown) {
     const axiosErr = err as { response?: { data?: { message?: string } }; message?: string };
-    return { success: false, message: axiosErr?.response?.data?.message || axiosErr?.message || "Failed to create category" };
+    const msg = axiosErr?.response?.data?.message || axiosErr?.message || "Failed to create category";
+    toast.error(msg);
+    return { success: false, message: msg };
   }
 }
 
@@ -429,8 +432,8 @@ export async function fetchBrands(): Promise<BrandItem[]> {
       return response.data.data;
     }
     if (Array.isArray(response?.data)) return response.data;
-  } catch (err) {
-    console.warn("Backend /api/brands failed", err);
+  } catch {
+    toast.error("Failed to fetch brands.");
   }
   return [];
 }
@@ -442,8 +445,8 @@ export async function fetchUnits(): Promise<UnitItem[]> {
       return response.data.data;
     }
     if (Array.isArray(response?.data)) return response.data;
-  } catch (err) {
-    console.warn("Backend /api/units failed", err);
+  } catch {
+    toast.error("Failed to fetch units.");
   }
   return [];
 }
@@ -457,8 +460,8 @@ export async function fetchAlertsList(): Promise<AlertItem[]> {
     if (Array.isArray(response?.data)) {
       return response.data;
     }
-  } catch (err) {
-    console.warn("Backend /api/alerts failed", err);
+  } catch {
+    toast.error("Failed to fetch alerts list.");
   }
   return [];
 }
@@ -469,8 +472,8 @@ export async function fetchAlertSummary(): Promise<Record<string, unknown> | nul
     if (response?.data?.success) {
       return response.data.data;
     }
-  } catch (err) {
-    console.warn("Backend /api/alerts/summary failed", err);
+  } catch {
+    toast.error("Failed to fetch alert summary.");
   }
   return null;
 }
@@ -484,8 +487,8 @@ export async function fetchVendorsList(): Promise<VendorItem[]> {
     if (Array.isArray(response?.data)) {
       return response.data;
     }
-  } catch (err) {
-    console.warn("Backend /api/vendors failed", err);
+  } catch {
+    toast.error("Failed to fetch vendors list.");
   }
   return [];
 }
@@ -499,10 +502,30 @@ export async function fetchPurchaseOrdersList(): Promise<PurchaseOrderItem[]> {
     if (Array.isArray(response?.data)) {
       return response.data;
     }
-  } catch (err) {
-    console.warn("Backend /api/purchase-orders failed", err);
+  } catch {
+    toast.error("Failed to fetch purchase orders.");
   }
   return [];
+}
+
+export async function createPurchaseOrder(payload: {
+  vendorName: string;
+  totalAmount: number;
+  status?: string;
+  productId?: number;
+  productName?: string;
+  quantity?: number;
+  unitCost?: number;
+}): Promise<{ success: boolean; message?: string; data?: PurchaseOrderItem }> {
+  try {
+    const response = await api.post("/api/purchase-orders", payload);
+    return response?.data || { success: true };
+  } catch (err: unknown) {
+    const axiosErr = err as { response?: { data?: { message?: string } }; message?: string };
+    const msg = axiosErr?.response?.data?.message || axiosErr?.message || "Failed to create purchase order";
+    toast.error(msg);
+    return { success: false, message: msg };
+  }
 }
 
 export async function fetchSalesOrdersList(): Promise<SalesOrderItem[]> {
@@ -514,8 +537,8 @@ export async function fetchSalesOrdersList(): Promise<SalesOrderItem[]> {
     if (Array.isArray(response?.data)) {
       return response.data;
     }
-  } catch (err) {
-    console.warn("Backend /api/sales-orders failed", err);
+  } catch {
+    toast.error("Failed to fetch sales orders.");
   }
   return [];
 }
@@ -529,8 +552,8 @@ export async function fetchInvoicesList(): Promise<InvoiceItem[]> {
     if (Array.isArray(response?.data)) {
       return response.data;
     }
-  } catch (err) {
-    console.warn("Backend /api/invoices failed", err);
+  } catch {
+    toast.error("Failed to fetch invoices.");
   }
   return [];
 }
@@ -541,8 +564,8 @@ export async function fetchReportKpis(): Promise<ReportKpis | null> {
     if (response?.data?.success) {
       return response.data.data;
     }
-  } catch (err) {
-    console.warn("Backend /api/reports/kpi-summary failed", err);
+  } catch {
+    toast.error("Failed to fetch report KPI summary.");
   }
   return null;
 }

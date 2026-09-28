@@ -16,7 +16,9 @@ import {
   VendorItem,
   fetchVendorsList,
   updateProduct,
-  recordReorderActivity,
+  createPurchaseOrder,
+  fetchPurchaseOrdersList,
+  PurchaseOrderItem,
 } from "@/lib/dashboardApi";
 import styles from "@/styles/pages/inventory.module.css";
 import {
@@ -53,10 +55,12 @@ export default function InventoryPage() {
 
   // Modal State for "Create Reorder" drawer/modal
   const [showReorderModal, setShowReorderModal] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<ProductItem | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<ProductItem | null>(
+    null,
+  );
   const [reorderVendor, setReorderVendor] = useState("");
   const [reorderDeliveryTo, setReorderDeliveryTo] = useState("Silkmill");
-  const [reorderQty, setReorderQty] = useState(82);
+  const [reorderQty, setReorderQty] = useState(10);
   const [reorderUnitCost, setReorderUnitCost] = useState(160);
   const [orderDate, setOrderDate] = useState<Date>(new Date());
   const [expectedDeliveryDate, setExpectedDeliveryDate] = useState<Date>(() => {
@@ -64,14 +68,18 @@ export default function InventoryPage() {
     d.setDate(d.getDate() + 1);
     return d;
   });
-  const [reorderNote, setReorderNote] = useState("Please include packing slip. Delivery between 9 AM - 5 PM");
+  const [reorderNote, setReorderNote] = useState();
 
   // Modal State for "Placing Order" success confirmation toast
   const [showOrderModal, setShowOrderModal] = useState(false);
   const [orderVendorName, setOrderVendorName] = useState("");
 
   // Action Menu Popover State (90px x 58px)
-  const [activeActionMenuId, setActiveActionMenuId] = useState<number | string | null>(null);
+  const [activeActionMenuId, setActiveActionMenuId] = useState<
+    number | string | null
+  >(null);
+
+  const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrderItem[]>([]);
 
   useEffect(() => {
     function handleClickOutside() {
@@ -108,24 +116,28 @@ export default function InventoryPage() {
       fetchCategories(),
       fetchVendorsList(),
       fetchStockFlowChartData(daysNum),
-    ]).then(([prodsData, statsData, catsData, vendorsData, flowData]) => {
-      if (!isMounted) return;
-      setProducts(prodsData || []);
-      setStats(
-        statsData || {
-          totalProducts: 0,
-          addedThisMonth: 0,
-          activeStock: 0,
-          lowStock: 0,
-          outOfStock: 0,
-          unitsRestockedThisMonth: 0,
-        }
-      );
-      setCategories(catsData || []);
-      setVendors(vendorsData || []);
-      setStockFlowData(flowData || []);
-      setLoading(false);
-    });
+      fetchPurchaseOrdersList(),
+    ]).then(
+      ([prodsData, statsData, catsData, vendorsData, flowData, poData]) => {
+        if (!isMounted) return;
+        setProducts(prodsData || []);
+        setStats(
+          statsData || {
+            totalProducts: 0,
+            addedThisMonth: 0,
+            activeStock: 0,
+            lowStock: 0,
+            outOfStock: 0,
+            unitsRestockedThisMonth: 0,
+          },
+        );
+        setCategories(catsData || []);
+        setVendors(vendorsData || []);
+        setStockFlowData(flowData || []);
+        setPurchaseOrders(poData || []);
+        setLoading(false);
+      },
+    );
 
     return () => {
       isMounted = false;
@@ -139,32 +151,55 @@ export default function InventoryPage() {
     });
   };
 
-  // Open Reorder Modal prefilled with product and its last ordered quantity
+  const getPreviousOrderQty = (
+    prod: ProductItem | null,
+    poList: PurchaseOrderItem[],
+  ): number => {
+    if (!prod) return 10;
+    // Sort purchase orders descending (newest first)
+    const sortedPOs = [...poList].sort((a, b) => {
+      const timeA = a.createdAt
+        ? new Date(a.createdAt).getTime()
+        : Number(a.id) || 0;
+      const timeB = b.createdAt
+        ? new Date(b.createdAt).getTime()
+        : Number(b.id) || 0;
+      return timeB - timeA;
+    });
+
+    const matchingPO = sortedPOs.find((po) => {
+      if (prod.id && po.productId && String(po.productId) === String(prod.id))
+        return true;
+      if (
+        prod.productName &&
+        po.productName &&
+        po.productName.toLowerCase() === prod.productName.toLowerCase()
+      )
+        return true;
+      return false;
+    });
+
+    if (matchingPO && matchingPO.quantity) {
+      return Number(matchingPO.quantity);
+    }
+
+    const currentStock = prod.quantity ?? 0;
+    return Math.max(1, 100 - currentStock);
+  };
+
   const openReorderModal = (prod?: ProductItem) => {
     const target = prod || (products.length > 0 ? products[0] : null);
     setSelectedProduct(target);
 
-    const defaultVendor = target?.vendor?.vendorName || (vendors.length > 0 ? String(vendors[0].vendorName || vendors[0].name) : "");
+    const defaultVendor =
+      target?.vendor?.vendorName ||
+      (vendors.length > 0
+        ? String(vendors[0].vendorName || vendors[0].name)
+        : "");
     setReorderVendor(defaultVendor);
     setReorderDeliveryTo("Silkmill");
 
-    // Retrieve last ordered quantity stored for this product in localStorage
-    let lastQty = 82;
-    if (target && target.id && typeof window !== "undefined") {
-      try {
-        const storedMap = JSON.parse(localStorage.getItem("last_reordered_quantities") || "{}");
-        if (storedMap[target.id]) {
-          lastQty = Number(storedMap[target.id]);
-        } else {
-          const inStock = target.quantity ?? 0;
-          lastQty = inStock < 100 ? Math.max(10, 100 - inStock) : 82;
-        }
-      } catch (err) {}
-    } else if (target) {
-      const inStock = target.quantity ?? 0;
-      lastQty = inStock < 100 ? Math.max(10, 100 - inStock) : 82;
-    }
-
+    const lastQty = getPreviousOrderQty(target, purchaseOrders);
     setReorderQty(lastQty);
 
     const cost = target?.purchaseRate || target?.sellingPrice || 160;
@@ -174,66 +209,61 @@ export default function InventoryPage() {
   };
 
   const handleProductSelect = (productNameVal: string) => {
-    const matched = products.find((p) => (p.productName || "") === productNameVal);
+    const matched = products.find(
+      (p) => (p.productName || "") === productNameVal,
+    );
     if (matched) {
       setSelectedProduct(matched);
-      const vName = matched.vendor?.vendorName || (vendors.length > 0 ? String(vendors[0].vendorName || vendors[0].name) : reorderVendor);
+      const vName =
+        matched.vendor?.vendorName ||
+        (vendors.length > 0
+          ? String(vendors[0].vendorName || vendors[0].name)
+          : reorderVendor);
       if (vName) setReorderVendor(vName);
 
-      let lastQty = 82;
-      if (matched.id && typeof window !== "undefined") {
-        try {
-          const storedMap = JSON.parse(localStorage.getItem("last_reordered_quantities") || "{}");
-          if (storedMap[matched.id]) {
-            lastQty = Number(storedMap[matched.id]);
-          } else {
-            const inStock = matched.quantity ?? 0;
-            lastQty = inStock < 100 ? Math.max(10, 100 - inStock) : 82;
-          }
-        } catch (err) {}
-      }
+      const lastQty = getPreviousOrderQty(matched, purchaseOrders);
       setReorderQty(lastQty);
 
-      const cost = matched.purchaseRate || matched.sellingPrice || reorderUnitCost;
+      const cost =
+        matched.purchaseRate || matched.sellingPrice || reorderUnitCost;
       setReorderUnitCost(cost);
     }
   };
 
   const handleSubmitOrder = async () => {
-    const targetVendor = reorderVendor || selectedProduct?.vendor?.vendorName || "Vendor";
+    const targetVendor =
+      reorderVendor || selectedProduct?.vendor?.vendorName || "Vendor";
 
     if (selectedProduct && selectedProduct.id) {
       const currentQty = selectedProduct.quantity ?? 0;
       const newQty = currentQty + (reorderQty || 0);
 
-      // Save last ordered quantity for this product in localStorage
-      if (typeof window !== "undefined") {
-        try {
-          const storedMap = JSON.parse(localStorage.getItem("last_reordered_quantities") || "{}");
-          storedMap[selectedProduct.id] = reorderQty;
-          localStorage.setItem("last_reordered_quantities", JSON.stringify(storedMap));
-        } catch (err) {}
-      }
+      await createPurchaseOrder({
+        vendorName: targetVendor,
+        totalAmount: (reorderQty || 0) * (reorderUnitCost || 0),
+        status: "Completed",
+        productId: Number(selectedProduct.id),
+        productName: selectedProduct.productName,
+        quantity: reorderQty,
+        unitCost: reorderUnitCost,
+      });
 
-      // 1. Update product quantity in database
       await updateProduct(selectedProduct.id, {
         quantity: newQty,
         purchaseRate: reorderUnitCost || selectedProduct.purchaseRate,
       });
 
-      // 2. Save reorder event into recent activity log
-      recordReorderActivity(selectedProduct, reorderQty);
-
-      // 3. Refresh product list, stat counts, and stock flow chart from database
       const daysNum = getDaysCount(daysFilter);
-      const [prodsData, statsData, flowData] = await Promise.all([
+      const [prodsData, statsData, flowData, poData] = await Promise.all([
         fetchProductsList(),
         fetchProductStats(),
         fetchStockFlowChartData(daysNum),
+        fetchPurchaseOrdersList(),
       ]);
       if (prodsData) setProducts(prodsData);
       if (statsData) setStats(statsData);
       if (flowData) setStockFlowData(flowData);
+      if (poData) setPurchaseOrders(poData);
     }
 
     setOrderVendorName(targetVendor);
@@ -257,7 +287,8 @@ export default function InventoryPage() {
     const pName = (p.productName || "").toLowerCase();
     const pSku = (p.sku || "").toLowerCase();
     const matchesSearch =
-      pName.includes(search.toLowerCase()) || pSku.includes(search.toLowerCase());
+      pName.includes(search.toLowerCase()) ||
+      pSku.includes(search.toLowerCase());
 
     const catName = p.category?.categoryName || "";
     const matchesCategory =
@@ -269,12 +300,13 @@ export default function InventoryPage() {
 
   // Calculate dynamic Stock Info stats strictly from live Database products
   const activeProductsCount = stats.totalProducts || products.length;
-  const highStockCount = products.filter((p) => (p.quantity ?? 0) > 20).length;
-  const lowStockCount = products.filter((p) => (p.quantity ?? 0) > 0 && (p.quantity ?? 0) <= 20).length;
+  const lowStockCount = products.filter(
+    (p) => (p.quantity ?? 0) > 0 && (p.quantity ?? 0) <= 20,
+  ).length;
   const outOfStockCount = products.filter((p) => (p.quantity ?? 0) <= 0).length;
 
   // Max value for stock bars height percentage computation
-  const maxStockVal = Math.max(highStockCount, lowStockCount, outOfStockCount, 1);
+  const maxStockVal = Math.max(lowStockCount, outOfStockCount, 1);
 
   // Build category options dynamically from backend Database Categories
   const categoryOptions: CustomSelectOption[] = [
@@ -288,7 +320,7 @@ export default function InventoryPage() {
   const chartDataToRender = stockFlowData;
   const maxChartVal = Math.max(
     ...chartDataToRender.map((d) => (d.stockAdded || 0) + (d.stockSold || 0)),
-    100
+    100,
   );
 
   return (
@@ -301,7 +333,11 @@ export default function InventoryPage() {
             <button type="button" className={styles.exportBtn}>
               <FiUpload /> Export
             </button>
-            <button type="button" className={styles.reorderPrimaryBtn} onClick={() => openReorderModal()}>
+            <button
+              type="button"
+              className={styles.reorderPrimaryBtn}
+              onClick={() => openReorderModal()}
+            >
               <FiPlus /> Reorder
             </button>
           </div>
@@ -340,7 +376,12 @@ export default function InventoryPage() {
                   <p>No stock flow data available</p>
                 </div>
               ) : (
-                <svg viewBox="0 0 540 160" width="100%" height="100%" preserveAspectRatio="none">
+                <svg
+                  viewBox="0 0 540 160"
+                  width="100%"
+                  height="100%"
+                  preserveAspectRatio="none"
+                >
                   {/* Horizontal Grid lines */}
                   {[20, 55, 90, 125].map((y) => (
                     <line
@@ -357,15 +398,28 @@ export default function InventoryPage() {
                   {/* Bars */}
                   {chartDataToRender.map((item, idx) => {
                     const totalDays = Math.max(chartDataToRender.length, 1);
-                    const barWidth = totalDays <= 5 ? 32 : totalDays <= 10 ? 20 : 10;
+                    const barWidth =
+                      totalDays <= 5 ? 32 : totalDays <= 10 ? 20 : 10;
                     const step = 540 / totalDays;
                     const x = idx * step + (step - barWidth) / 2;
 
-                    const totalVal = (item.stockAdded || 0) + (item.stockSold || 0);
+                    const totalVal =
+                      (item.stockAdded || 0) + (item.stockSold || 0);
                     // Max height for stacked bar is 85px to stay cleanly below header grid lines
                     const maxBarH = 85;
-                    const totalH = totalVal > 0 ? Math.max(12, Math.round((totalVal / maxChartVal) * maxBarH)) : 0;
-                    const addedHeight = totalVal > 0 ? Math.round(((item.stockAdded || 0) / totalVal) * totalH) : 0;
+                    const totalH =
+                      totalVal > 0
+                        ? Math.max(
+                            12,
+                            Math.round((totalVal / maxChartVal) * maxBarH),
+                          )
+                        : 0;
+                    const addedHeight =
+                      totalVal > 0
+                        ? Math.round(
+                            ((item.stockAdded || 0) / totalVal) * totalH,
+                          )
+                        : 0;
                     const soldHeight = Math.max(0, totalH - addedHeight);
 
                     const baselineY = 125;
@@ -414,7 +468,9 @@ export default function InventoryPage() {
                         )}
                         {/* Tooltip on Bar Hover */}
                         {isHighlight && (
-                          <g transform={`translate(${Math.max(5, Math.min(x - 25, 430))}, ${Math.max(ySold - 44, 2)})`}>
+                          <g
+                            transform={`translate(${Math.max(5, Math.min(x - 25, 430))}, ${Math.max(ySold - 44, 2)})`}
+                          >
                             <rect
                               width="100"
                               height="38"
@@ -424,18 +480,44 @@ export default function InventoryPage() {
                               filter="drop-shadow(0px 2px 6px rgba(0,0,0,0.08))"
                             />
                             <circle cx="10" cy="14" r="3" fill="#93c5fd" />
-                            <text x="18" y="17" fontSize="9" fontWeight="600" fill="#475569">
+                            <text
+                              x="18"
+                              y="17"
+                              fontSize="9"
+                              fontWeight="600"
+                              fill="#475569"
+                            >
                               Stock Added:
                             </text>
-                            <text x="92" y="17" fontSize="9" fontWeight="700" fill="#0f172a" textAnchor="end">
+                            <text
+                              x="92"
+                              y="17"
+                              fontSize="9"
+                              fontWeight="700"
+                              fill="#0f172a"
+                              textAnchor="end"
+                            >
                               {item.stockAdded.toLocaleString()}
                             </text>
 
                             <circle cx="10" cy="27" r="3" fill="#f87171" />
-                            <text x="18" y="30" fontSize="9" fontWeight="600" fill="#475569">
+                            <text
+                              x="18"
+                              y="30"
+                              fontSize="9"
+                              fontWeight="600"
+                              fill="#475569"
+                            >
                               Stock Sold:
                             </text>
-                            <text x="92" y="30" fontSize="9" fontWeight="700" fill="#0f172a" textAnchor="end">
+                            <text
+                              x="92"
+                              y="30"
+                              fontSize="9"
+                              fontWeight="700"
+                              fill="#0f172a"
+                              textAnchor="end"
+                            >
                               {item.stockSold.toLocaleString()}
                             </text>
                           </g>
@@ -473,30 +555,18 @@ export default function InventoryPage() {
 
               {/* Horizontal Bars Section with Vertical Dashed Dividers */}
               <div className={styles.stockBarsHorizontalGrid}>
-                {/* High Stock Column */}
-                <div className={styles.stockColItem}>
-                  <div className={styles.stockColHeader}>
-                    <span className={styles.stockColLabel}>High stock</span>
-                    <span className={styles.stockColVal}>{highStockCount}</span>
-                  </div>
-                  <div className={styles.barTrack}>
-                    <div
-                      className={styles.barFillGreen}
-                      style={{ height: `${Math.min(100, Math.max(25, (highStockCount / maxStockVal) * 100))}%` }}
-                    />
-                  </div>
-                </div>
-
                 {/* Low Stock Column */}
                 <div className={styles.stockColItem}>
                   <div className={styles.stockColHeader}>
-                    <span className={styles.stockColLabel}>low stock</span>
+                    <span className={styles.stockColLabel}>Low stock</span>
                     <span className={styles.stockColVal}>{lowStockCount}</span>
                   </div>
                   <div className={styles.barTrack}>
                     <div
                       className={styles.barFillYellow}
-                      style={{ height: `${Math.min(100, Math.max(25, (lowStockCount / maxStockVal) * 100))}%` }}
+                      style={{
+                        height: `${Math.min(100, Math.max(25, (lowStockCount / maxStockVal) * 100))}%`,
+                      }}
                     />
                   </div>
                 </div>
@@ -505,12 +575,16 @@ export default function InventoryPage() {
                 <div className={styles.stockColItem}>
                   <div className={styles.stockColHeader}>
                     <span className={styles.stockColLabel}>Out of stock</span>
-                    <span className={styles.stockColVal}>{outOfStockCount}</span>
+                    <span className={styles.stockColVal}>
+                      {outOfStockCount}
+                    </span>
                   </div>
                   <div className={styles.barTrack}>
                     <div
                       className={styles.barFillRed}
-                      style={{ height: `${Math.min(100, Math.max(25, (outOfStockCount / maxStockVal) * 100))}%` }}
+                      style={{
+                        height: `${Math.min(100, Math.max(25, (outOfStockCount / maxStockVal) * 100))}%`,
+                      }}
                     />
                   </div>
                 </div>
@@ -567,13 +641,22 @@ export default function InventoryPage() {
                   <th style={{ textAlign: "left" }}>SKU</th>
                   <th style={{ textAlign: "left" }}>Category</th>
                   <th style={{ textAlign: "left" }}>Current Stock</th>
-                  <th style={{ textAlign: "right", paddingRight: "28px" }}>Action</th>
+                  <th style={{ textAlign: "right", paddingRight: "28px" }}>
+                    Action
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={5} style={{ textAlign: "center", padding: "32px", color: "#64748b" }}>
+                    <td
+                      colSpan={5}
+                      style={{
+                        textAlign: "center",
+                        padding: "32px",
+                        color: "#64748b",
+                      }}
+                    >
                       Loading inventory items from backend database...
                     </td>
                   </tr>
@@ -583,13 +666,17 @@ export default function InventoryPage() {
                     const sku = p.sku || "-";
                     const category = p.category?.categoryName || "-";
                     const qty = p.quantity ?? 0;
-                    const imageUrl = p.imageUrl || "/Frontend/Dashboard_product.png";
+                    const imageUrl =
+                      p.imageUrl || "/Frontend/Dashboard_product.png";
 
                     // Determine stock status & progress bar percentage
-                    let statusLabel = "High";
+                    let statusLabel = "In Stock";
                     let statusClass = styles.statusHigh;
                     let fillClass = styles.progressFillHigh;
-                    let fillPct = Math.min(100, Math.max(10, (qty / 100) * 100));
+                    let fillPct = Math.min(
+                      100,
+                      Math.max(10, (qty / 100) * 100),
+                    );
 
                     if (qty <= 0) {
                       statusLabel = "Out of stock";
@@ -606,7 +693,9 @@ export default function InventoryPage() {
                     return (
                       <tr
                         key={p.id || idx}
-                        onClick={() => p.id && router.push(`/products/add?id=${p.id}`)}
+                        onClick={() =>
+                          p.id && router.push(`/products/add?id=${p.id}`)
+                        }
                         style={{ cursor: "pointer" }}
                         title="Click to view/edit product details"
                       >
@@ -619,7 +708,8 @@ export default function InventoryPage() {
                               height={36}
                               className={styles.productImg}
                               onError={(e) => {
-                                (e.target as HTMLElement).style.display = "none";
+                                (e.target as HTMLElement).style.display =
+                                  "none";
                               }}
                             />
                             <span className={styles.productName}>{name}</span>
@@ -635,7 +725,9 @@ export default function InventoryPage() {
                           <div className={styles.stockProgressWrapper}>
                             <div className={styles.stockBadgeRow}>
                               <span>{qty} unit</span>
-                              <span className={statusClass}>- {statusLabel}</span>
+                              <span className={statusClass}>
+                                - {statusLabel}
+                              </span>
                             </div>
                             <div className={styles.progressBarBg}>
                               <div
@@ -651,7 +743,9 @@ export default function InventoryPage() {
                             onClick={(e) => {
                               e.stopPropagation();
                               const rowKey = p.id || idx;
-                              setActiveActionMenuId(activeActionMenuId === rowKey ? null : rowKey);
+                              setActiveActionMenuId(
+                                activeActionMenuId === rowKey ? null : rowKey,
+                              );
                             }}
                             title="Action options"
                           >
@@ -669,7 +763,8 @@ export default function InventoryPage() {
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setActiveActionMenuId(null);
-                                  if (p.id) router.push(`/products/add?id=${p.id}`);
+                                  if (p.id)
+                                    router.push(`/products/add?id=${p.id}`);
                                 }}
                               >
                                 View
@@ -693,12 +788,27 @@ export default function InventoryPage() {
                   })
                 ) : (
                   <tr>
-                    <td colSpan={5} style={{ textAlign: "center", padding: "40px", color: "#94a3b8" }}>
-                      <p style={{ fontSize: "15px", fontWeight: 700, color: "#475569", margin: "0 0 6px 0" }}>
+                    <td
+                      colSpan={5}
+                      style={{
+                        textAlign: "center",
+                        padding: "40px",
+                        color: "#94a3b8",
+                      }}
+                    >
+                      <p
+                        style={{
+                          fontSize: "15px",
+                          fontWeight: 700,
+                          color: "#475569",
+                          margin: "0 0 6px 0",
+                        }}
+                      >
                         No inventory records found.
                       </p>
                       <p style={{ fontSize: "13px", margin: 0 }}>
-                        Products added to the backend database will automatically display here.
+                        Products added to the backend database will
+                        automatically display here.
                       </p>
                     </td>
                   </tr>
@@ -728,7 +838,9 @@ export default function InventoryPage() {
               <button className={styles.pageBtn} disabled>
                 &lt; Previous
               </button>
-              <button className={`${styles.pageBtn} ${styles.activePageBtn}`}>1</button>
+              <button className={`${styles.pageBtn} ${styles.activePageBtn}`}>
+                1
+              </button>
               <button className={styles.pageBtn}>2</button>
               <button className={styles.pageBtn}>3</button>
               <button className={styles.pageBtn}>Next &gt;</button>
@@ -739,8 +851,14 @@ export default function InventoryPage() {
 
       {/* Create Reorder Modal */}
       {showReorderModal && (
-        <div className={styles.modalOverlay} onClick={() => setShowReorderModal(false)}>
-          <div className={styles.reorderModalBox} onClick={(e) => e.stopPropagation()}>
+        <div
+          className={styles.modalOverlay}
+          onClick={() => setShowReorderModal(false)}
+        >
+          <div
+            className={styles.reorderModalBox}
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Header */}
             <div className={styles.reorderModalHeader}>
               <div className={styles.reorderHeaderLeft}>
@@ -768,7 +886,10 @@ export default function InventoryPage() {
               <div className={styles.productPreviewCard}>
                 <div className={styles.productPreviewLeft}>
                   <Image
-                    src={selectedProduct.imageUrl || "/Frontend/Dashboard_product.png"}
+                    src={
+                      selectedProduct.imageUrl ||
+                      "/Frontend/Dashboard_product.png"
+                    }
                     alt={selectedProduct.productName || "Product"}
                     width={48}
                     height={48}
@@ -778,8 +899,12 @@ export default function InventoryPage() {
                     }}
                   />
                   <div>
-                    <p className={styles.productPreviewName}>{selectedProduct.productName || "Product"}</p>
-                    <p className={styles.productPreviewSku}>{selectedProduct.sku || "-"}</p>
+                    <p className={styles.productPreviewName}>
+                      {selectedProduct.productName || "Product"}
+                    </p>
+                    <p className={styles.productPreviewSku}>
+                      {selectedProduct.sku || "-"}
+                    </p>
                     <p className={styles.productPreviewCat}>
                       {selectedProduct.category?.categoryName || "Category"}
                     </p>
@@ -800,7 +925,10 @@ export default function InventoryPage() {
             {/* Form Fields Grid */}
             <div className={styles.reorderFormGrid}>
               {/* Select Product */}
-              <div className={styles.formGroup} style={{ gridColumn: "1 / -1" }}>
+              <div
+                className={styles.formGroup}
+                style={{ gridColumn: "1 / -1" }}
+              >
                 <label className={styles.formLabel}>Select Product</label>
                 <CustomSelect
                   options={products.map((p) => ({
@@ -823,7 +951,12 @@ export default function InventoryPage() {
                           label: String(v.vendorName || v.name || "Vendor"),
                           value: String(v.vendorName || v.name || "Vendor"),
                         }))
-                      : [{ label: "Fresh Farm suppliers", value: "Fresh Farm suppliers" }]
+                      : [
+                          {
+                            label: "Fresh Farm suppliers",
+                            value: "Fresh Farm suppliers",
+                          },
+                        ]
                   }
                   value={reorderVendor}
                   onChange={setReorderVendor}
@@ -852,14 +985,18 @@ export default function InventoryPage() {
                   <button
                     type="button"
                     className={styles.stepperBtn}
-                    onClick={() => setReorderQty((prev) => Math.max(1, prev - 1))}
+                    onClick={() =>
+                      setReorderQty((prev) => Math.max(1, prev - 1))
+                    }
                   >
                     <FiMinus />
                   </button>
                   <input
                     type="number"
                     value={reorderQty}
-                    onChange={(e) => setReorderQty(Math.max(1, Number(e.target.value) || 1))}
+                    onChange={(e) =>
+                      setReorderQty(Math.max(1, Number(e.target.value) || 1))
+                    }
                     className={styles.stepperInput}
                   />
                   <button
@@ -909,7 +1046,10 @@ export default function InventoryPage() {
               </div>
 
               {/* Note (Full Width) */}
-              <div className={styles.formGroup} style={{ gridColumn: "1 / -1" }}>
+              <div
+                className={styles.formGroup}
+                style={{ gridColumn: "1 / -1" }}
+              >
                 <label className={styles.formLabel}>Note</label>
                 <textarea
                   value={reorderNote}
@@ -936,16 +1076,30 @@ export default function InventoryPage() {
               <div className={styles.summaryRow}>
                 <span className={styles.summaryLabel}>Subtotal</span>
                 <span className={styles.summaryVal}>
-                  ₹{subtotal.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  ₹
+                  {subtotal.toLocaleString("en-IN", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
                 </span>
               </div>
               <hr className={styles.summaryDivider} />
               <div className={styles.summaryRow}>
-                <span className={styles.summaryLabel} style={{ fontWeight: 700, color: "#0f172a" }}>
+                <span
+                  className={styles.summaryLabel}
+                  style={{ fontWeight: 700, color: "#0f172a" }}
+                >
                   Total
                 </span>
-                <span className={styles.summaryVal} style={{ fontSize: "15px", color: "#0f172a" }}>
-                  ₹{total.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                <span
+                  className={styles.summaryVal}
+                  style={{ fontSize: "15px", color: "#0f172a" }}
+                >
+                  ₹
+                  {total.toLocaleString("en-IN", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
                 </span>
               </div>
             </div>
@@ -983,14 +1137,18 @@ export default function InventoryPage() {
 
       {/* Placing Order Confirmation Modal (Matching Figma overlay) */}
       {showOrderModal && (
-        <div className={styles.modalOverlay} onClick={() => setShowOrderModal(false)}>
+        <div
+          className={styles.modalOverlay}
+          onClick={() => setShowOrderModal(false)}
+        >
           <div className={styles.modalBox} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalIconBox}>
               <FiSend />
             </div>
             <h2 className={styles.modalTitle}>Placing Order</h2>
             <p className={styles.modalText}>
-              Your order has been sent to <strong>{orderVendorName || "Vendor"}</strong>
+              Your order has been sent to{" "}
+              <strong>{orderVendorName || "Vendor"}</strong>
             </p>
             <button
               className={styles.modalCloseBtn}

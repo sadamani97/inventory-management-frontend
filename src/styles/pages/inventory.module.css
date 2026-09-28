@@ -54,19 +54,19 @@
   align-items: center;
   gap: 8px;
   padding: 9px 18px;
-  background-color: var(--primary, #2563eb);
-  color: var(--text-inverse, #ffffff);
+  background-color: var(--primary);
+  color: var(--text-inverse);
   border: none;
   border-radius: 8px;
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: var(--shadow-primary, 0 4px 12px rgba(37, 99, 235, 0.25));
+  box-shadow: var(--shadow-primary);
   transition: all 0.15s ease;
 }
 
 .reorderPrimaryBtn:hover {
-  background-color: var(--primary-dark, #1d4ed8);
+  background-color: var(--primary-dark);
 }
 
 .reorderBtn {
@@ -74,22 +74,22 @@
   align-items: center;
   gap: 8px;
   padding: 9px 18px;
-  background-color: var(--primary, #2563eb);
-  color: var(--text-inverse, #ffffff);
+  background-color: var(--primary);
+  color: var(--text-inverse);
   border: none;
   border-radius: 8px;
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: var(--shadow-primary, 0 4px 12px rgba(37, 99, 235, 0.25));
+  box-shadow: var(--shadow-primary);
   transition: all 0.15s ease;
 }
 
 .reorderBtn:hover {
-  background-color: var(--primary-dark, #1d4ed8);
+  background-color: var(--primary-dark);
 }
 
-/* Top Dashboard Cards Grid Matching Exact Figma Specs */
+
 .topCardsGrid {
   display: grid;
   grid-template-columns: 727px 420px;
@@ -396,13 +396,13 @@
   font-weight: 700;
   color: #2563eb;
   border-bottom: 1px solid #f1f5f9;
-  background-color: var(--background, #f8fafc);
+  background-color: var(--background);
 }
 
 .table td {
   padding: 14px 16px;
   font-size: 13.5px;
-  color: var(--text-body, #334155);
+  color: var(--text-body);
   border-bottom: 1px solid #f1f5f9;
   vertical-align: middle;
 }
@@ -412,7 +412,7 @@
 }
 
 .table tr:hover td {
-  background-color: var(--background, #f8fafc);
+  background-color: var(--background);
 }
 
 .productCell {
@@ -427,14 +427,14 @@
   height: 36px;
   border-radius: 8px;
   object-fit: cover;
-  background-color: var(--hover-bg, #f1f5f9);
-  border: 1px solid var(--border-subtle, #e2e8f0);
+  background-color: var(--hover-bg);
+  border: 1px solid var(--border-subtle);
   flex-shrink: 0;
 }
 
 .productName {
   font-weight: 700;
-  color: var(--text, #0f172a);
+  color: var(--text);
   font-size: 13.5px;
   margin: 0;
   white-space: nowrap;
@@ -451,7 +451,7 @@
 
 .categoryTag {
   font-weight: 500;
-  color: var(--text-muted, #64748b);
+  color: var(--text-muted);
   white-space: nowrap;
 }
 
@@ -533,7 +533,7 @@
   padding-right: 28px !important;
 }
 
-/* Figma Specs: 90px x 58px Popover Menu */
+
 .actionPopover {
   position: absolute;
   right: 24px;
@@ -541,7 +541,7 @@
   width: 90px;
   height: 58px;
   background-color: #ffffff;
-  border: 1px solid var(--border-subtle, #e2e8f0);
+  border: 1px solid var(--border-subtle);
   border-radius: 8px;
   box-shadow: 0 4px 16px rgba(15, 23, 42, 0.12);
   display: flex;

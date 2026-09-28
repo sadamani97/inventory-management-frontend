@@ -5,6 +5,7 @@ import Header from "./Header";
 import styles from "./DashboardLayout.module.css";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { setAuthUser } from "@/store/authSlice";
+import { toast } from "react-toastify";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -38,7 +39,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               })
             );
           } catch (e) {
-            console.error("Error restoring user state:", e);
+            toast.error("Failed to restore user session");
           }
         }
         queueMicrotask(() => {

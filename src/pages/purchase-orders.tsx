@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { fetchPurchaseOrdersList } from "@/lib/dashboardApi";
+import { fetchPurchaseOrdersList, PurchaseOrderItem } from "@/lib/dashboardApi";
 
 export default function PurchaseOrdersPage() {
-  const [orders, setOrders] = useState<Record<string, unknown>[]>([]);
+  const [orders, setOrders] = useState<PurchaseOrderItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -41,7 +41,7 @@ export default function PurchaseOrdersPage() {
               <thead>
                 <tr style={{ borderBottom: "1px solid #f1f5f9", background: "#fafafa" }}>
                   <th style={{ padding: "12px", color: "#2563eb", fontWeight: 700 }}>PO Number</th>
-                  <th style={{ padding: "12px", color: "#2563eb", fontWeight: 700 }}>Vendor ID</th>
+                  <th style={{ padding: "12px", color: "#2563eb", fontWeight: 700 }}>Vendor / Product</th>
                   <th style={{ padding: "12px", color: "#2563eb", fontWeight: 700 }}>Total Amount</th>
                   <th style={{ padding: "12px", color: "#2563eb", fontWeight: 700 }}>Status</th>
                 </tr>
@@ -50,7 +50,7 @@ export default function PurchaseOrdersPage() {
                 {orders.map((po) => (
                   <tr key={String(po.id)} style={{ borderBottom: "1px solid #f1f5f9" }}>
                     <td style={{ padding: "12px", fontWeight: 700, color: "#0f172a" }}>{String(po.poNumber || `PO-#${po.id}`)}</td>
-                    <td style={{ padding: "12px", color: "#475569" }}>Vendor #{String(po.vendorId || "-")}</td>
+                    <td style={{ padding: "12px", color: "#475569" }}>{String(po.productName || po.vendorName || "Order")}</td>
                     <td style={{ padding: "12px", fontWeight: 700, color: "#16a34a" }}>₹ {Number(po.totalAmount || 0).toLocaleString()}</td>
                     <td style={{ padding: "12px" }}>
                       <span style={{ background: "#eff6ff", color: "#2563eb", padding: "3px 10px", borderRadius: "999px", fontSize: "11px", fontWeight: 700 }}>
