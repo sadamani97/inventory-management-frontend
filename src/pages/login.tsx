@@ -13,6 +13,7 @@ import Input from "@/components/ui/Input";
 import Link from "next/link";
 import Image from "next/image";
 import styles from "@/styles/pages/login.module.css";
+import { toast } from "react-toastify";
 
 const loginSchema = z.object({
   email: z.string().email("Enter a valid email"),
@@ -53,16 +54,20 @@ export default function LoginPage() {
             message: result?.message,
           }),
         );
+        toast.success(result?.message || "Login successful");
         setStatusMessage(result?.message || "Login successful");
         router.push("/dashboard");
       } else {
-        dispatch(setAuthError("Login failed"));
-        setStatusMessage(result?.message || "Login failed");
+        const errText = result?.message || "Login failed";
+        dispatch(setAuthError(errText));
+        toast.error(errText);
+        setStatusMessage(errText);
       }
     } catch (error: unknown) {
       const axiosError = error as AxiosError<{ message?: string }>;
       const message = axiosError?.response?.data?.message || "Login failed. Please try again.";
       dispatch(setAuthError(message));
+      toast.error(message);
       setStatusMessage(message);
     }
   };

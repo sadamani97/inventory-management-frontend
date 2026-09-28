@@ -13,6 +13,7 @@ import Input from "@/components/ui/Input";
 import Link from "next/link";
 import Image from "next/image";
 import styles from "@/styles/pages/signup.module.css";
+import { toast } from "react-toastify";
 
 const signupSchema = z
   .object({
@@ -59,16 +60,20 @@ export default function SignupPage() {
             message: result?.message,
           }),
         );
+        toast.success(result?.message || "Signup successful");
         setStatusMessage(result?.message || "Signup successful");
         router.push("/login");
       } else {
-        dispatch(setAuthError("Signup failed"));
-        setStatusMessage(result?.message || "Signup failed");
+        const errText = result?.message || "Signup failed";
+        dispatch(setAuthError(errText));
+        toast.error(errText);
+        setStatusMessage(errText);
       }
     } catch (error: unknown) {
       const axiosError = error as AxiosError<{ message?: string }>;
       const message = axiosError?.response?.data?.message || "Signup failed. Please try again.";
       dispatch(setAuthError(message));
+      toast.error(message);
       setStatusMessage(message);
     }
   };

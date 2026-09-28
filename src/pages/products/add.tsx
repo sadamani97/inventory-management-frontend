@@ -18,6 +18,7 @@ import {
   BrandItem,
   UnitItem,
 } from "@/lib/dashboardApi";
+import { toast } from "react-toastify";
 import api from "@/lib/api";
 import styles from "@/styles/pages/addProduct.module.css";
 import { FiChevronLeft, FiImage, FiPlus, FiX } from "react-icons/fi";
@@ -157,19 +158,27 @@ export default function AddProductPage() {
     setSuccessMsg("");
 
     if (!productName || productName.trim().length < 3) {
-      setErrorMsg("Product Name must be at least 3 characters long.");
+      const msg = "Product Name must be at least 3 characters long.";
+      setErrorMsg(msg);
+      toast.error(msg);
       return;
     }
     if (!vendorId) {
-      setErrorMsg("Please select a Vendor.");
+      const msg = "Please select a Vendor.";
+      setErrorMsg(msg);
+      toast.error(msg);
       return;
     }
     if (!categoryId) {
-      setErrorMsg("Please select a Category.");
+      const msg = "Please select a Category.";
+      setErrorMsg(msg);
+      toast.error(msg);
       return;
     }
     if (!sku || !sku.trim()) {
-      setErrorMsg("SKU is required.");
+      const msg = "SKU is required.";
+      setErrorMsg(msg);
+      toast.error(msg);
       return;
     }
 
@@ -199,11 +208,11 @@ export default function AddProductPage() {
         : await createProduct(payload);
 
       if (result && result.success) {
-        setSuccessMsg(
-          isEditMode
-            ? "Product successfully updated in backend database!"
-            : "Product successfully created & saved in backend database!"
-        );
+        const msg = isEditMode
+          ? "Product successfully updated in backend database!"
+          : "Product successfully created & saved in backend database!";
+        setSuccessMsg(msg);
+        toast.success(msg);
         setTimeout(() => {
           router.push("/products");
         }, 1200);
@@ -212,11 +221,15 @@ export default function AddProductPage() {
           typeof result?.error === "object"
             ? JSON.stringify(result.error)
             : result?.message || "Failed to save product.";
-        setErrorMsg(`Backend Error: ${errorDetail}`);
+        const fullErr = `Backend Error: ${errorDetail}`;
+        setErrorMsg(fullErr);
+        toast.error(fullErr);
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
-      setErrorMsg(message || "Network Error: Unable to reach backend API endpoint.");
+      const fullErr = message || "Network Error: Unable to reach backend API endpoint.";
+      setErrorMsg(fullErr);
+      toast.error(fullErr);
     } finally {
       setSubmitting(false);
     }

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { FiChevronDown, FiPlus } from "react-icons/fi";
 import styles from "./CustomSelect.module.css";
+import { toast } from "react-toastify";
 
 export interface CustomSelectOption {
   label: string;
@@ -73,7 +74,7 @@ export default function CustomSelect({
       setIsAdding(false);
       setIsOpen(false);
     } catch (err) {
-      console.error("Failed to add new item:", err);
+      toast.error("Failed to add new item");
     } finally {
       setAddingLoading(false);
     }
