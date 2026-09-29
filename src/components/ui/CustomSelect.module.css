@@ -29,7 +29,7 @@
 
 .triggerActive {
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  box-shadow: 0 0 0 3px var(--color-var-4);
 }
 
 .label {
@@ -100,15 +100,15 @@
 
 /* Soft blue highlight for selected option matching Figma spec */
 .optionSelected {
-  background-color: #e8f0fe !important;
-  color: #2563eb !important;
+  background-color: var(--selected-option-bg) !important;
+  color: var(--primary) !important;
   font-weight: 600;
 }
 
 .addNewContainer {
   padding: 6px;
   border-top: 1px solid var(--border-translucent);
-  background-color: #fafafa;
+  background-color: var(--surface-alt);
 }
 
 .inputAddBox {
@@ -125,18 +125,18 @@
   border-radius: 6px;
   font-size: 13px;
   outline: none;
-  background-color: #ffffff;
+  background-color: var(--surface);
 }
 
 .addInput:focus {
-  border-color: #2563eb;
+  border-color: var(--primary);
 }
 
 .addBtnAction {
   width: 100%;
   height: 38px;
-  background-color: #2563eb;
-  color: #ffffff;
+  background-color: var(--primary);
+  color: var(--surface);
   border: none;
   border-radius: 6px;
   font-size: 13px;
@@ -149,7 +149,7 @@
 }
 
 .addBtnAction:hover {
-  background-color: #1d4ed8;
+  background-color: var(--primary-dark);
 }
 
 .addBtnAction:disabled {

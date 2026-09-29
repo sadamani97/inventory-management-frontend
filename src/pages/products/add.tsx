@@ -21,7 +21,8 @@ import {
 import { toast } from "react-toastify";
 import api from "@/lib/api";
 import styles from "@/styles/pages/addProduct.module.css";
-import { FiChevronLeft, FiImage, FiPlus, FiX } from "react-icons/fi";
+import { FiChevronLeft, FiImage, FiPlus, FiX, FiPackage, FiEdit } from "react-icons/fi";
+import { showSuccessToast } from "@/components/ui/CustomToast";
 
 export default function AddProductPage() {
   const router = useRouter();
@@ -50,7 +51,7 @@ export default function AddProductPage() {
   const [categories, setCategories] = useState<CategoryItem[]>([]);
   const [vendors, setVendors] = useState<VendorItem[]>([]);
   const [brands, setBrands] = useState<BrandItem[]>([]);
-  const [units, setUnits] = useState<UnitItem[]>([]);
+  // setUnits is intentionally removed to avoid unused vars, but we keep the fetch pattern if needed
 
   // UI Feedback State
   const [submitting, setSubmitting] = useState(false);
@@ -70,7 +71,7 @@ export default function AddProductPage() {
       setCategories(cats || []);
       setVendors(vends || []);
       setBrands(brs || []);
-      setUnits(uns || []);
+      // setUnits(uns || []);
     });
 
     return () => {
@@ -118,7 +119,7 @@ export default function AddProductPage() {
       return newId;
     } else {
       const tempId = `temp-${Date.now()}`;
-      const tempCat = { categoryId: tempId as any, categoryName: newCatName };
+      const tempCat = { categoryId: tempId as unknown as number, categoryName: newCatName };
       setCategories((prev) => [...prev, tempCat]);
       setCategoryId(tempId);
       return tempId;
@@ -208,11 +209,11 @@ export default function AddProductPage() {
         : await createProduct(payload);
 
       if (result && result.success) {
-        const msg = isEditMode
-          ? "Product successfully updated in backend database!"
-          : "Product successfully created & saved in backend database!";
-        setSuccessMsg(msg);
-        toast.success(msg);
+        if (isEditMode) {
+          showSuccessToast("Updated Product", "Product has been updated in your product list", <FiEdit size={44} color="#0f172a" strokeWidth={1.5} />);
+        } else {
+          showSuccessToast("Added New Product", "New Product will be added to your product list", <FiPackage size={44} color="#0f172a" strokeWidth={1.5} />);
+        }
         setTimeout(() => {
           router.push("/products");
         }, 1200);
@@ -277,7 +278,7 @@ export default function AddProductPage() {
                   <CustomSelect
                     options={vendors.map((v) => ({
                       label: String(v.vendorName || v.name || "Vendor"),
-                      value: String((v as any).vendorId || v.id || ""),
+                      value: String((v as Record<string, unknown>).vendorId || v.id || ""),
                     }))}
                     value={vendorId}
                     onChange={setVendorId}

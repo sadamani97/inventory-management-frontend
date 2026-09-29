@@ -17,13 +17,13 @@
   cursor: pointer;
   user-select: none;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 1px 2px var(--color-var-1);
 }
 
 .datePill:hover {
   border-color: var(--border-hover);
   background-color: var(--background);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 6px var(--color-var-2);
 }
 
 .datePillBlue {
@@ -35,7 +35,7 @@
 .datePillBlue:hover {
   background-color: var(--primary-dark);
   border-color: var(--primary-dark);
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+  box-shadow: 0 4px 12px var(--color-var-3);
 }
 
 .datePillBlue .calendarIcon {
@@ -44,7 +44,7 @@
 
 .datePillActive {
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  box-shadow: 0 0 0 3px var(--color-var-4);
 }
 
 .calendarIcon {
@@ -62,7 +62,7 @@
   background-color: var(--surface);
   border: 1px solid var(--border);
   border-radius: 16px;
-  box-shadow: 0 16px 36px -6px rgba(15, 23, 42, 0.12), 0 6px 16px -4px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 16px 36px -6px var(--color-var-5), 0 6px 16px -4px var(--color-var-6);
   padding: 16px;
   animation: popoverFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -190,7 +190,7 @@
   background-color: var(--primary) !important;
   color: var(--surface) !important;
   font-weight: 700;
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
+  box-shadow: 0 2px 8px var(--color-var-7);
 }
 
 .dayBtnToday:not(.dayBtnSelected) {
@@ -310,10 +310,10 @@
   color: var(--surface);
   cursor: pointer;
   transition: all 0.15s ease;
-  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+  box-shadow: 0 2px 6px var(--color-var-3);
 }
 
 .okBtn:hover {
   background-color: var(--primary-dark);
-  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.35);
+  box-shadow: 0 4px 10px var(--color-var-7);
 }

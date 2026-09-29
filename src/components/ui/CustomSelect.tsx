@@ -73,7 +73,6 @@ export default function CustomSelect({
       setNewItemText("");
       setIsAdding(false);
       setIsOpen(false);
-    } catch (err) {
       toast.error("Failed to add new item");
     } finally {
       setAddingLoading(false);

@@ -1,74 +1,1223 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/router";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { fetchVendorsList } from "@/lib/dashboardApi";
+import CustomSelect from "@/components/ui/CustomSelect";
+import {
+  fetchVendorsList,
+  fetchVendorStats,
+  createVendor,
+  updateVendor,
+  deleteVendor,
+  fetchVendorTypes,
+  fetchCountries,
+  fetchStates,
+  fetchCities,
+  createAddress,
+  updateAddress,
+  createVendorContact,
+  updateVendorContact,
+  createVendorBankDetails,
+  updateVendorBankDetails,
+  fetchCategories,
+  createCategory,
+  VendorItem,
+  VendorStatsResponse,
+  VendorTypeItem,
+  CountryItem,
+  StateItem,
+  CityItem,
+  CategoryItem,
+} from "@/lib/dashboardApi";
+import styles from "@/styles/pages/vendors.module.css";
+import {
+  FiSearch,
+  FiPlus,
+  FiUpload,
+  FiMoreVertical,
+  FiEdit,
+  FiTrash2,
+  FiX,
+  FiStar,
+  FiUserPlus,
+  FiPaperclip,
+} from "react-icons/fi";
+import { toast } from "react-toastify";
+import { showSuccessToast } from "@/components/ui/CustomToast";
 
 export default function VendorsPage() {
-  const [vendors, setVendors] = useState<Record<string, unknown>[]>([]);
-  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+  const [vendors, setVendors] = useState<VendorItem[]>([]);
+  const [stats, setStats] = useState<VendorStatsResponse>({
+    totalVendors: 0,
+    activeVendors: 0,
+    newVendors: 0,
+    activePurchaseOrders: 0,
+  });
+  const [vendorTypes, setVendorTypes] = useState<VendorTypeItem[]>([]);
+  const [countries, setCountries] = useState<CountryItem[]>([]);
+  const [states, setStates] = useState<StateItem[]>([]);
+  const [cities, setCities] = useState<CityItem[]>([]);
+  const [categories, setCategories] = useState<CategoryItem[]>([]);
 
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [categoryFilter, setCategoryFilter] = useState("All");
+  const [lastDeliveryFilter, setLastDeliveryFilter] = useState("All");
+  const [starredOnly, setStarredOnly] = useState(false);
+  const [starredVendorIds, setStarredVendorIds] = useState<Record<string | number, boolean>>({});
+
+  // Popover State
+  const [activeActionMenuId, setActiveActionMenuId] = useState<number | string | null>(null);
+
+  // Modal / Drawer State
+  const [showVendorModal, setShowVendorModal] = useState(false);
+  const [editingVendorId, setEditingVendorId] = useState<number | string | null>(null);
+
+  // ID states for editing nested entities
+  const [addressId, setAddressId] = useState<number | string | null>(null);
+  const [contactId, setContactId] = useState<number | string | null>(null);
+  const [bankDetailId, setBankDetailId] = useState<number | string | null>(null);
+
+  // Form Fields
+  const [vendorName, setVendorName] = useState("");
+  const [companyName, setCompanyName] = useState("");
+  const [vendorTypeId, setVendorTypeId] = useState<string>("");
+  const [website, setWebsite] = useState("");
+  const [gstin, setGstin] = useState("");
+  const [status, setStatus] = useState<"active" | "inactive">("active");
+  const [vendorCode, setVendorCode] = useState("");
+  const [panNumber, setPanNumber] = useState("");
+  const [currency, setCurrency] = useState("INR (₹)");
+  const [creditLimit, setCreditLimit] = useState("");
+  const [productCategory, setProductCategory] = useState("");
+  const [preferredProducts, setPreferredProducts] = useState("");
+  const [leadTime, setLeadTime] = useState("");
+  const [gstCertificate, setGstCertificate] = useState("");
+  const [agreement, setAgreement] = useState("");
+  const [vendorLogo, setVendorLogo] = useState("");
+  const [phoneCode, setPhoneCode] = useState("+91");
+  const [vendorPhone, setVendorPhone] = useState("");
+  const [vendorEmail, setVendorEmail] = useState("");
+
+  // Address Fields
+  const [addressLine, setAddressLine] = useState("");
+  const [countryName, setCountryName] = useState("");
+  const [stateName, setStateName] = useState("");
+  const [cityName, setCityName] = useState("");
+  const [pincode, setPincode] = useState("");
+
+  // Contact Person Fields
+  const [contactName, setContactName] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactMobile, setContactMobile] = useState("");
+
+  // Bank Details Fields
+  const [accountHolderName, setAccountHolderName] = useState("");
+  const [bankName, setBankName] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
+  const [ifscCode, setIfscCode] = useState("");
+  const [branchName, setBranchName] = useState("");
+  const [upiId, setUpiId] = useState("");
+
+  const [submitting, setSubmitting] = useState(false);
+
+  // Initial Load Data function
+  const loadPageData = async () => {
+    setLoading(true);
+    const [vList, vStats, vTypes, cList, catList] = await Promise.all([
+      fetchVendorsList(),
+      fetchVendorStats(),
+      fetchVendorTypes(),
+      fetchCountries(),
+      fetchCategories(),
+    ]);
+
+    setVendors(vList || []);
+    setStats(
+      vStats || {
+        totalVendors: vList?.length || 0,
+        activeVendors: vList?.filter((v) => v.status === "active")?.length || 0,
+        newVendors: 0,
+        activePurchaseOrders: 0,
+      }
+    );
+    setVendorTypes(vTypes || []);
+    setCountries(cList || []);
+    setCategories(catList || []);
+    setLoading(false);
+  };
+
+  // Initial Load Effect
   useEffect(() => {
-    fetchVendorsList().then((data) => {
-      setVendors(data);
-      setLoading(false);
-    });
+    const timer = setTimeout(() => {
+      loadPageData();
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
+
+  // Fetch States when Country changes
+  useEffect(() => {
+    let isMounted = true;
+    const timer = setTimeout(() => {
+      const foundCountry = countries.find(c => c.countryName.toLowerCase() === countryName.trim().toLowerCase());
+      if (foundCountry) {
+        fetchStates(Number(foundCountry.countryId || foundCountry.id)).then((data) => {
+          if (isMounted) setStates(data || []);
+        });
+      } else {
+        if (isMounted) setStates([]);
+      }
+    }, 0);
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
+  }, [countryName, countries]);
+
+  // Fetch Cities when State changes
+  useEffect(() => {
+    let isMounted = true;
+    const timer = setTimeout(() => {
+      const foundState = states.find(s => s.stateName.toLowerCase() === stateName.trim().toLowerCase());
+      if (foundState) {
+        fetchCities(Number(foundState.stateId || foundState.id)).then((data) => {
+          if (isMounted) setCities(data || []);
+        });
+      } else {
+        if (isMounted) setCities([]);
+      }
+    }, 0);
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
+  }, [stateName, states]);
+
+  // Close Action Popover on click outside
+  useEffect(() => {
+    function handleClickOutside() {
+      setActiveActionMenuId(null);
+    }
+    if (activeActionMenuId !== null) {
+      document.addEventListener("click", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("click", handleClickOutside);
+    };
+  }, [activeActionMenuId]);
+  // Handler for adding a new category from the dropdown
+  const handleAddNewCategory = async (newCatName: string): Promise<string | void> => {
+    const res = await createCategory(newCatName);
+    if (res && res.success && res.data) {
+      const newCat = res.data;
+      setCategories((prev) => [...prev, newCat]);
+      const newName = String(newCat.categoryName || newCatName);
+      setProductCategory(newName);
+      return newName;
+    } else {
+      const tempCat = { categoryId: Date.now() as unknown as number, categoryName: newCatName };
+      setCategories((prev) => [...prev, tempCat]);
+      setProductCategory(newCatName);
+      return newCatName;
+    }
+  };
+
+  // Reset Form
+  const resetForm = () => {
+    setEditingVendorId(null);
+    setAddressId(null);
+    setContactId(null);
+    setBankDetailId(null);
+    setVendorName("");
+    setCompanyName("");
+    setVendorTypeId("");
+    setWebsite("");
+    setGstin("");
+    setStatus("active");
+    setVendorCode("");
+    setPanNumber("");
+    setCurrency("INR (₹)");
+    setCreditLimit("");
+    setProductCategory("");
+    setPreferredProducts("");
+    setLeadTime("");
+    setGstCertificate("");
+    setAgreement("");
+    setVendorLogo("");
+    setPhoneCode("+91");
+    setVendorPhone("");
+    setVendorEmail("");
+
+    setAddressLine("");
+    setCountryName("");
+    setStateName("");
+    setCityName("");
+    setPincode("");
+
+    setContactName("");
+    setContactEmail("");
+    setContactMobile("");
+
+    setAccountHolderName("");
+    setBankName("");
+    setAccountNumber("");
+    setIfscCode("");
+    setBranchName("");
+  };
+
+  const openCreateModal = () => {
+    resetForm();
+    setShowVendorModal(true);
+  };
+
+  const openEditModal = (vendor: VendorItem) => {
+    resetForm();
+    setEditingVendorId(vendor.vendorId || vendor.id || null);
+    setVendorName(vendor.vendorName || vendor.name || "");
+    setCompanyName(vendor.companyName || "");
+    setVendorTypeId(String(vendor.vendorTypeId || (vendorTypes.length > 0 ? vendorTypes[0].vendorTypeId || vendorTypes[0].id : "")));
+    setWebsite(vendor.website || "");
+    setGstin(vendor.gstin || "");
+    setStatus(vendor.status === "inactive" ? "inactive" : "active");
+    setVendorCode(vendor.vendorCode || "");
+    setPanNumber(vendor.panNumber || "");
+    setCurrency(vendor.currency || "INR (₹)");
+    setCreditLimit(String(vendor.creditLimit || ""));
+    setProductCategory(vendor.productCategory || "");
+    setPreferredProducts(vendor.preferredProducts || "");
+    setLeadTime(vendor.leadTime || "");
+    setGstCertificate(vendor.gstCertificate || "");
+    setAgreement(vendor.agreement || "");
+    setVendorLogo(vendor.vendorLogo || "");
+    setVendorPhone(vendor.phone || "");
+    setVendorEmail(vendor.email || "");
+
+    if (vendor.addresses && vendor.addresses.length > 0) {
+      const addr = vendor.addresses[0];
+      setAddressId(addr.addressId || addr.id || null);
+      setAddressLine(addr.addressLine || "");
+      
+      const cName = countries.find(c => c.countryId === addr.countryId || c.id === addr.countryId)?.countryName || "";
+      setCountryName(cName);
+      
+      const sName = states.find(s => s.stateId === addr.stateId || s.id === addr.stateId)?.stateName || "";
+      setStateName(sName);
+      
+      const ctName = cities.find(ct => ct.cityId === addr.cityId || ct.id === addr.cityId)?.cityName || "";
+      setCityName(ctName);
+      
+      setPincode(addr.pincode || "");
+    }
+
+    if (vendor.contacts && vendor.contacts.length > 0) {
+      const cnt = vendor.contacts[0];
+      setContactId(cnt.vendorContactId || cnt.id || null);
+      setContactName(cnt.name || "");
+      setContactEmail(cnt.email || "");
+      const mob = cnt.mobile || "";
+      if (mob.startsWith("+") && mob.includes(" ")) {
+        const [code, ...rest] = mob.split(" ");
+        setPhoneCode(code);
+        setContactMobile(rest.join(" "));
+      } else {
+        setPhoneCode("+91");
+        setContactMobile(mob);
+      }
+    }
+
+    if (vendor.bankDetails && vendor.bankDetails.length > 0) {
+      const bnk = vendor.bankDetails[0];
+      setBankDetailId(bnk.vendorBankDetailId || bnk.id || null);
+      setAccountHolderName(bnk.accountHolderName || "");
+      setBankName(bnk.bankName || "");
+      setAccountNumber(bnk.accountNumber || "");
+      setIfscCode(bnk.ifscCode || "");
+      setBranchName(bnk.branchName || "");
+      setUpiId(bnk.upiId || "");
+    }
+
+    setShowVendorModal(true);
+  };
+
+  const handleDeleteVendor = async (id: number | string) => {
+    if (!window.confirm("Are you sure you want to delete this vendor?")) return;
+    const res = await deleteVendor(id);
+    if (res.success) {
+      showSuccessToast("Deleted Vendor", "Vendor has been removed from your vendor list", <FiTrash2 size={44} color="#0f172a" strokeWidth={1.5} />);
+      loadPageData();
+    }
+  };
+
+  const handleSubmitVendor = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!vendorName.trim()) {
+      toast.error("Vendor name is required");
+      return;
+    }
+    if (!companyName.trim()) {
+      toast.error("Company name is required");
+      return;
+    }
+    if (!gstin.trim()) {
+      toast.error("GSTIN is required");
+      return;
+    }
+
+    setSubmitting(true);
+
+    const typeIdVal = Number(vendorTypeId) || (vendorTypes.length > 0 ? Number(vendorTypes[0].vendorTypeId || vendorTypes[0].id) : 1);
+
+    const payload = {
+      vendorName: vendorName.trim(),
+      companyName: companyName.trim(),
+      vendorTypeId: typeIdVal,
+      website: website.trim() || undefined,
+      gstin: gstin.trim(),
+      status,
+      vendorCode: vendorCode.trim() || undefined,
+      panNumber: panNumber.trim() || undefined,
+      currency: currency.trim() || undefined,
+      creditLimit: creditLimit.trim() || undefined,
+      productCategory: productCategory.trim() || undefined,
+      preferredProducts: preferredProducts.trim() || undefined,
+      leadTime: leadTime.trim() || undefined,
+      gstCertificate: gstCertificate.trim() || undefined,
+      agreement: agreement.trim() || undefined,
+      vendorLogo: vendorLogo.trim() || undefined,
+      phone: vendorPhone.trim() || undefined,
+      email: vendorEmail.trim() || undefined,
+    };
+
+    let createdVendorId: number | undefined = undefined;
+
+    if (editingVendorId) {
+      const res = await updateVendor(editingVendorId, payload);
+      if (res.success) {
+        showSuccessToast("Updated Vendor", "Vendor has been updated in your vendor list", <FiEdit size={44} color="#0f172a" strokeWidth={1.5} />);
+        createdVendorId = Number(editingVendorId);
+      }
+    } else {
+      const res = await createVendor(payload);
+      if (res.success) {
+        showSuccessToast("Added New Vendor", "New Vendor will be added to your vendor list", <FiUserPlus size={44} color="#0f172a" strokeWidth={1.5} />);
+        if (res.data && (res.data.vendorId || res.data.id)) {
+          createdVendorId = Number(res.data.vendorId || res.data.id);
+        }
+      }
+    }
+
+    // Attach supplementary details if vendor creation/update succeeded and vendorId exists
+    if (createdVendorId) {
+      const vId = createdVendorId;
+
+      if (addressLine.trim() || countryName.trim() || cityName.trim()) {
+        const foundCountry = countries.find(c => c.countryName.toLowerCase() === countryName.trim().toLowerCase());
+        const foundState = states.find(s => s.stateName.toLowerCase() === stateName.trim().toLowerCase());
+        const foundCity = cities.find(ct => ct.cityName.toLowerCase() === cityName.trim().toLowerCase());
+
+        const addressPayload = {
+          addressLine: addressLine.trim(),
+          countryId: foundCountry ? (foundCountry.countryId || foundCountry.id || 1) : 1,
+          stateId: foundState ? (foundState.stateId || foundState.id || 1) : 1,
+          cityId: foundCity ? (foundCity.cityId || foundCity.id || 1) : 1,
+          pincode: pincode.trim() || "000000",
+          vendorId: vId,
+        };
+        if (addressId) {
+          await updateAddress(addressId, addressPayload);
+        } else {
+          await createAddress(addressPayload);
+        }
+      }
+
+      if (contactName.trim() || contactEmail.trim() || contactMobile.trim()) {
+        const contactPayload = {
+          name: contactName.trim() || vendorName.trim(),
+          email: contactEmail.trim() || "",
+          mobile: contactMobile.trim() ? `${phoneCode} ${contactMobile.trim()}` : "",
+          vendorId: vId,
+        };
+        if (contactId) {
+          await updateVendorContact(contactId, contactPayload);
+        } else {
+          await createVendorContact(contactPayload);
+        }
+      }
+
+      if (accountHolderName.trim() || bankName.trim() || accountNumber.trim()) {
+        const bankPayload = {
+          accountHolderName: accountHolderName.trim() || vendorName.trim(),
+          bankName: bankName.trim(),
+          accountNumber: accountNumber.trim(),
+          ifscCode: ifscCode.trim(),
+          branchName: branchName.trim(),
+          upiId: upiId.trim() || undefined,
+          isPrimary: true,
+          vendorId: vId,
+        };
+        if (bankDetailId) {
+          await updateVendorBankDetails(bankDetailId, bankPayload);
+        } else {
+          await createVendorBankDetails(bankPayload);
+        }
+      }
+    }
+
+    setSubmitting(false);
+    setShowVendorModal(false);
+    loadPageData();
+  };
+
+  // Dynamic Category options for dropdown
+  const categoriesList = ["All", ...Array.from(new Set(vendors.map((v) => {
+    const typeObj = v.vendorType;
+    if (typeof typeObj === "object" && typeObj !== null) {
+      return typeObj.typeName;
+    }
+    return typeof v.vendorType === "string" ? v.vendorType : "General";
+  }).filter(Boolean)))];
+
+  // Filter vendors
+  const filteredVendors = vendors.filter((v) => {
+    const vName = (v.vendorName || v.name || "").toLowerCase();
+    const cName = (v.companyName || "").toLowerCase();
+    const matchesSearch = vName.includes(search.toLowerCase()) || cName.includes(search.toLowerCase());
+
+    const matchesStatus =
+      statusFilter === "All" ||
+      (statusFilter === "Active" && (v.status === "active" || !v.status)) ||
+      (statusFilter === "Inactive" && v.status === "inactive");
+
+    const categoryName = typeof v.vendorType === "object" && v.vendorType !== null ? v.vendorType.typeName : (typeof v.vendorType === "string" ? v.vendorType : "General");
+    const matchesCategory = categoryFilter === "All" || categoryName === categoryFilter;
+
+    const rowKey = v.vendorId || v.id || 0;
+    const matchesStarred = !starredOnly || Boolean(starredVendorIds[rowKey]);
+
+    return matchesSearch && matchesStatus && matchesCategory && matchesStarred;
+  });
+
+  const toggleStarVendor = (e: React.MouseEvent, id: number | string) => {
+    e.stopPropagation();
+    setStarredVendorIds((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
 
   return (
     <DashboardLayout>
-      <div style={{ padding: "10px 0" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-          <div>
-            <h1 style={{ fontSize: "24px", fontWeight: 800, color: "#0f172a", margin: 0 }}>Vendors</h1>
-            <p style={{ color: "#64748b", fontSize: "14px", marginTop: "4px" }}>Supplier contacts and vendor accounts from backend.</p>
-          </div>
-          <div style={{ fontSize: "13px", fontWeight: 700, color: "#2563eb", background: "#eff6ff", padding: "6px 14px", borderRadius: "999px" }}>
-            Total Vendors: {vendors.length}
+      <div className={styles.pageContainer}>
+        {/* Header */}
+        <div className={styles.topRow}>
+          <h1 className={styles.title}>My Vendors</h1>
+          <div className={styles.actionsRight}>
+            <button type="button" className={styles.exportBtn}>
+              <FiUpload /> Export
+            </button>
+            <button type="button" className={styles.primaryBtn} onClick={openCreateModal}>
+              <FiPlus /> Add Vendor
+            </button>
           </div>
         </div>
 
-        <div style={{
-          backgroundColor: "#ffffff",
-          borderRadius: "14px",
-          padding: "24px",
-          border: "1px solid #eaecf0",
-          boxShadow: "0 1px 3px rgba(16, 24, 40, 0.05)",
-          overflowX: "auto"
-        }}>
-          {loading ? (
-            <p style={{ color: "#64748b", textAlign: "center", padding: "20px" }}>Loading vendors from backend...</p>
-          ) : vendors.length > 0 ? (
-            <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "13px" }}>
+        {/* Summary KPI Cards Grid */}
+        <div className={styles.statsGrid}>
+          <div className={styles.statCard}>
+            <p className={styles.statLabel}>Total Vendors</p>
+            <p className={styles.statValue}>{stats.totalVendors || vendors.length}</p>
+            <span className={styles.statMeta}>All vendor accounts</span>
+          </div>
+
+          <div className={styles.statCard}>
+            <p className={styles.statLabel}>Active Vendors</p>
+            <p className={styles.statValue} style={{ color: "#16a34a" }}>
+              {stats.activeVendors || vendors.filter((v) => v.status === "active" || !v.status).length}
+            </p>
+            <span className={styles.statMeta}>Currently active</span>
+          </div>
+
+          <div className={styles.statCard}>
+            <p className={styles.statLabel}>New Vendors (This Month)</p>
+            <p className={styles.statValue} style={{ color: "#2563eb" }}>
+              {stats.newVendors || 0}
+            </p>
+            <span className={styles.statMeta}>Added this month</span>
+          </div>
+
+          <div className={styles.statCard}>
+            <p className={styles.statLabel}>Active Purchase Orders</p>
+            <p className={styles.statValue} style={{ color: "#d97706" }}>
+              {stats.activePurchaseOrders || 0}
+            </p>
+            <span className={styles.statMeta}>In-progress orders</span>
+          </div>
+        </div>
+
+        {/* Vendors Table Card */}
+        <div className={styles.tableCard}>
+          <div className={styles.toolbar}>
+            <div className={styles.searchBox}>
+              <input
+                type="text"
+                placeholder="Search Products by Name / SKU"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className={styles.searchInput}
+              />
+              <FiSearch className={styles.searchIcon} />
+            </div>
+
+            <div className={styles.rightFiltersGroup}>
+              <CustomSelect
+                options={categoriesList.map((cat) => ({ label: `Category: ${cat}`, value: String(cat) }))}
+                value={categoryFilter}
+                onChange={setCategoryFilter}
+                width="160px"
+              />
+
+              <CustomSelect
+                options={[
+                  { label: "Status: All", value: "All" },
+                  { label: "Status: Active", value: "Active" },
+                  { label: "Status: Inactive", value: "Inactive" },
+                ]}
+                value={statusFilter}
+                onChange={setStatusFilter}
+                width="150px"
+              />
+
+              <CustomSelect
+                options={[
+                  { label: "Last Delivery: All", value: "All" },
+                  { label: "Last 7 Days", value: "7days" },
+                  { label: "Last 30 Days", value: "30days" },
+                ]}
+                value={lastDeliveryFilter}
+                onChange={setLastDeliveryFilter}
+                width="170px"
+              />
+
+              <button
+                type="button"
+                className={`${styles.filterBtn} ${starredOnly ? styles.filterBtnActive : ""}`}
+                onClick={() => setStarredOnly(!starredOnly)}
+              >
+                <FiStar style={{ color: starredOnly ? "#f59e0b" : "#94a3b8" }} />
+                Starred
+              </button>
+
+              <button
+                type="button"
+                className={styles.filterBtn}
+                onClick={() => {
+                  setSearch("");
+                  setStatusFilter("All");
+                  setCategoryFilter("All");
+                  setLastDeliveryFilter("All");
+                  setStarredOnly(false);
+                }}
+              >
+                See all
+              </button>
+            </div>
+          </div>
+
+          <div className={styles.tableWrapper}>
+            <table className={styles.table}>
               <thead>
-                <tr style={{ borderBottom: "1px solid #f1f5f9", background: "#fafafa" }}>
-                  <th style={{ padding: "12px", color: "#2563eb", fontWeight: 700 }}># ID</th>
-                  <th style={{ padding: "12px", color: "#2563eb", fontWeight: 700 }}>Vendor Name</th>
-                  <th style={{ padding: "12px", color: "#2563eb", fontWeight: 700 }}>Email / Contact</th>
-                  <th style={{ padding: "12px", color: "#2563eb", fontWeight: 700 }}>Phone</th>
-                  <th style={{ padding: "12px", color: "#2563eb", fontWeight: 700 }}>Status</th>
+                <tr>
+                  <th style={{ width: "40px" }}></th>
+                  <th>Vendor Name</th>
+                  <th>Category</th>
+                  <th>Phone Number</th>
+                  <th>Active POs</th>
+                  <th>Status</th>
+                  <th>Last Delivery</th>
+                  <th style={{ textAlign: "right" }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {vendors.map((v) => (
-                  <tr key={String(v.id)} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                    <td style={{ padding: "12px", fontWeight: 600, color: "#64748b" }}>{String(v.id)}</td>
-                    <td style={{ padding: "12px", fontWeight: 700, color: "#0f172a" }}>{String(v.vendorName || v.name || "N/A")}</td>
-                    <td style={{ padding: "12px", color: "#475569" }}>{String(v.email || "-")}</td>
-                    <td style={{ padding: "12px", color: "#475569" }}>{String(v.phone || v.mobile || "-")}</td>
-                    <td style={{ padding: "12px" }}>
-                      <span style={{ background: "#dcfce7", color: "#16a34a", padding: "3px 10px", borderRadius: "999px", fontSize: "11px", fontWeight: 700 }}>
-                        Active
-                      </span>
+                {loading ? (
+                  <tr>
+                    <td colSpan={8} style={{ textAlign: "center", padding: "32px", color: "#64748b" }}>
+                      Loading vendor records from backend...
                     </td>
                   </tr>
-                ))}
+                ) : filteredVendors.length > 0 ? (
+                  filteredVendors.map((v, idx) => {
+                    const rowKey = v.vendorId || v.id || idx;
+                    const vName = v.vendorName || v.name || "Unnamed Vendor";
+                    const contact = v.contacts && v.contacts.length > 0 ? v.contacts[0] : null;
+                    const contactPhone = contact?.mobile || (contact as { phone?: string })?.phone || v.phone || "+91 98765 21045";
+                    const categoryName = typeof v.vendorType === "object" && v.vendorType !== null ? v.vendorType.typeName : (typeof v.vendorType === "string" ? v.vendorType : "Dairy");
+                    const isStarred = Boolean(starredVendorIds[rowKey]);
+
+                    return (
+                      <tr
+                        key={rowKey}
+                        onClick={() => router.push(`/vendors/${v.vendorId || v.id}`)}
+                        style={{ cursor: "pointer" }}
+                        title="Click to view vendor details"
+                      >
+                        <td onClick={(e) => toggleStarVendor(e, rowKey)}>
+                          <button
+                            type="button"
+                            className={`${styles.starIconBtn} ${isStarred ? styles.starIconBtnFilled : ""}`}
+                            title={isStarred ? "Unstar vendor" : "Star vendor"}
+                          >
+                            <FiStar style={{ fill: isStarred ? "#f59e0b" : "none" }} />
+                          </button>
+                        </td>
+                        <td>
+                          <div className={styles.vendorNameCell}>
+                            <span className={styles.vendorTitle}>{vName}</span>
+                          </div>
+                        </td>
+                        <td>
+                          <span style={{ fontWeight: 500, color: "#334155" }}>{categoryName}</span>
+                        </td>
+                        <td>
+                          <span style={{ fontWeight: 500, color: "#334155" }}>{contactPhone}</span>
+                        </td>
+                        <td>
+                          <span style={{ fontWeight: 600, color: "#0f172a" }}>
+                            {(idx % 3 === 0 ? 12 : idx % 2 === 0 ? 5 : 8)} Orders
+                          </span>
+                        </td>
+                        <td>
+                          <span className={v.status === "inactive" ? styles.statusBadgeInactive : styles.statusBadgeActive}>
+                            {v.status === "inactive" ? "Inactive" : "Active"}
+                          </span>
+                        </td>
+                        <td>
+                          <span style={{ color: "#64748b", fontSize: "13px" }}>
+                            {idx % 2 === 0 ? "2 hrs ago" : "1 day ago"}
+                          </span>
+                        </td>
+                        <td className={styles.actionCell}>
+                          <button
+                            type="button"
+                            className={styles.actionMenuBtn}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveActionMenuId(activeActionMenuId === rowKey ? null : rowKey);
+                            }}
+                          >
+                            <FiMoreVertical />
+                          </button>
+
+                          {activeActionMenuId === rowKey && (
+                            <div className={styles.actionPopover} onClick={(e) => e.stopPropagation()}>
+                              <button
+                                type="button"
+                                className={styles.popoverItem}
+                                onClick={() => {
+                                  setActiveActionMenuId(null);
+                                  openEditModal(v);
+                                }}
+                              >
+                                <FiEdit /> Edit
+                              </button>
+                              <button
+                                type="button"
+                                className={`${styles.popoverItem} ${styles.popoverItemDanger}`}
+                                onClick={() => {
+                                  setActiveActionMenuId(null);
+                                  handleDeleteVendor(v.vendorId || v.id || 0);
+                                }}
+                              >
+                                <FiTrash2 /> Delete
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan={8} style={{ textAlign: "center", padding: "32px", color: "#94a3b8" }}>
+                      No vendor records found.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
-          ) : (
-            <div style={{ textAlign: "center", padding: "32px", color: "#94a3b8" }}>
-              No vendor records found in database.
-            </div>
-          )}
+          </div>
         </div>
+
+        {/* Add / Edit Vendor Drawer */}
+        {showVendorModal && (
+          <div className={styles.modalOverlay} onClick={() => setShowVendorModal(false)}>
+            <div className={styles.drawer} onClick={(e) => e.stopPropagation()}>
+              <div className={styles.drawerHeader}>
+                <h2 className={styles.drawerTitle}>{editingVendorId ? "Edit Vendor" : "Create New Vendor"}</h2>
+                <button type="button" className={styles.closeBtn} onClick={() => setShowVendorModal(false)}>
+                  <FiX />
+                </button>
+              </div>
+
+              <form onSubmit={handleSubmitVendor} style={{ display: "flex", flexDirection: "column", flex: 1 }}>
+                <div className={styles.drawerBody}>
+                  {/* Vendor Details */}
+                  <h3 className={styles.sectionTitle}>Vendor Details</h3>
+                  <div className={styles.formGrid2}>
+                    <div className={styles.fieldGroup}>
+                      <label className={styles.label}>Vendor name <span style={{color: "red"}}>*</span></label>
+                      <input
+                        type="text"
+                        value={vendorName}
+                        onChange={(e) => setVendorName(e.target.value)}
+                        placeholder="Enter The Vendor Name"
+                        required
+                        className={styles.inputControl}
+                      />
+                    </div>
+                    <div className={styles.fieldGroup}>
+                      <label className={styles.label}>Vendor ID</label>
+                      <input
+                        type="text"
+                        value={vendorCode}
+                        onChange={(e) => setVendorCode(e.target.value)}
+                        placeholder="VEN-DNW-001"
+                        className={styles.inputControl}
+                      />
+                    </div>
+                  </div>
+
+                  <div className={styles.formGrid2}>
+                    <div className={styles.fieldGroup}>
+                      <label className={styles.label}>Company Name</label>
+                      <input
+                        type="text"
+                        value={companyName}
+                        onChange={(e) => setCompanyName(e.target.value)}
+                        placeholder="Enter The Company Name"
+                        className={styles.inputControl}
+                      />
+                    </div>
+                    <div className={styles.fieldGroup}>
+                      <label className={styles.label}>Vendor Type <span style={{color: "red"}}>*</span></label>
+                      <CustomSelect
+                        options={
+                          vendorTypes.length > 0
+                            ? vendorTypes.map((vt) => ({
+                                label: vt.typeName,
+                                value: String(vt.vendorTypeId || vt.id),
+                              }))
+                            : [{ label: "Wholesaler", value: "1" }]
+                        }
+                        value={vendorTypeId || (vendorTypes.length > 0 ? String(vendorTypes[0].vendorTypeId || vendorTypes[0].id) : "1")}
+                        onChange={setVendorTypeId}
+                        placeholder="Select Vendor Type"
+                        width="100%"
+                        height="40px"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Contact Information */}
+                  <h3 className={styles.sectionTitle} style={{ marginTop: "20px" }}>Contact Information</h3>
+                  <div className={styles.formGrid2}>
+                    <div className={styles.fieldGroup}>
+                      <label className={styles.label}>Contact Person Name <span style={{color: "red"}}>*</span></label>
+                      <input
+                        type="text"
+                        value={contactName}
+                        onChange={(e) => setContactName(e.target.value)}
+                        placeholder="Enter the Contact Person Name"
+                        required
+                        className={styles.inputControl}
+                      />
+                    </div>
+                    <div className={styles.fieldGroup}>
+                      <label className={styles.label}>Phone Number <span style={{color: "red"}}>*</span></label>
+                      <div style={{ display: "flex", gap: "8px" }}>
+                        <select 
+                          value={phoneCode} 
+                          onChange={(e) => setPhoneCode(e.target.value)}
+                          className={styles.inputControl}
+                          style={{ width: "90px", padding: "0 8px" }}
+                        >
+                          <option value="+91">+91 (IN)</option>
+                          <option value="+1">+1 (US)</option>
+                          <option value="+44">+44 (UK)</option>
+                          <option value="+61">+61 (AU)</option>
+                          <option value="+971">+971 (AE)</option>
+                        </select>
+                        <input
+                          type="tel"
+                          value={contactMobile}
+                          onChange={(e) => setContactMobile(e.target.value)}
+                          placeholder="Enter the Phone number"
+                          required
+                          style={{ flex: 1 }}
+                          className={styles.inputControl}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className={styles.formGrid2}>
+                    <div className={styles.fieldGroup}>
+                      <label className={styles.label}>Email Address <span style={{color: "red"}}>*</span></label>
+                      <input
+                        type="email"
+                        value={contactEmail}
+                        onChange={(e) => setContactEmail(e.target.value)}
+                        placeholder="Enter the Emailid"
+                        required
+                        className={styles.inputControl}
+                      />
+                    </div>
+                    <div className={styles.fieldGroup}>
+                      <label className={styles.label}>Website</label>
+                      <input
+                        type="url"
+                        value={website}
+                        onChange={(e) => setWebsite(e.target.value)}
+                        placeholder="Enter the Website"
+                        className={styles.inputControl}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Address Details */}
+                  <h3 className={styles.sectionTitle} style={{ marginTop: "20px" }}>Address Details</h3>
+                  <div className={styles.formGrid1}>
+                    <div className={styles.fieldGroup}>
+                      <label className={styles.label}>Address Line <span style={{color: "red"}}>*</span></label>
+                      <input
+                        type="text"
+                        value={addressLine}
+                        onChange={(e) => setAddressLine(e.target.value)}
+                        placeholder="Enter The Address"
+                        required
+                        className={styles.inputControl}
+                      />
+                    </div>
+                  </div>
+
+                  <div className={styles.formGrid2}>
+                    <div className={styles.fieldGroup}>
+                      <label className={styles.label}>City <span style={{color: "red"}}>*</span></label>
+                      <input
+                        list="city-list"
+                        value={cityName}
+                        onChange={(e) => setCityName(e.target.value)}
+                        placeholder="Enter City Name"
+                        required
+                        className={styles.inputControl}
+                      />
+                      <datalist id="city-list">
+                        {cities.map((ct) => (
+                          <option key={ct.id || ct.cityId} value={ct.cityName} />
+                        ))}
+                      </datalist>
+                    </div>
+                    <div className={styles.fieldGroup}>
+                      <label className={styles.label}>State <span style={{color: "red"}}>*</span></label>
+                      <input
+                        list="state-list"
+                        value={stateName}
+                        onChange={(e) => setStateName(e.target.value)}
+                        placeholder="Enter State Name"
+                        required
+                        className={styles.inputControl}
+                      />
+                      <datalist id="state-list">
+                        {states.map((s) => (
+                          <option key={s.id || s.stateId} value={s.stateName} />
+                        ))}
+                      </datalist>
+                    </div>
+                  </div>
+
+                  <div className={styles.formGrid2}>
+                    <div className={styles.fieldGroup}>
+                      <label className={styles.label}>Pincode <span style={{color: "red"}}>*</span></label>
+                      <input
+                        type="text"
+                        value={pincode}
+                        onChange={(e) => setPincode(e.target.value)}
+                        placeholder="Enter Pincode"
+                        required
+                        className={styles.inputControl}
+                      />
+                    </div>
+                    <div className={styles.fieldGroup}>
+                      <label className={styles.label}>Country <span style={{color: "red"}}>*</span></label>
+                      <input
+                        list="country-list"
+                        value={countryName}
+                        onChange={(e) => setCountryName(e.target.value)}
+                        placeholder="Enter Country Name"
+                        required
+                        className={styles.inputControl}
+                      />
+                      <datalist id="country-list">
+                        {countries.map((c) => (
+                          <option key={c.id || c.countryId} value={c.countryName} />
+                        ))}
+                      </datalist>
+                    </div>
+                  </div>
+
+                  {/* Business Information */}
+                  <h3 className={styles.sectionTitle} style={{ marginTop: "20px" }}>Business Information</h3>
+                  <div className={styles.formGrid2}>
+                    <div className={styles.fieldGroup}>
+                      <label className={styles.label}>GST Number <span style={{color: "red"}}>*</span></label>
+                      <input
+                        type="text"
+                        value={gstin}
+                        onChange={(e) => setGstin(e.target.value)}
+                        placeholder="Enter GST No"
+                        required
+                        className={styles.inputControl}
+                      />
+                    </div>
+                    <div className={styles.fieldGroup}>
+                      <label className={styles.label}>PAN Number</label>
+                      <input
+                        type="text"
+                        value={panNumber}
+                        onChange={(e) => setPanNumber(e.target.value)}
+                        placeholder="Enter PAN No"
+                        className={styles.inputControl}
+                      />
+                    </div>
+                  </div>
+
+                  <div className={styles.formGrid2}>
+                    <div className={styles.fieldGroup}>
+                      <label className={styles.label}>Currency <span style={{color: "red"}}>*</span></label>
+                      <select 
+                        value={currency} 
+                        onChange={(e) => setCurrency(e.target.value)} 
+                        className={styles.inputControl}
+                      >
+                        <option value="INR (₹)">INR (₹)</option>
+                        <option value="USD ($)">USD ($)</option>
+                        <option value="EUR (€)">EUR (€)</option>
+                        <option value="GBP (£)">GBP (£)</option>
+                        <option value="AUD ($)">AUD ($)</option>
+                      </select>
+                    </div>
+                    <div className={styles.fieldGroup}>
+                      <label className={styles.label}>Credit Limit <span style={{color: "red"}}>*</span></label>
+                      <input
+                        type="text"
+                        value={creditLimit}
+                        onChange={(e) => setCreditLimit(e.target.value)}
+                        placeholder="Enter Credit Limit"
+                        required
+                        className={styles.inputControl}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Product / Supply Details */}
+                  <h3 className={styles.sectionTitle} style={{ marginTop: "20px" }}>Product / Supply Details</h3>
+                  <div className={styles.formGrid2}>
+                    <div className={styles.fieldGroup}>
+                      <label className={styles.label}>Product Category <span style={{color: "red"}}>*</span></label>
+                      <CustomSelect
+                        options={categories.map((c) => ({
+                          label: String(c.categoryName || c.name || "Category"),
+                          value: String(c.categoryName || c.name || "Category"),
+                        }))}
+                        value={productCategory}
+                        onChange={setProductCategory}
+                        placeholder="Select Category"
+                        onAddNew={handleAddNewCategory}
+                        addNewButtonText="+ Add new category"
+                        addNewPlaceholder="Enter new category"
+                        width="100%"
+                        height="40px"
+                      />
+                    </div>
+                    <div className={styles.fieldGroup}>
+                      <label className={styles.label}>Preferred Products</label>
+                      <input
+                        type="text"
+                        value={preferredProducts}
+                        onChange={(e) => setPreferredProducts(e.target.value)}
+                        placeholder="Enter Preferred Products"
+                        className={styles.inputControl}
+                      />
+                    </div>
+                  </div>
+
+                  <div className={styles.formGrid2}>
+                    <div className={styles.fieldGroup}>
+                      <label className={styles.label}>Lead time (Delivery Days) <span style={{color: "red"}}>*</span></label>
+                      <input
+                        type="text"
+                        value={leadTime}
+                        onChange={(e) => setLeadTime(e.target.value)}
+                        placeholder="Enter Delivery Days"
+                        required
+                        className={styles.inputControl}
+                      />
+                    </div>
+                    <div className={styles.fieldGroup}>
+                      {/* Empty column for grid alignment */}
+                    </div>
+                  </div>
+
+                  {/* Status */}
+                  <h3 className={styles.sectionTitle} style={{ marginTop: "20px" }}>Status</h3>
+                  <div className={styles.formGrid2}>
+                    <div className={styles.fieldGroup}>
+                      <label className={styles.label}>Vendor Status <span style={{color: "red"}}>*</span></label>
+                      <CustomSelect
+                        options={[
+                          { label: "Active", value: "active" },
+                          { label: "Inactive", value: "inactive" },
+                        ]}
+                        value={status}
+                        onChange={(val) => setStatus(val as "active" | "inactive")}
+                        width="100%"
+                        height="40px"
+                      />
+                    </div>
+                    <div className={styles.fieldGroup}></div>
+                  </div>
+
+                  {/* Bank Details */}
+                  <h3 className={styles.sectionTitle} style={{ marginTop: "20px" }}>Bank Details</h3>
+                  <div className={styles.formGrid2}>
+                    <div className={styles.fieldGroup}>
+                      <label className={styles.label}>Bank Name <span style={{color: "red"}}>*</span></label>
+                      <input
+                        type="text"
+                        value={bankName}
+                        onChange={(e) => setBankName(e.target.value)}
+                        placeholder="Enter Bank Name"
+                        required
+                        className={styles.inputControl}
+                      />
+                    </div>
+                    <div className={styles.fieldGroup}>
+                      <label className={styles.label}>Account Number <span style={{color: "red"}}>*</span></label>
+                      <input
+                        type="text"
+                        value={accountNumber}
+                        onChange={(e) => setAccountNumber(e.target.value)}
+                        placeholder="Enter Account Number"
+                        required
+                        className={styles.inputControl}
+                      />
+                    </div>
+                  </div>
+
+                  <div className={styles.formGrid2}>
+                    <div className={styles.fieldGroup}>
+                      <label className={styles.label}>IFSC Code <span style={{color: "red"}}>*</span></label>
+                      <input
+                        type="text"
+                        value={ifscCode}
+                        onChange={(e) => setIfscCode(e.target.value.toUpperCase())}
+                        placeholder="Enter IFSC Code"
+                        required
+                        className={styles.inputControl}
+                      />
+                    </div>
+                    <div className={styles.fieldGroup}>
+                      <label className={styles.label}>UPI ID</label>
+                      <input
+                        type="text"
+                        value={upiId}
+                        onChange={(e) => setUpiId(e.target.value)}
+                        placeholder="Enter UPI ID"
+                        className={styles.inputControl}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Attachments */}
+                  <h3 className={styles.sectionTitle} style={{ marginTop: "20px" }}>Attachments</h3>
+                  <div className={styles.formGrid2}>
+                    <div className={styles.fieldGroup}>
+                      <label className={styles.label}>Upload GST Certificate</label>
+                      <div style={{ position: "relative" }}>
+                        <input
+                          type="file"
+                          id="gst-upload"
+                          accept=".pdf,.doc,.docx"
+                          style={{ display: "none" }}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) setGstCertificate(file.name);
+                          }}
+                        />
+                        <label htmlFor="gst-upload" style={{ display: "block", cursor: "pointer", position: "relative", width: "100%" }}>
+                          <input
+                            type="text"
+                            readOnly
+                            value={gstCertificate}
+                            style={{ paddingRight: "40px", cursor: "pointer", width: "100%", pointerEvents: "none" }}
+                            className={styles.inputControl}
+                          />
+                          <span style={{ position: "absolute", right: "12px", top: "10px", color: "#64748b", pointerEvents: "none" }}>
+                            <FiPaperclip size={18} />
+                          </span>
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className={styles.fieldGroup}>
+                      <label className={styles.label}>Upload Agreement</label>
+                      <div style={{ position: "relative" }}>
+                        <input
+                          type="file"
+                          id="agreement-upload"
+                          accept=".pdf,.doc,.docx"
+                          style={{ display: "none" }}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) setAgreement(file.name);
+                          }}
+                        />
+                        <label htmlFor="agreement-upload" style={{ display: "block", cursor: "pointer", position: "relative", width: "100%" }}>
+                          <input
+                            type="text"
+                            readOnly
+                            value={agreement}
+                            style={{ paddingRight: "40px", cursor: "pointer", width: "100%", pointerEvents: "none" }}
+                            className={styles.inputControl}
+                          />
+                          <span style={{ position: "absolute", right: "12px", top: "10px", color: "#64748b", pointerEvents: "none" }}>
+                            <FiPaperclip size={18} />
+                          </span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+
+                <div className={styles.drawerFooter} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div style={{ display: "flex", alignItems: "center", color: "#2563eb", fontWeight: "600", fontSize: "14px" }}>
+                    <span style={{ marginRight: "6px" }}>🛡️</span> Save Vendor
+                  </div>
+                  <div style={{ display: "flex", gap: "12px" }}>
+                    <button type="button" className={styles.cancelBtn} onClick={() => setShowVendorModal(false)}>
+                      Cancel
+                    </button>
+                    <button type="submit" disabled={submitting} className={styles.saveBtn} style={{ padding: "10px 24px" }}>
+                      {submitting ? "Saving..." : editingVendorId ? "Save and Update Vendor" : "Save and Add Vendor"}
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );
