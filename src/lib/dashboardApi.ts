@@ -591,15 +591,28 @@ export async function fetchPurchaseOrdersList(): Promise<PurchaseOrderItem[]> {
   return [];
 }
 
-export async function createPurchaseOrder(payload: {
-  vendorName: string;
-  totalAmount: number;
+export interface CreatePurchaseOrderPayload {
+  poNumber: string;
+  vendorId: number;
+  deliveryAddressId: number;
+  orderDate: string;
+  expectedDeliveryDate: string;
+  paymentTerms: string;
+  shipmentMethod: string;
+  notes?: string;
   status?: string;
-  productId?: number;
-  productName?: string;
-  quantity?: number;
-  unitCost?: number;
-}): Promise<{ success: boolean; message?: string; data?: PurchaseOrderItem }> {
+  subtotal?: number;
+  taxPercentage?: number;
+  taxAmount?: number;
+  totalAmount?: number;
+  items?: {
+    productId: number;
+    quantity: number;
+    unitPrice: number;
+  }[];
+}
+
+export async function createPurchaseOrder(payload: CreatePurchaseOrderPayload): Promise<{ success: boolean; message?: string; data?: PurchaseOrderItem }> {
   try {
     const response = await api.post("/api/purchase-orders", payload);
     return response?.data || { success: true };
