@@ -20,6 +20,7 @@ import {
   updateVendorBankDetails,
   fetchCategories,
   createCategory,
+  setVendorStarred,
   VendorItem,
   VendorStatsResponse,
   VendorTypeItem,
@@ -65,7 +66,6 @@ export default function VendorsPage() {
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [lastDeliveryFilter, setLastDeliveryFilter] = useState("All");
   const [starredOnly, setStarredOnly] = useState(false);
-  const [starredVendorIds, setStarredVendorIds] = useState<Record<string | number, boolean>>({});
 
   // Popover State
   const [activeActionMenuId, setActiveActionMenuId] = useState<number | string | null>(null);
@@ -73,6 +73,9 @@ export default function VendorsPage() {
   // Modal / Drawer State
   const [showVendorModal, setShowVendorModal] = useState(false);
   const [editingVendorId, setEditingVendorId] = useState<number | string | null>(null);
+
+  // Star Loading State
+  const [starLoadingIds, setStarLoadingIds] = useState<Set<number | string>>(new Set());
 
   // ID states for editing nested entities
   const [addressId, setAddressId] = useState<number | string | null>(null);
@@ -134,14 +137,20 @@ export default function VendorsPage() {
     ]);
 
     setVendors(vList || []);
-    setStats(
-      vStats || {
-        totalVendors: vList?.length || 0,
-        activeVendors: vList?.filter((v) => v.status === "active")?.length || 0,
-        newVendors: 0,
-        activePurchaseOrders: 0,
-      }
-    );
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const calculatedNewVendors = (vList || []).filter((v) => {
+      if (!v.createdAt) return false;
+      const createdAtDate = new Date(v.createdAt);
+      return createdAtDate >= thirtyDaysAgo;
+    }).length;
+
+    setStats({
+      totalVendors: vStats?.totalVendors || vList?.length || 0,
+      activeVendors: vStats?.activeVendors || vList?.filter((v) => v.status === "active")?.length || 0,
+      newVendors: calculatedNewVendors,
+      activePurchaseOrders: vStats?.activePurchaseOrders || 0,
+    });
     setVendorTypes(vTypes || []);
     setCountries(cList || []);
     setCategories(catList || []);
@@ -494,17 +503,39 @@ export default function VendorsPage() {
     const matchesCategory = categoryFilter === "All" || categoryName === categoryFilter;
 
     const rowKey = v.vendorId || v.id || 0;
-    const matchesStarred = !starredOnly || Boolean(starredVendorIds[rowKey]);
+    const matchesStarred = !starredOnly || Boolean(v.isStarred);
 
     return matchesSearch && matchesStatus && matchesCategory && matchesStarred;
   });
 
-  const toggleStarVendor = (e: React.MouseEvent, id: number | string) => {
+  const toggleStarVendor = async (e: React.MouseEvent, vendor: VendorItem) => {
     e.stopPropagation();
-    setStarredVendorIds((prev) => ({
-      ...prev,
-      [id]: !prev[id],
-    }));
+    const id = vendor.vendorId || vendor.id;
+    if (!id || starLoadingIds.has(id)) return;
+
+    setStarLoadingIds((prev) => new Set(prev).add(id));
+
+    const nextStarred = !vendor.isStarred;
+    setVendors((prev) =>
+      prev.map((item) =>
+        (item.vendorId || item.id) === id ? { ...item, isStarred: nextStarred } : item
+      )
+    );
+
+    const res = await setVendorStarred(id, nextStarred);
+    if (!res.success) {
+      setVendors((prev) =>
+        prev.map((item) =>
+          (item.vendorId || item.id) === id ? { ...item, isStarred: vendor.isStarred } : item
+        )
+      );
+    }
+    
+    setStarLoadingIds((prev) => {
+      const newSet = new Set(prev);
+      newSet.delete(id);
+      return newSet;
+    });
   };
 
   return (
@@ -653,7 +684,7 @@ export default function VendorsPage() {
                     const contact = v.contacts && v.contacts.length > 0 ? v.contacts[0] : null;
                     const contactPhone = contact?.mobile || (contact as { phone?: string })?.phone || v.phone || "+91 98765 21045";
                     const categoryName = typeof v.vendorType === "object" && v.vendorType !== null ? v.vendorType.typeName : (typeof v.vendorType === "string" ? v.vendorType : "Dairy");
-                    const isStarred = Boolean(starredVendorIds[rowKey]);
+                    const isStarred = Boolean(v.isStarred);
 
                     return (
                       <tr
@@ -662,11 +693,20 @@ export default function VendorsPage() {
                         style={{ cursor: "pointer" }}
                         title="Click to view vendor details"
                       >
-                        <td onClick={(e) => toggleStarVendor(e, rowKey)}>
+                        <td onClick={(e) => {
+                          const vendorId = v.vendorId || v.id;
+                          if (vendorId && starLoadingIds.has(vendorId)) {
+                            e.stopPropagation();
+                            return;
+                          }
+                          toggleStarVendor(e, v);
+                        }}>
                           <button
                             type="button"
+                            disabled={v.vendorId || v.id ? starLoadingIds.has(v.vendorId || v.id as number | string) : false}
                             className={`${styles.starIconBtn} ${isStarred ? styles.starIconBtnFilled : ""}`}
                             title={isStarred ? "Unstar vendor" : "Star vendor"}
+                            style={(v.vendorId || v.id) && starLoadingIds.has(v.vendorId || v.id as number | string) ? { cursor: "not-allowed", opacity: 0.5 } : {}}
                           >
                             <FiStar style={{ fill: isStarred ? "#f59e0b" : "none" }} />
                           </button>

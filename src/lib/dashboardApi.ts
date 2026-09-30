@@ -131,6 +131,7 @@ export interface VendorItem {
   gstCertificate?: string;
   agreement?: string;
   vendorLogo?: string;
+  isStarred?: boolean;
   vendorType?: VendorTypeItem;
   addresses?: AddressItem[];
   contacts?: VendorContactItem[];
@@ -726,6 +727,21 @@ export async function updateVendor(
   } catch (err: unknown) {
     const axiosErr = err as { response?: { data?: { message?: string } }; message?: string };
     const msg = axiosErr?.response?.data?.message || axiosErr?.message || "Failed to update vendor";
+    toast.error(msg);
+    return { success: false, message: msg };
+  }
+}
+
+export async function setVendorStarred(
+  id: number | string,
+  isStarred: boolean
+): Promise<{ success: boolean; message?: string; data?: VendorItem }> {
+  try {
+    const response = await api.patch(`/api/vendors/${id}/star`, { isStarred });
+    return response?.data || { success: true };
+  } catch (err: unknown) {
+    const axiosErr = err as { response?: { data?: { message?: string } }; message?: string };
+    const msg = axiosErr?.response?.data?.message || axiosErr?.message || "Failed to update starred vendor";
     toast.error(msg);
     return { success: false, message: msg };
   }

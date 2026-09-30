@@ -7,6 +7,7 @@ import {
   fetchVendorById,
   fetchProductsList,
   fetchPurchaseOrdersList,
+  setVendorStarred,
   VendorItem,
   ProductItem,
 } from "@/lib/dashboardApi";
@@ -272,8 +273,21 @@ export default function VendorDetailPage() {
             <button className={styles.iconBtn} onClick={() => toast.info("More actions")}>
               <FiMoreHorizontal />
             </button>
-            <button className={styles.iconBtn} onClick={() => toast.info("Starred vendor")}>
-              <FiStar />
+            <button
+              className={styles.iconBtn}
+              title={vendorObj.isStarred ? "Unstar vendor" : "Star vendor"}
+              onClick={async () => {
+                const vendorId = vendorObj.vendorId || vendorObj.id;
+                if (!vendorId) return;
+                const nextStarred = !vendorObj.isStarred;
+                setVendor({ ...vendorObj, isStarred: nextStarred });
+                const res = await setVendorStarred(vendorId, nextStarred);
+                if (!res.success) {
+                  setVendor({ ...vendorObj, isStarred: vendorObj.isStarred });
+                }
+              }}
+            >
+              <FiStar style={{ fill: vendorObj.isStarred ? "#f59e0b" : "none", color: vendorObj.isStarred ? "#f59e0b" : undefined }} />
             </button>
             <button
               className={styles.createPoBtn}
