@@ -456,3 +456,109 @@
   align-items: center;
   gap: 6px;
 }
+
+.vendorNotesGroup {
+  grid-column: span 2;
+}
+
+.paymentTermsGroup {
+  grid-column: span 2;
+}
+
+.shipmentTitle {
+  margin-top: 8px;
+}
+
+.indiamartLogo {
+  border-radius: 50%;
+  border: 1px solid #e2e8f0;
+  object-fit: cover;
+}
+
+.indiamartLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.tradeindiaLogo {
+  border-radius: 50%;
+  border: 1px solid #e2e8f0;
+  object-fit: cover;
+}
+
+.tradeindiaLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.itemQtyBadge {
+  font-size: 14px;
+  font-weight: 600;
+  width: 20px;
+  text-align: center;
+}
+
+.searchProductGroup {
+  margin-top: 16px;
+}
+
+.productDropdownList {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  margin-top: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.productDropdownItem {
+  padding: 12px;
+  border-bottom: 1px solid #e2e8f0;
+  cursor: pointer;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.productDropdownImage {
+  border-radius: 4px;
+}
+
+.productDropdownName {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.productDropdownPrice {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.addMoreLink {
+  margin-top: 12px;
+  display: inline-block;
+}
+
+.orderDetailsTitle {
+  font-size: 14px;
+  margin: 0 0 16px 0;
+  color: #0f172a;
+}
+
+.itemOrderedTitle {
+  font-size: 14px;
+  margin: 0 0 12px 0;
+  color: #0f172a;
+}
+
+.orderedItemRow {
+  margin-bottom: 8px;
+}
+
+.summaryTitle {
+  font-size: 14px;
+  margin: 16px 0 12px 0;
+  color: #0f172a;
+}

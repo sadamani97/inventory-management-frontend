@@ -289,3 +289,31 @@
   color: var(--text-inverse) !important;
   border-color: var(--primary);
 }
+
+.autoStyle243318 {
+  text-align: center;
+  padding: 32px;
+  color: #64748b;
+}
+
+.autoStyle32a577 {
+  cursor: pointer;
+}
+
+.autoStyle741323 {
+  text-align: center;
+  padding: 40px;
+  color: #94a3b8;
+}
+
+.autoStyle0ad6e2 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #475569;
+  margin: 0 0 6px 0;
+}
+
+.autoStyle2f3830 {
+  font-size: 13px;
+  margin: 0;
+}

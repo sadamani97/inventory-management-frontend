@@ -5,6 +5,7 @@ import { fetchVendorsList, VendorItem, fetchProductsList, ProductItem, createPur
 import CustomSelect from "@/components/ui/CustomSelect";
 import styles from "@/styles/components/createPOModal.module.css";
 import { toast } from "react-toastify";
+import { APP_IMAGES } from "@/constants/images";
 
 interface CreatePOModalProps {
   isOpen: boolean;
@@ -18,7 +19,7 @@ export default function CreatePOModal({ isOpen, onClose, onSuccess }: CreatePOMo
   const [products, setProducts] = useState<ProductItem[]>([]);
   
   // Step 1 Data
-  const [poNumber, setPoNumber] = useState(`PO-${Math.floor(1000 + Math.random() * 9000)}`);
+  const [poNumber, setPoNumber] = useState("");
   const [vendorId, setVendorId] = useState("");
   const [orderDate, setOrderDate] = useState("");
   const [deliveryDate, setDeliveryDate] = useState("");
@@ -26,6 +27,7 @@ export default function CreatePOModal({ isOpen, onClose, onSuccess }: CreatePOMo
   const [note, setNote] = useState("");
   const [selectedAddress, setSelectedAddress] = useState(1);
   const [shipment, setShipment] = useState("indiamart");
+  const [status, setStatus] = useState("Pending");
 
   // Step 2 Data
   const [searchQuery, setSearchQuery] = useState("");
@@ -35,8 +37,13 @@ export default function CreatePOModal({ isOpen, onClose, onSuccess }: CreatePOMo
     if (isOpen) {
       fetchVendorsList().then(data => setVendors(data || []));
       fetchProductsList().then(data => setProducts(data || []));
-      setStep(1);
-      setOrderItems([]);
+      
+      const timer = setTimeout(() => {
+        setStep(1);
+        setOrderItems([]);
+        setPoNumber(`PO-${Math.floor(1000 + Math.random() * 9000)}`);
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [isOpen]);
 
@@ -48,6 +55,13 @@ export default function CreatePOModal({ isOpen, onClose, onSuccess }: CreatePOMo
     { label: "COD (Cash on Delivery)", value: "COD (Cash on Delivery)" },
     { label: "Net 30", value: "Net 30" },
     { label: "Advance Payment", value: "Advance Payment" },
+  ];
+
+  const statusOptions = [
+    { label: "Pending", value: "Pending" },
+    { label: "Approved", value: "Approved" },
+    { label: "Delivered", value: "Delivered" },
+    { label: "Cancelled", value: "Cancelled" },
   ];
 
   const handleProductSelect = (product: ProductItem) => {
@@ -99,16 +113,19 @@ export default function CreatePOModal({ isOpen, onClose, onSuccess }: CreatePOMo
       unitPrice: Number(item.purchaseRate || item.sellingPrice || 0)
     }));
 
+    const selectedVendor = vendors.find(v => String(v.id || v.vendorId) === vendorId);
+
     const payload = {
       poNumber,
       vendorId: Number(vendorId),
+      vendorName: selectedVendor?.vendorName || selectedVendor?.companyName || "Unknown",
       deliveryAddressId: selectedAddress,
       orderDate: orderDate || new Date().toISOString().split("T")[0],
       expectedDeliveryDate: deliveryDate || orderDate || new Date().toISOString().split("T")[0],
       paymentTerms,
       shipmentMethod: shipment,
       notes: note,
-      status: "Pending",
+      status: status,
       subtotal,
       taxPercentage: 10,
       taxAmount,
@@ -197,7 +214,7 @@ export default function CreatePOModal({ isOpen, onClose, onSuccess }: CreatePOMo
                   <label className={styles.label}>Expected Delivery Date</label>
                   <input type="date" className={styles.input} value={deliveryDate} onChange={e => setDeliveryDate(e.target.value)} />
                 </div>
-                <div className={styles.formGroup} style={{ gridColumn: "span 2" }}>
+                <div className={`${styles.formGroup} ${styles.vendorNotesGroup}`}>
                   <label className={styles.label}>Payment Terms <span className={styles.required}>*</span></label>
                   <CustomSelect 
                     options={paymentOptions} 
@@ -207,7 +224,17 @@ export default function CreatePOModal({ isOpen, onClose, onSuccess }: CreatePOMo
                     height="42px"
                   />
                 </div>
-                <div className={styles.formGroup} style={{ gridColumn: "span 2" }}>
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>Status <span className={styles.required}>*</span></label>
+                  <CustomSelect 
+                    options={statusOptions} 
+                    value={status} 
+                    onChange={setStatus}
+                    width="100%"
+                    height="42px"
+                  />
+                </div>
+                <div className={`${styles.formGroup} ${styles.paymentTermsGroup}`} style={{ gridColumn: 'span 2' }}>
                   <label className={styles.label}>Note</label>
                   <textarea 
                     className={styles.textarea} 
@@ -241,15 +268,15 @@ export default function CreatePOModal({ isOpen, onClose, onSuccess }: CreatePOMo
                 </div>
               </div>
 
-              <h3 className={styles.sectionTitle} style={{ marginTop: "8px" }}>Shipment <span className={styles.required}>*</span></h3>
+              <h3 className={`${styles.sectionTitle} ${styles.shipmentTitle}`}>Shipment <span className={styles.required}>*</span></h3>
               <div className={styles.shipmentCards}>
                 <div className={`${styles.shipmentCard} ${shipment === "indiamart" ? styles.active : ""}`} onClick={() => setShipment("indiamart")}>
-                  <Image src="/product/indiamart.png" alt="Indiamart" width={32} height={32} style={{ borderRadius: "50%", border: "1px solid #e2e8f0", objectFit: "cover" }} />
-                  <span style={{ fontSize: "14px", fontWeight: 600, color: "#0f172a" }}>indiamart.com</span>
+                  <Image {...APP_IMAGES.INDIAMART} alt={APP_IMAGES.INDIAMART.alt} className={styles.indiamartLogo} />
+                  <span className={styles.indiamartLabel}>indiamart.com</span>
                 </div>
                 <div className={`${styles.shipmentCard} ${shipment === "tradeindia" ? styles.active : ""}`} onClick={() => setShipment("tradeindia")}>
-                  <Image src="/product/tradeindia.png" alt="Tradeindia" width={32} height={32} style={{ borderRadius: "50%", border: "1px solid #e2e8f0", objectFit: "cover" }} />
-                  <span style={{ fontSize: "14px", fontWeight: 600, color: "#0f172a" }}>tradeindia.com</span>
+                  <Image {...APP_IMAGES.TRADEINDIA} alt={APP_IMAGES.TRADEINDIA.alt} className={styles.tradeindiaLogo} />
+                  <span className={styles.tradeindiaLabel}>tradeindia.com</span>
                 </div>
               </div>
             </>
@@ -262,7 +289,7 @@ export default function CreatePOModal({ isOpen, onClose, onSuccess }: CreatePOMo
               {orderItems.map((item) => (
                 <div key={item.id} className={styles.productItem}>
                   <div className={styles.productInfo}>
-                    <Image src={item.imageUrl || "/images/Logo.svg"} alt="Item" width={40} height={40} className={styles.productImg} />
+                    <Image src={item.imageUrl || APP_IMAGES.LOGO.src} alt="Item" width={40} height={40} className={styles.productImg} />
                     <div className={styles.productText}>
                       <h4>{item.productName} <span>| {item.sku}</span></h4>
                       <div className={styles.productPrice}>₹{Number(item.purchaseRate || item.sellingPrice || 0).toFixed(2)}</div>
@@ -274,14 +301,14 @@ export default function CreatePOModal({ isOpen, onClose, onSuccess }: CreatePOMo
                     </button>
                     <div className={styles.qtyControl}>
                       <button className={styles.qtyBtn} onClick={() => updateItemQty(item.id, -1)}>-</button>
-                      <span style={{ fontSize: "14px", fontWeight: 600, width: "20px", textAlign: "center" }}>{item.qty}</span>
+                      <span className={styles.itemQtyBadge}>{item.qty}</span>
                       <button className={styles.qtyBtn} onClick={() => updateItemQty(item.id, 1)}>+</button>
                     </div>
                   </div>
                 </div>
               ))}
 
-              <div className={styles.formGroup} style={{ marginTop: "16px" }}>
+              <div className={`${styles.formGroup} ${styles.searchProductGroup}`}>
                 <label className={styles.label}>Product</label>
                 <div className={styles.searchBox}>
                   <FiSearch color="#94a3b8" />
@@ -294,17 +321,17 @@ export default function CreatePOModal({ isOpen, onClose, onSuccess }: CreatePOMo
                 </div>
                 
                 {searchQuery && (
-                  <div style={{ border: "1px solid #e2e8f0", borderRadius: "8px", marginTop: "8px", maxHeight: "200px", overflowY: "auto" }}>
+                  <div className={styles.productDropdownList}>
                     {products.filter(p => p.productName?.toLowerCase().includes(searchQuery.toLowerCase())).map(p => (
                       <div 
-                        key={p.id} 
-                        style={{ padding: "12px", borderBottom: "1px solid #e2e8f0", cursor: "pointer", display: "flex", gap: "12px", alignItems: "center" }}
+                        key={p.id}
+                        className={styles.productDropdownItem}
                         onClick={() => handleProductSelect(p)}
                       >
-                        <Image src={p.imageUrl || "/images/Logo.svg"} alt="Item" width={32} height={32} style={{ borderRadius: "4px" }} />
+                        <Image src={p.imageUrl || APP_IMAGES.LOGO.src} alt="Item" width={32} height={32}  className={styles.productDropdownImage} />
                         <div>
-                          <div style={{ fontSize: "13px", fontWeight: 600, color: "#0f172a" }}>{p.productName} <span>| {p.sku}</span></div>
-                          <div style={{ fontSize: "12px", color: "#64748b" }}>₹{Number(p.purchaseRate || p.sellingPrice || 0).toFixed(2)}</div>
+                          <div className={styles.productDropdownName}>{p.productName} <span>| {p.sku}</span></div>
+                          <div className={styles.productDropdownPrice}>₹{Number(p.purchaseRate || p.sellingPrice || 0).toFixed(2)}</div>
                         </div>
                       </div>
                     ))}
@@ -312,7 +339,7 @@ export default function CreatePOModal({ isOpen, onClose, onSuccess }: CreatePOMo
                 )}
               </div>
 
-              <span className={styles.addLink} style={{ marginTop: "12px", display: "inline-block" }}>+Add More</span>
+              <span className={`${styles.addLink} ${styles.addMoreLink}`}>+Add More</span>
             </>
           )}
 
@@ -321,7 +348,7 @@ export default function CreatePOModal({ isOpen, onClose, onSuccess }: CreatePOMo
               <h3 className={styles.sectionTitle}>Review & Submit</h3>
               
               <div className={styles.reviewBox}>
-                <h4 style={{ fontSize: "14px", margin: "0 0 16px 0", color: "#0f172a" }}>Order Details</h4>
+                <h4 className={styles.orderDetailsTitle}>Order Details</h4>
                 <div className={styles.reviewGrid}>
                   <div>
                     <div className={styles.reviewRow}>
@@ -354,11 +381,11 @@ export default function CreatePOModal({ isOpen, onClose, onSuccess }: CreatePOMo
                 </div>
               </div>
 
-              <h4 style={{ fontSize: "14px", margin: "0 0 12px 0", color: "#0f172a" }}>Item Ordered</h4>
+              <h4 className={styles.itemOrderedTitle}>Item Ordered</h4>
               {orderItems.map((item) => (
-                <div key={item.id} className={styles.productItem} style={{ marginBottom: "8px" }}>
+                <div key={item.id} className={`${styles.productItem} ${styles.orderedItemRow}`}>
                   <div className={styles.productInfo}>
-                    <Image src={item.imageUrl || "/images/Logo.svg"} alt="Item" width={40} height={40} className={styles.productImg} />
+                    <Image src={item.imageUrl || APP_IMAGES.LOGO.src} alt="Item" width={40} height={40} className={styles.productImg} />
                     <div className={styles.productText}>
                       <h4>{item.productName} <span>| {item.sku}</span></h4>
                       <span>{item.qty} Item{item.qty > 1 ? "s" : ""}</span>
@@ -368,7 +395,7 @@ export default function CreatePOModal({ isOpen, onClose, onSuccess }: CreatePOMo
                 </div>
               ))}
 
-              <h4 style={{ fontSize: "14px", margin: "16px 0 12px 0", color: "#0f172a" }}>Summary</h4>
+              <h4 className={styles.summaryTitle}>Summary</h4>
               <div className={styles.summaryBox}>
                 <div className={styles.reviewRow}>
                   <span className={styles.reviewLabel}>Subtotal</span>

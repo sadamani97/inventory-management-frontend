@@ -45,6 +45,24 @@ import {
 import { toast } from "react-toastify";
 import { showSuccessToast } from "@/components/ui/CustomToast";
 
+const formatTimeAgo = (dateStr?: string) => {
+  if (!dateStr) return "N/A";
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  
+  if (diffInSeconds < 60) return "Just now";
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
+  if (diffInMinutes < 60) return `${diffInMinutes} min ago`;
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) return `${diffInHours} hrs ago`;
+  const diffInDays = Math.floor(diffInHours / 24);
+  if (diffInDays === 1) return `1 day ago`;
+  if (diffInDays < 30) return `${diffInDays} days ago`;
+  
+  return date.toLocaleDateString();
+};
+
 export default function VendorsPage() {
   const router = useRouter();
   const [vendors, setVendors] = useState<VendorItem[]>([]);
@@ -502,7 +520,6 @@ export default function VendorsPage() {
     const categoryName = typeof v.vendorType === "object" && v.vendorType !== null ? v.vendorType.typeName : (typeof v.vendorType === "string" ? v.vendorType : "General");
     const matchesCategory = categoryFilter === "All" || categoryName === categoryFilter;
 
-    const rowKey = v.vendorId || v.id || 0;
     const matchesStarred = !starredOnly || Boolean(v.isStarred);
 
     return matchesSearch && matchesStatus && matchesCategory && matchesStarred;
@@ -564,7 +581,7 @@ export default function VendorsPage() {
 
           <div className={styles.statCard}>
             <p className={styles.statLabel}>Active Vendors</p>
-            <p className={styles.statValue} style={{ color: "#16a34a" }}>
+            <p className={`${styles.statValue} ${styles.autoStyle086964}`}>
               {stats.activeVendors || vendors.filter((v) => v.status === "active" || !v.status).length}
             </p>
             <span className={styles.statMeta}>Currently active</span>
@@ -572,7 +589,7 @@ export default function VendorsPage() {
 
           <div className={styles.statCard}>
             <p className={styles.statLabel}>New Vendors (This Month)</p>
-            <p className={styles.statValue} style={{ color: "#2563eb" }}>
+            <p className={`${styles.statValue} ${styles.autoStyle0919da}`}>
               {stats.newVendors || 0}
             </p>
             <span className={styles.statMeta}>Added this month</span>
@@ -580,7 +597,7 @@ export default function VendorsPage() {
 
           <div className={styles.statCard}>
             <p className={styles.statLabel}>Active Purchase Orders</p>
-            <p className={styles.statValue} style={{ color: "#d97706" }}>
+            <p className={`${styles.statValue} ${styles.autoStyle668cc7}`}>
               {stats.activePurchaseOrders || 0}
             </p>
             <span className={styles.statMeta}>In-progress orders</span>
@@ -660,20 +677,20 @@ export default function VendorsPage() {
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <th style={{ width: "40px" }}></th>
+                  <th className={styles.autoStyleb883a8}></th>
                   <th>Vendor Name</th>
                   <th>Category</th>
                   <th>Phone Number</th>
                   <th>Active POs</th>
                   <th>Status</th>
                   <th>Last Delivery</th>
-                  <th style={{ textAlign: "right" }}>Actions</th>
+                  <th className={styles.autoStylee4386d}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={8} style={{ textAlign: "center", padding: "32px", color: "#64748b" }}>
+                    <td colSpan={8} className={styles.autoStylefc08ab}>
                       Loading vendor records from backend...
                     </td>
                   </tr>
@@ -690,7 +707,7 @@ export default function VendorsPage() {
                       <tr
                         key={rowKey}
                         onClick={() => router.push(`/vendors/${v.vendorId || v.id}`)}
-                        style={{ cursor: "pointer" }}
+                        className={styles.autoStyle51893b}
                         title="Click to view vendor details"
                       >
                         <td onClick={(e) => {
@@ -717,13 +734,13 @@ export default function VendorsPage() {
                           </div>
                         </td>
                         <td>
-                          <span style={{ fontWeight: 500, color: "#334155" }}>{categoryName}</span>
+                          <span className={styles.autoStyle6012df}>{categoryName}</span>
                         </td>
                         <td>
-                          <span style={{ fontWeight: 500, color: "#334155" }}>{contactPhone}</span>
+                          <span className={styles.autoStyle691ffe}>{contactPhone}</span>
                         </td>
                         <td>
-                          <span style={{ fontWeight: 600, color: "#0f172a" }}>
+                          <span className={styles.autoStyleb5e5dd}>
                             {(idx % 3 === 0 ? 12 : idx % 2 === 0 ? 5 : 8)} Orders
                           </span>
                         </td>
@@ -733,8 +750,8 @@ export default function VendorsPage() {
                           </span>
                         </td>
                         <td>
-                          <span style={{ color: "#64748b", fontSize: "13px" }}>
-                            {idx % 2 === 0 ? "2 hrs ago" : "1 day ago"}
+                          <span className={styles.autoStyle7f3fba}>
+                            {formatTimeAgo(v.createdAt)}
                           </span>
                         </td>
                         <td className={styles.actionCell}>
@@ -779,7 +796,7 @@ export default function VendorsPage() {
                   })
                 ) : (
                   <tr>
-                    <td colSpan={8} style={{ textAlign: "center", padding: "32px", color: "#94a3b8" }}>
+                    <td colSpan={8} className={styles.autoStyle15f9a2}>
                       No vendor records found.
                     </td>
                   </tr>
@@ -800,13 +817,13 @@ export default function VendorsPage() {
                 </button>
               </div>
 
-              <form onSubmit={handleSubmitVendor} style={{ display: "flex", flexDirection: "column", flex: 1 }}>
+              <form onSubmit={handleSubmitVendor} className={styles.autoStyle926e2d}>
                 <div className={styles.drawerBody}>
                   {/* Vendor Details */}
                   <h3 className={styles.sectionTitle}>Vendor Details</h3>
                   <div className={styles.formGrid2}>
                     <div className={styles.fieldGroup}>
-                      <label className={styles.label}>Vendor name <span style={{color: "red"}}>*</span></label>
+                      <label className={styles.label}>Vendor name <span className={styles.autoStyle3e4228}>*</span></label>
                       <input
                         type="text"
                         value={vendorName}
@@ -840,7 +857,7 @@ export default function VendorsPage() {
                       />
                     </div>
                     <div className={styles.fieldGroup}>
-                      <label className={styles.label}>Vendor Type <span style={{color: "red"}}>*</span></label>
+                      <label className={styles.label}>Vendor Type <span className={styles.autoStylee2ad41}>*</span></label>
                       <CustomSelect
                         options={
                           vendorTypes.length > 0
@@ -860,10 +877,10 @@ export default function VendorsPage() {
                   </div>
 
                   {/* Contact Information */}
-                  <h3 className={styles.sectionTitle} style={{ marginTop: "20px" }}>Contact Information</h3>
+                  <h3 className={`${styles.sectionTitle} ${styles.autoStyle433539}`}>Contact Information</h3>
                   <div className={styles.formGrid2}>
                     <div className={styles.fieldGroup}>
-                      <label className={styles.label}>Contact Person Name <span style={{color: "red"}}>*</span></label>
+                      <label className={styles.label}>Contact Person Name <span className={styles.autoStyle550717}>*</span></label>
                       <input
                         type="text"
                         value={contactName}
@@ -874,13 +891,12 @@ export default function VendorsPage() {
                       />
                     </div>
                     <div className={styles.fieldGroup}>
-                      <label className={styles.label}>Phone Number <span style={{color: "red"}}>*</span></label>
-                      <div style={{ display: "flex", gap: "8px" }}>
+                      <label className={styles.label}>Phone Number <span className={styles.autoStyle95ce14}>*</span></label>
+                      <div className={styles.autoStylefe223f}>
                         <select 
                           value={phoneCode} 
                           onChange={(e) => setPhoneCode(e.target.value)}
-                          className={styles.inputControl}
-                          style={{ width: "90px", padding: "0 8px" }}
+                          className={`${styles.inputControl} ${styles.autoStyleb8f13a}`}
                         >
                           <option value="+91">+91 (IN)</option>
                           <option value="+1">+1 (US)</option>
@@ -894,8 +910,7 @@ export default function VendorsPage() {
                           onChange={(e) => setContactMobile(e.target.value)}
                           placeholder="Enter the Phone number"
                           required
-                          style={{ flex: 1 }}
-                          className={styles.inputControl}
+                          className={`${styles.inputControl} ${styles.autoStylee08b89}`}
                         />
                       </div>
                     </div>
@@ -903,7 +918,7 @@ export default function VendorsPage() {
 
                   <div className={styles.formGrid2}>
                     <div className={styles.fieldGroup}>
-                      <label className={styles.label}>Email Address <span style={{color: "red"}}>*</span></label>
+                      <label className={styles.label}>Email Address <span className={styles.autoStylef396f0}>*</span></label>
                       <input
                         type="email"
                         value={contactEmail}
@@ -926,10 +941,10 @@ export default function VendorsPage() {
                   </div>
 
                   {/* Address Details */}
-                  <h3 className={styles.sectionTitle} style={{ marginTop: "20px" }}>Address Details</h3>
+                  <h3 className={`${styles.sectionTitle} ${styles.autoStyle68ff68}`}>Address Details</h3>
                   <div className={styles.formGrid1}>
                     <div className={styles.fieldGroup}>
-                      <label className={styles.label}>Address Line <span style={{color: "red"}}>*</span></label>
+                      <label className={styles.label}>Address Line <span className={styles.autoStyle8ebcc8}>*</span></label>
                       <input
                         type="text"
                         value={addressLine}
@@ -943,7 +958,7 @@ export default function VendorsPage() {
 
                   <div className={styles.formGrid2}>
                     <div className={styles.fieldGroup}>
-                      <label className={styles.label}>City <span style={{color: "red"}}>*</span></label>
+                      <label className={styles.label}>City <span className={styles.autoStyle5bd104}>*</span></label>
                       <input
                         list="city-list"
                         value={cityName}
@@ -959,7 +974,7 @@ export default function VendorsPage() {
                       </datalist>
                     </div>
                     <div className={styles.fieldGroup}>
-                      <label className={styles.label}>State <span style={{color: "red"}}>*</span></label>
+                      <label className={styles.label}>State <span className={styles.autoStylea7b623}>*</span></label>
                       <input
                         list="state-list"
                         value={stateName}
@@ -978,7 +993,7 @@ export default function VendorsPage() {
 
                   <div className={styles.formGrid2}>
                     <div className={styles.fieldGroup}>
-                      <label className={styles.label}>Pincode <span style={{color: "red"}}>*</span></label>
+                      <label className={styles.label}>Pincode <span className={styles.autoStyledcf1b3}>*</span></label>
                       <input
                         type="text"
                         value={pincode}
@@ -989,7 +1004,7 @@ export default function VendorsPage() {
                       />
                     </div>
                     <div className={styles.fieldGroup}>
-                      <label className={styles.label}>Country <span style={{color: "red"}}>*</span></label>
+                      <label className={styles.label}>Country <span className={styles.autoStyle426164}>*</span></label>
                       <input
                         list="country-list"
                         value={countryName}
@@ -1007,10 +1022,10 @@ export default function VendorsPage() {
                   </div>
 
                   {/* Business Information */}
-                  <h3 className={styles.sectionTitle} style={{ marginTop: "20px" }}>Business Information</h3>
+                  <h3 className={`${styles.sectionTitle} ${styles.autoStyle731b86}`}>Business Information</h3>
                   <div className={styles.formGrid2}>
                     <div className={styles.fieldGroup}>
-                      <label className={styles.label}>GST Number <span style={{color: "red"}}>*</span></label>
+                      <label className={styles.label}>GST Number <span className={styles.autoStyleb346df}>*</span></label>
                       <input
                         type="text"
                         value={gstin}
@@ -1034,7 +1049,7 @@ export default function VendorsPage() {
 
                   <div className={styles.formGrid2}>
                     <div className={styles.fieldGroup}>
-                      <label className={styles.label}>Currency <span style={{color: "red"}}>*</span></label>
+                      <label className={styles.label}>Currency <span className={styles.autoStylec54485}>*</span></label>
                       <select 
                         value={currency} 
                         onChange={(e) => setCurrency(e.target.value)} 
@@ -1048,7 +1063,7 @@ export default function VendorsPage() {
                       </select>
                     </div>
                     <div className={styles.fieldGroup}>
-                      <label className={styles.label}>Credit Limit <span style={{color: "red"}}>*</span></label>
+                      <label className={styles.label}>Credit Limit <span className={styles.autoStyleb50a87}>*</span></label>
                       <input
                         type="text"
                         value={creditLimit}
@@ -1061,10 +1076,10 @@ export default function VendorsPage() {
                   </div>
 
                   {/* Product / Supply Details */}
-                  <h3 className={styles.sectionTitle} style={{ marginTop: "20px" }}>Product / Supply Details</h3>
+                  <h3 className={`${styles.sectionTitle} ${styles.autoStylebe58e6}`}>Product / Supply Details</h3>
                   <div className={styles.formGrid2}>
                     <div className={styles.fieldGroup}>
-                      <label className={styles.label}>Product Category <span style={{color: "red"}}>*</span></label>
+                      <label className={styles.label}>Product Category <span className={styles.autoStyle9115f1}>*</span></label>
                       <CustomSelect
                         options={categories.map((c) => ({
                           label: String(c.categoryName || c.name || "Category"),
@@ -1094,7 +1109,7 @@ export default function VendorsPage() {
 
                   <div className={styles.formGrid2}>
                     <div className={styles.fieldGroup}>
-                      <label className={styles.label}>Lead time (Delivery Days) <span style={{color: "red"}}>*</span></label>
+                      <label className={styles.label}>Lead time (Delivery Days) <span className={styles.autoStyleead3dd}>*</span></label>
                       <input
                         type="text"
                         value={leadTime}
@@ -1110,10 +1125,10 @@ export default function VendorsPage() {
                   </div>
 
                   {/* Status */}
-                  <h3 className={styles.sectionTitle} style={{ marginTop: "20px" }}>Status</h3>
+                  <h3 className={`${styles.sectionTitle} ${styles.autoStyle8f986f}`}>Status</h3>
                   <div className={styles.formGrid2}>
                     <div className={styles.fieldGroup}>
-                      <label className={styles.label}>Vendor Status <span style={{color: "red"}}>*</span></label>
+                      <label className={styles.label}>Vendor Status <span className={styles.autoStyle4e9a07}>*</span></label>
                       <CustomSelect
                         options={[
                           { label: "Active", value: "active" },
@@ -1129,10 +1144,10 @@ export default function VendorsPage() {
                   </div>
 
                   {/* Bank Details */}
-                  <h3 className={styles.sectionTitle} style={{ marginTop: "20px" }}>Bank Details</h3>
+                  <h3 className={`${styles.sectionTitle} ${styles.autoStyle36334e}`}>Bank Details</h3>
                   <div className={styles.formGrid2}>
                     <div className={styles.fieldGroup}>
-                      <label className={styles.label}>Bank Name <span style={{color: "red"}}>*</span></label>
+                      <label className={styles.label}>Bank Name <span className={styles.autoStyle5b0812}>*</span></label>
                       <input
                         type="text"
                         value={bankName}
@@ -1143,7 +1158,7 @@ export default function VendorsPage() {
                       />
                     </div>
                     <div className={styles.fieldGroup}>
-                      <label className={styles.label}>Account Number <span style={{color: "red"}}>*</span></label>
+                      <label className={styles.label}>Account Number <span className={styles.autoStylea066a6}>*</span></label>
                       <input
                         type="text"
                         value={accountNumber}
@@ -1157,7 +1172,7 @@ export default function VendorsPage() {
 
                   <div className={styles.formGrid2}>
                     <div className={styles.fieldGroup}>
-                      <label className={styles.label}>IFSC Code <span style={{color: "red"}}>*</span></label>
+                      <label className={styles.label}>IFSC Code <span className={styles.autoStyle3f840a}>*</span></label>
                       <input
                         type="text"
                         value={ifscCode}
@@ -1180,30 +1195,29 @@ export default function VendorsPage() {
                   </div>
 
                   {/* Attachments */}
-                  <h3 className={styles.sectionTitle} style={{ marginTop: "20px" }}>Attachments</h3>
+                  <h3 className={`${styles.sectionTitle} ${styles.autoStyle2f29c9}`}>Attachments</h3>
                   <div className={styles.formGrid2}>
                     <div className={styles.fieldGroup}>
                       <label className={styles.label}>Upload GST Certificate</label>
-                      <div style={{ position: "relative" }}>
+                      <div className={styles.autoStyle41dade}>
                         <input
                           type="file"
                           id="gst-upload"
                           accept=".pdf,.doc,.docx"
-                          style={{ display: "none" }}
+                          className={styles.autoStyle1e407f}
                           onChange={(e) => {
                             const file = e.target.files?.[0];
                             if (file) setGstCertificate(file.name);
                           }}
                         />
-                        <label htmlFor="gst-upload" style={{ display: "block", cursor: "pointer", position: "relative", width: "100%" }}>
+                        <label htmlFor="gst-upload" className={styles.autoStyleef312f}>
                           <input
                             type="text"
                             readOnly
                             value={gstCertificate}
-                            style={{ paddingRight: "40px", cursor: "pointer", width: "100%", pointerEvents: "none" }}
-                            className={styles.inputControl}
+                            className={`${styles.inputControl} ${styles.autoStyle96824d}`}
                           />
-                          <span style={{ position: "absolute", right: "12px", top: "10px", color: "#64748b", pointerEvents: "none" }}>
+                          <span className={styles.autoStyle324560}>
                             <FiPaperclip size={18} />
                           </span>
                         </label>
@@ -1212,26 +1226,25 @@ export default function VendorsPage() {
 
                     <div className={styles.fieldGroup}>
                       <label className={styles.label}>Upload Agreement</label>
-                      <div style={{ position: "relative" }}>
+                      <div className={styles.autoStyle67e53d}>
                         <input
                           type="file"
                           id="agreement-upload"
                           accept=".pdf,.doc,.docx"
-                          style={{ display: "none" }}
+                          className={styles.autoStyle0a727a}
                           onChange={(e) => {
                             const file = e.target.files?.[0];
                             if (file) setAgreement(file.name);
                           }}
                         />
-                        <label htmlFor="agreement-upload" style={{ display: "block", cursor: "pointer", position: "relative", width: "100%" }}>
+                        <label htmlFor="agreement-upload" className={styles.autoStyleb5a572}>
                           <input
                             type="text"
                             readOnly
                             value={agreement}
-                            style={{ paddingRight: "40px", cursor: "pointer", width: "100%", pointerEvents: "none" }}
-                            className={styles.inputControl}
+                            className={`${styles.inputControl} ${styles.autoStyle8312ce}`}
                           />
-                          <span style={{ position: "absolute", right: "12px", top: "10px", color: "#64748b", pointerEvents: "none" }}>
+                          <span className={styles.autoStyle28d012}>
                             <FiPaperclip size={18} />
                           </span>
                         </label>
@@ -1241,15 +1254,15 @@ export default function VendorsPage() {
 
                 </div>
 
-                <div className={styles.drawerFooter} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div style={{ display: "flex", alignItems: "center", color: "#2563eb", fontWeight: "600", fontSize: "14px" }}>
-                    <span style={{ marginRight: "6px" }}>🛡️</span> Save Vendor
+                <div className={`${styles.drawerFooter} ${styles.autoStylef7edeb}`}>
+                  <div className={styles.autoStylea58f4d}>
+                    <span className={styles.autoStyle6eec55}>🛡️</span> Save Vendor
                   </div>
-                  <div style={{ display: "flex", gap: "12px" }}>
+                  <div className={styles.autoStyle8a3bc1}>
                     <button type="button" className={styles.cancelBtn} onClick={() => setShowVendorModal(false)}>
                       Cancel
                     </button>
-                    <button type="submit" disabled={submitting} className={styles.saveBtn} style={{ padding: "10px 24px" }}>
+                    <button type="submit" disabled={submitting} className={`${styles.saveBtn} ${styles.autoStyle993744}`}>
                       {submitting ? "Saving..." : editingVendorId ? "Save and Update Vendor" : "Save and Add Vendor"}
                     </button>
                   </div>

@@ -19,7 +19,9 @@ import {
   createPurchaseOrder,
   fetchPurchaseOrdersList,
   PurchaseOrderItem,
+  CreatePurchaseOrderPayload,
 } from "@/lib/dashboardApi";
+import { APP_IMAGES } from "@/constants/images";
 import styles from "@/styles/pages/inventory.module.css";
 import {
   FiSearch,
@@ -237,15 +239,28 @@ export default function InventoryPage() {
       const currentQty = selectedProduct.quantity ?? 0;
       const newQty = currentQty + (reorderQty || 0);
 
-      await createPurchaseOrder({
+      const payload: CreatePurchaseOrderPayload = {
+        poNumber: `PO-${Math.floor(1000 + Math.random() * 9000)}`,
+        vendorId: selectedProduct.vendorId || 1,
         vendorName: targetVendor,
-        totalAmount: (reorderQty || 0) * (reorderUnitCost || 0),
+        deliveryAddressId: 1,
+        orderDate: new Date().toISOString().split("T")[0],
+        expectedDeliveryDate: new Date().toISOString().split("T")[0],
+        paymentTerms: "COD",
+        shipmentMethod: "Default",
+        notes: "SYSTEM_REORDER",
         status: "Completed",
-        productId: Number(selectedProduct.id),
-        productName: selectedProduct.productName,
-        quantity: reorderQty,
-        unitCost: reorderUnitCost,
-      });
+        totalAmount: (reorderQty || 0) * (reorderUnitCost || 0),
+        items: [
+          {
+            productId: Number(selectedProduct.id),
+            quantity: reorderQty || 0,
+            unitPrice: reorderUnitCost || 0,
+          },
+        ],
+      };
+      
+      await createPurchaseOrder(payload);
 
       await updateProduct(selectedProduct.id, {
         quantity: newQty,
@@ -429,7 +444,7 @@ export default function InventoryPage() {
                       <g
                         key={idx}
                         onMouseEnter={() => setActiveHoverIdx(idx)}
-                        style={{ cursor: "pointer" }}
+                        className={styles.autoStyled60394}
                       >
                         {/* Stock Added (Blue at bottom) */}
                         {addedHeight > 0 && (
@@ -627,19 +642,19 @@ export default function InventoryPage() {
           <div className={styles.tableWrapper}>
             <table className={styles.table}>
               <colgroup>
-                <col style={{ width: "28%" }} />
-                <col style={{ width: "20%" }} />
-                <col style={{ width: "18%" }} />
-                <col style={{ width: "22%" }} />
-                <col style={{ width: "12%" }} />
+                <col  className={styles.autoStyle597c24} />
+                <col  className={styles.autoStylee76fe6} />
+                <col  className={styles.autoStyle11c871} />
+                <col  className={styles.autoStyle58f1b6} />
+                <col  className={styles.autoStyle446e4f} />
               </colgroup>
               <thead>
                 <tr>
-                  <th style={{ textAlign: "left" }}>Product name</th>
-                  <th style={{ textAlign: "left" }}>SKU</th>
-                  <th style={{ textAlign: "left" }}>Category</th>
-                  <th style={{ textAlign: "left" }}>Current Stock</th>
-                  <th style={{ textAlign: "right", paddingRight: "28px" }}>
+                  <th className={styles.autoStyleb0fe23}>Product name</th>
+                  <th className={styles.autoStyle37b34e}>SKU</th>
+                  <th className={styles.autoStyle314b0f}>Category</th>
+                  <th className={styles.autoStyleba8bb2}>Current Stock</th>
+                  <th className={styles.autoStyle9adde2}>
                     Action
                   </th>
                 </tr>
@@ -649,12 +664,7 @@ export default function InventoryPage() {
                   <tr>
                     <td
                       colSpan={5}
-                      style={{
-                        textAlign: "center",
-                        padding: "32px",
-                        color: "#64748b",
-                      }}
-                    >
+                     className={styles.autoStylebffb96}>
                       Loading inventory items from backend database...
                     </td>
                   </tr>
@@ -694,13 +704,13 @@ export default function InventoryPage() {
                         onClick={() =>
                           p.id && router.push(`/products/add?id=${p.id}`)
                         }
-                        style={{ cursor: "pointer" }}
+                        className={styles.autoStylea11bc9}
                         title="Click to view/edit product details"
                       >
                         <td>
                           <div className={styles.productCell}>
                             <Image
-                              src={imageUrl}
+                              src={imageUrl || APP_IMAGES.LOGO.src}
                               alt={name}
                               width={36}
                               height={36}
@@ -788,23 +798,12 @@ export default function InventoryPage() {
                   <tr>
                     <td
                       colSpan={5}
-                      style={{
-                        textAlign: "center",
-                        padding: "40px",
-                        color: "#94a3b8",
-                      }}
-                    >
+                     className={styles.autoStylecc1a5d}>
                       <p
-                        style={{
-                          fontSize: "15px",
-                          fontWeight: 700,
-                          color: "#475569",
-                          margin: "0 0 6px 0",
-                        }}
-                      >
+                       className={styles.autoStyleb02676}>
                         No inventory records found.
                       </p>
-                      <p style={{ fontSize: "13px", margin: 0 }}>
+                      <p className={styles.autoStyled12ec2}>
                         Products added to the backend database will
                         automatically display here.
                       </p>
@@ -886,7 +885,7 @@ export default function InventoryPage() {
                   <Image
                     src={
                       selectedProduct.imageUrl ||
-                      "/Frontend/Dashboard_product.png"
+                      APP_IMAGES.DASHBOARD_PRODUCT.src
                     }
                     alt={selectedProduct.productName || "Product"}
                     width={48}
@@ -924,8 +923,7 @@ export default function InventoryPage() {
             <div className={styles.reorderFormGrid}>
               {/* Select Product */}
               <div
-                className={styles.formGroup}
-                style={{ gridColumn: "1 / -1" }}
+                className={`${styles.formGroup} ${styles.autoStyle06f730}`}
               >
                 <label className={styles.formLabel}>Select Product</label>
                 <CustomSelect
@@ -1045,8 +1043,7 @@ export default function InventoryPage() {
 
               {/* Note (Full Width) */}
               <div
-                className={styles.formGroup}
-                style={{ gridColumn: "1 / -1" }}
+                className={`${styles.formGroup} ${styles.autoStyle6b182f}`}
               >
                 <label className={styles.formLabel}>Note</label>
                 <textarea
@@ -1084,14 +1081,12 @@ export default function InventoryPage() {
               <hr className={styles.summaryDivider} />
               <div className={styles.summaryRow}>
                 <span
-                  className={styles.summaryLabel}
-                  style={{ fontWeight: 700, color: "#0f172a" }}
+                  className={`${styles.summaryLabel} ${styles.autoStyle4a1ff8}`}
                 >
                   Total
                 </span>
                 <span
-                  className={styles.summaryVal}
-                  style={{ fontSize: "15px", color: "#0f172a" }}
+                  className={`${styles.summaryVal} ${styles.autoStyle459e18}`}
                 >
                   ₹
                   {total.toLocaleString("en-IN", {

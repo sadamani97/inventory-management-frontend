@@ -126,7 +126,7 @@ export default function RecentActivitiesTable() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={6} style={{ textAlign: "center", color: "#64748b", padding: "24px" }}>
+                <td colSpan={6} className={styles.autoStyle02f1e5}>
                   Loading activities from backend...
                 </td>
               </tr>
@@ -147,7 +147,7 @@ export default function RecentActivitiesTable() {
               ))
             ) : (
               <tr>
-                <td colSpan={6} style={{ textAlign: "center", color: "#94a3b8", padding: "24px" }}>
+                <td colSpan={6} className={styles.autoStylee4fe52}>
                   No backend products or activities found.
                 </td>
               </tr>

@@ -51,8 +51,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   if (checkingAuth) {
     return (
-      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", backgroundColor: "#f8fafc" }}>
-        <p style={{ color: "#64748b", fontWeight: 500 }}>Checking authentication...</p>
+      <div className={styles.autoStyled8d084}>
+        <p className={styles.autoStyle58a4d4}>Checking authentication...</p>
       </div>
     );
   }

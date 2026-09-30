@@ -2,6 +2,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import Image from "next/image";
 import styles from "./Sidebar.module.css";
+import { APP_IMAGES } from "@/constants/images";
 import {
   FiGrid,
   FiAlertTriangle,
@@ -54,10 +55,8 @@ export default function Sidebar() {
       <div className={styles.brandHeader}>
         <Link href="/dashboard" className={styles.brandLogo}>
           <Image
-            src="/Frontend/DashboardLogo.png"
-            alt="Stockflow Logo"
-            width={28}
-            height={28}
+            {...APP_IMAGES.DASHBOARD_LOGO}
+            alt={APP_IMAGES.DASHBOARD_LOGO.alt}
             className={styles.brandLogoImg}
             priority
           />

@@ -53,10 +53,9 @@ export default function Header() {
 
         <button
           onClick={handleLogout}
-          className={styles.notificationBtn}
+          className={`${styles.notificationBtn} ${styles.autoStyle5376a2}`}
           title="Logout"
           aria-label="Logout"
-          style={{ marginLeft: 8 }}
         >
           <FiLogOut />
         </button>

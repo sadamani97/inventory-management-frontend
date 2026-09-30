@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Image from "next/image";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import { APP_IMAGES } from "@/constants/images";
 import styles from "@/styles/pages/vendorDetails.module.css";
 import {
   fetchVendorById,
@@ -87,7 +88,9 @@ export default function VendorDetailPage() {
   const [vendor, setVendor] = useState<VendorItem | null>(null);
   const [products, setProducts] = useState<ProductItem[]>([]);
   const [purchaseOrders, setPurchaseOrders] = useState<ExtendedPO[]>([]);
-  const [activeTab, setActiveTab] = useState<"catalog" | "transaction" | "reviews">("catalog");
+  const [activeTab, setActiveTab] = useState<
+    "catalog" | "transaction" | "reviews"
+  >("catalog");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [loading, setLoading] = useState(true);
@@ -113,26 +116,42 @@ export default function VendorDetailPage() {
 
         if (prodRes.status === "fulfilled" && Array.isArray(prodRes.value)) {
           // Filter products for this specific vendor if vendorId matches
-          const vendorProds = (prodRes.value as ExtendedProduct[]).filter((p) => {
-            const pVId = p.vendorId || p.vendor_id || (p.vendor && (p.vendor.id || p.vendor.vendorId));
-            return pVId && String(pVId) === String(vendorIdStr);
-          });
+          const vendorProds = (prodRes.value as ExtendedProduct[]).filter(
+            (p) => {
+              const pVId =
+                p.vendorId ||
+                p.vendor_id ||
+                (p.vendor && (p.vendor.id || p.vendor.vendorId));
+              return pVId && String(pVId) === String(vendorIdStr);
+            },
+          );
           // Fix: show only vendor's products, if none exist, set to empty array instead of showing all
           setProducts(vendorProds);
         }
 
         if (poRes.status === "fulfilled" && Array.isArray(poRes.value)) {
-          const matchedPOs = (poRes.value as unknown as ExtendedPO[]).filter((po) => {
-            const vId = po.vendorId || po.vendor_id || (po.vendor && (po.vendor.id || po.vendor.vendorId));
-            if (vId && String(vId) === String(vendorIdStr)) return true;
-            if (vendorRes.status === "fulfilled" && vendorRes.value) {
-              const vName = vendorRes.value.vendorName || (vendorRes.value as { name?: string }).name;
-              if (po.vendorName && vName && po.vendorName.toLowerCase() === vName.toLowerCase()) {
-                return true;
+          const matchedPOs = (poRes.value as unknown as ExtendedPO[]).filter(
+            (po) => {
+              const vId =
+                po.vendorId ||
+                po.vendor_id ||
+                (po.vendor && (po.vendor.id || po.vendor.vendorId));
+              if (vId && String(vId) === String(vendorIdStr)) return true;
+              if (vendorRes.status === "fulfilled" && vendorRes.value) {
+                const vName =
+                  vendorRes.value.vendorName ||
+                  (vendorRes.value as { name?: string }).name;
+                if (
+                  po.vendorName &&
+                  vName &&
+                  po.vendorName.toLowerCase() === vName.toLowerCase()
+                ) {
+                  return true;
+                }
               }
-            }
-            return false;
-          });
+              return false;
+            },
+          );
           setPurchaseOrders(matchedPOs);
         }
       } catch (err) {
@@ -148,9 +167,7 @@ export default function VendorDetailPage() {
   if (loading) {
     return (
       <DashboardLayout>
-        <div style={{ padding: "40px", textAlign: "center", color: "#64748b" }}>
-          Loading vendor details...
-        </div>
+        <div className={styles.autoStylebce57c}>Loading vendor details...</div>
       </DashboardLayout>
     );
   }
@@ -158,19 +175,11 @@ export default function VendorDetailPage() {
   if (!vendor) {
     return (
       <DashboardLayout>
-        <div style={{ padding: "40px", textAlign: "center", color: "#64748b" }}>
+        <div className={styles.autoStyle4d0912}>
           <h3>Vendor not found</h3>
           <button
             onClick={() => router.push("/vendors")}
-            style={{
-              marginTop: "16px",
-              padding: "8px 16px",
-              backgroundColor: "#2563eb",
-              color: "#fff",
-              border: "none",
-              borderRadius: "6px",
-              cursor: "pointer",
-            }}
+            className={styles.autoStylea9279d}
           >
             Back to Vendors
           </button>
@@ -182,43 +191,92 @@ export default function VendorDetailPage() {
   const vendorObj = vendor as ExtendedVendor;
 
   // Extract contact info checking both contacts array and direct vendor fields
-  const primaryContact = vendorObj.contacts && vendorObj.contacts.length > 0 ? (vendorObj.contacts[0] as { mobileNumber?: string; phone?: string; mobile?: string; email?: string }) : null;
-  const phoneVal = primaryContact?.mobileNumber || primaryContact?.mobile || primaryContact?.phone || vendorObj.phone || vendorObj.mobileNumber || vendorObj.mobile || "N/A";
+  const primaryContact =
+    vendorObj.contacts && vendorObj.contacts.length > 0
+      ? (vendorObj.contacts[0] as {
+          mobileNumber?: string;
+          phone?: string;
+          mobile?: string;
+          email?: string;
+        })
+      : null;
+  const phoneVal =
+    primaryContact?.mobileNumber ||
+    primaryContact?.mobile ||
+    primaryContact?.phone ||
+    vendorObj.phone ||
+    vendorObj.mobileNumber ||
+    vendorObj.mobile ||
+    "N/A";
   const emailVal = primaryContact?.email || vendorObj.email || "N/A";
 
   // Extract address info checking both addresses array and direct vendor fields
-  const primaryAddress = vendorObj.addresses && vendorObj.addresses.length > 0 ? vendorObj.addresses[0] : null;
+  const primaryAddress =
+    vendorObj.addresses && vendorObj.addresses.length > 0
+      ? vendorObj.addresses[0]
+      : null;
   const addressObj = primaryAddress as ExtendedAddress | null;
   let fullAddress = "";
   if (addressObj) {
     const parts = [
       addressObj.addressLine1 || addressObj.addressLine,
-      typeof addressObj.city === "object" ? addressObj.city?.cityName || addressObj.city?.name : addressObj.city,
-      typeof addressObj.state === "object" ? addressObj.state?.stateName || addressObj.state?.name : addressObj.state,
-      typeof addressObj.country === "object" ? addressObj.country?.countryName || addressObj.country?.name : addressObj.country,
+      typeof addressObj.city === "object"
+        ? addressObj.city?.cityName || addressObj.city?.name
+        : addressObj.city,
+      typeof addressObj.state === "object"
+        ? addressObj.state?.stateName || addressObj.state?.name
+        : addressObj.state,
+      typeof addressObj.country === "object"
+        ? addressObj.country?.countryName || addressObj.country?.name
+        : addressObj.country,
       addressObj.pincode,
     ].filter(Boolean);
     fullAddress = parts.join(", ");
   }
   if (!fullAddress || fullAddress.trim() === "") {
-    fullAddress = vendorObj.address || vendorObj.addressLine || vendorObj.addressLine1 || "N/A";
+    fullAddress =
+      vendorObj.address ||
+      vendorObj.addressLine ||
+      vendorObj.addressLine1 ||
+      "N/A";
   }
 
   // Categories list for filter dropdown
-  const categories = ["All", ...Array.from(new Set((products as ExtendedProduct[]).map((p) => typeof p.category === "object" ? (p.category as { categoryName?: string })?.categoryName : p.category || "General")))] as string[];
+  const categories = [
+    "All",
+    ...Array.from(
+      new Set(
+        (products as ExtendedProduct[]).map((p) =>
+          typeof p.category === "object"
+            ? (p.category as { categoryName?: string })?.categoryName
+            : p.category || "General",
+        ),
+      ),
+    ),
+  ] as string[];
 
   // Filtered product catalog
   const filteredProducts = (products as ExtendedProduct[]).filter((p) => {
     const matchesSearch =
-      (p.name || p.productName || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (p.name || p.productName || "")
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
       (p.sku || "").toLowerCase().includes(searchQuery.toLowerCase());
-    const catName = typeof p.category === "object" ? (p.category as { categoryName?: string })?.categoryName : p.category || "General";
-    const matchesCat = selectedCategory === "All" || catName === selectedCategory;
+    const catName =
+      typeof p.category === "object"
+        ? (p.category as { categoryName?: string })?.categoryName
+        : p.category || "General";
+    const matchesCat =
+      selectedCategory === "All" || catName === selectedCategory;
     return matchesSearch && matchesCat;
   });
 
   const joinedDate = vendorObj.createdAt
-    ? new Date(vendorObj.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+    ? new Date(vendorObj.createdAt).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
     : "N/A";
 
   return (
@@ -227,11 +285,18 @@ export default function VendorDetailPage() {
         {/* Top Navigation Row */}
         <div className={styles.topBreadcrumbRow}>
           <div className={styles.headerLeft}>
-            <button className={styles.backBtn} onClick={() => router.push("/vendors")}>
+            <button
+              className={styles.backBtn}
+              onClick={() => router.push("/vendors")}
+            >
               <FiArrowLeft />
             </button>
             <Image
-              src={vendorObj?.vendorLogo ? `/${vendorObj.vendorLogo}` : "/product/Dailyneed.png"}
+              src={
+                vendorObj?.vendorLogo
+                  ? `/${vendorObj.vendorLogo}`
+                  : APP_IMAGES.DAILY_NEED.src
+              }
               alt="Vendor Logo"
               width={44}
               height={44}
@@ -249,12 +314,17 @@ export default function VendorDetailPage() {
                       : styles.statusPillInactive
                   }
                 >
-                  ✓ {vendorObj.status ? vendorObj.status.charAt(0).toUpperCase() + vendorObj.status.slice(1) : "Active"}
+                  ✓{" "}
+                  {vendorObj.status
+                    ? vendorObj.status.charAt(0).toUpperCase() +
+                      vendorObj.status.slice(1)
+                    : "Active"}
                 </span>
               </div>
               <div className={styles.vendorSubMeta}>
                 <span className={styles.vendorCodeTag}>
-                  {vendorObj.vendorCode || `VEN-${String(vendorObj.vendorId || vendorObj.id || id).padStart(3, "0")}`}
+                  {vendorObj.vendorCode ||
+                    `VEN-${String(vendorObj.vendorId || vendorObj.id || id).padStart(3, "0")}`}
                 </span>
                 <span className={styles.metaDot}>•</span>
                 <span>Joined {joinedDate}</span>
@@ -270,7 +340,10 @@ export default function VendorDetailPage() {
             >
               <FiEdit />
             </button>
-            <button className={styles.iconBtn} onClick={() => toast.info("More actions")}>
+            <button
+              className={styles.iconBtn}
+              onClick={() => toast.info("More actions")}
+            >
               <FiMoreHorizontal />
             </button>
             <button
@@ -287,7 +360,12 @@ export default function VendorDetailPage() {
                 }
               }}
             >
-              <FiStar style={{ fill: vendorObj.isStarred ? "#f59e0b" : "none", color: vendorObj.isStarred ? "#f59e0b" : undefined }} />
+              <FiStar
+                style={{
+                  fill: vendorObj.isStarred ? "#f59e0b" : "none",
+                  color: vendorObj.isStarred ? "#f59e0b" : undefined,
+                }}
+              />
             </button>
             <button
               className={styles.createPoBtn}
@@ -300,9 +378,7 @@ export default function VendorDetailPage() {
 
         {/* Vendor Description */}
         {vendorObj.description && (
-          <p className={styles.vendorDesc}>
-            {vendorObj.description}
-          </p>
+          <p className={styles.vendorDesc}>{vendorObj.description}</p>
         )}
 
         {/* 2-Column Main Layout Grid */}
@@ -332,7 +408,7 @@ export default function VendorDetailPage() {
                       <span>Vendor Type</span>
                     </div>
                     <div className={styles.detailValueBox}>
-                      {vendorObj.vendorType.name || "N/A"}
+                      {vendorObj.vendorType?.name || "N/A"}
                     </div>
                   </div>
                 )}
@@ -354,9 +430,7 @@ export default function VendorDetailPage() {
                     <FiPhone className={styles.detailIcon} />
                     <span>Phone number</span>
                   </div>
-                  <div className={styles.detailValueBox}>
-                    {phoneVal}
-                  </div>
+                  <div className={styles.detailValueBox}>{phoneVal}</div>
                 </div>
 
                 <div className={styles.detailRow}>
@@ -364,9 +438,7 @@ export default function VendorDetailPage() {
                     <FiMail className={styles.detailIcon} />
                     <span>Email</span>
                   </div>
-                  <div className={styles.detailValueBox}>
-                    {emailVal}
-                  </div>
+                  <div className={styles.detailValueBox}>{emailVal}</div>
                 </div>
 
                 <div className={styles.detailRow}>
@@ -386,16 +458,16 @@ export default function VendorDetailPage() {
                   </div>
                   <div className={styles.carriersGroup}>
                     <Image
-                      src="/product/indiamart.png"
-                      alt="IndiaMART"
+                      {...APP_IMAGES.INDIAMART}
+                      alt={APP_IMAGES.INDIAMART.alt}
                       width={80}
                       height={24}
                       className={styles.carrierLogoImg}
                     />
 
                     <Image
-                      src="/product/tradeindia.png"
-                      alt="TradeIndia"
+                      {...APP_IMAGES.TRADEINDIA}
+                      alt={APP_IMAGES.TRADEINDIA.alt}
                       width={80}
                       height={24}
                       className={styles.carrierLogoImg}
@@ -408,16 +480,14 @@ export default function VendorDetailPage() {
                     <FiMapPin className={styles.detailIcon} />
                     <span>Address</span>
                   </div>
-                  <div className={styles.detailValueBox}>
-                    {fullAddress}
-                  </div>
+                  <div className={styles.detailValueBox}>{fullAddress}</div>
                 </div>
               </div>
             </div>
 
             {/* Bank Details */}
             {vendorObj.bankDetails && vendorObj.bankDetails.length > 0 && (
-              <div style={{ marginTop: "24px" }}>
+              <div className={styles.autoStyle8d6061}>
                 <div className={styles.sectionHeaderTitle}>Bank Details</div>
                 <div className={styles.supplierDetailsList}>
                   <div className={styles.detailRow}>
@@ -478,8 +548,15 @@ export default function VendorDetailPage() {
             {/* Ratings Breakdown */}
             <div className={styles.ratingsSection}>
               <div className={styles.ratingsTopRow}>
-                <span className={styles.sectionHeaderTitle} style={{ margin: 0 }}>Ratings</span>
-                <span className={styles.viewAllRatingsLink} onClick={() => toast.info("Viewing all ratings")}>
+                <span
+                  className={`${styles.sectionHeaderTitle} ${styles.autoStylef70074}`}
+                >
+                  Ratings
+                </span>
+                <span
+                  className={styles.viewAllRatingsLink}
+                  onClick={() => toast.info("Viewing all ratings")}
+                >
                   View all ratings
                 </span>
               </div>
@@ -488,10 +565,8 @@ export default function VendorDetailPage() {
                 <span className={styles.bigScore}>4.3</span>
                 <div className={styles.starsGroup}>
                   <Image
-                    src="/product/Stars.png"
-                    alt="Rating Stars"
-                    width={90}
-                    height={18}
+                    {...APP_IMAGES.STARS}
+                    alt={APP_IMAGES.STARS.alt}
                     className={styles.starsImg}
                   />
                   <span className={styles.totalReviewsText}>4807 reviews</span>
@@ -502,7 +577,9 @@ export default function VendorDetailPage() {
                 <div className={styles.breakdownItem}>
                   <span className={styles.breakdownLabel}>5 - Excellent</span>
                   <div className={styles.barTrack}>
-                    <div className={styles.barFill} style={{ width: "75%" }} />
+                    <div
+                      className={`${styles.barFill} ${styles.autoStyled68d26}`}
+                    />
                   </div>
                   <span className={styles.breakdownCount}>2,200</span>
                 </div>
@@ -510,7 +587,9 @@ export default function VendorDetailPage() {
                 <div className={styles.breakdownItem}>
                   <span className={styles.breakdownLabel}>4 - Good</span>
                   <div className={styles.barTrack}>
-                    <div className={styles.barFill} style={{ width: "35%" }} />
+                    <div
+                      className={`${styles.barFill} ${styles.autoStyleabe515}`}
+                    />
                   </div>
                   <span className={styles.breakdownCount}>550</span>
                 </div>
@@ -518,15 +597,21 @@ export default function VendorDetailPage() {
                 <div className={styles.breakdownItem}>
                   <span className={styles.breakdownLabel}>3 - Okay</span>
                   <div className={styles.barTrack}>
-                    <div className={styles.barFill} style={{ width: "35%" }} />
+                    <div
+                      className={`${styles.barFill} ${styles.autoStyle9290b7}`}
+                    />
                   </div>
                   <span className={styles.breakdownCount}>550</span>
                 </div>
 
                 <div className={styles.breakdownItem}>
-                  <span className={styles.breakdownLabel}>2 - Disappointment</span>
+                  <span className={styles.breakdownLabel}>
+                    2 - Disappointment
+                  </span>
                   <div className={styles.barTrack}>
-                    <div className={styles.barFill} style={{ width: "25%" }} />
+                    <div
+                      className={`${styles.barFill} ${styles.autoStylee4d122}`}
+                    />
                   </div>
                   <span className={styles.breakdownCount}>407</span>
                 </div>
@@ -534,7 +619,9 @@ export default function VendorDetailPage() {
                 <div className={styles.breakdownItem}>
                   <span className={styles.breakdownLabel}>1 - Terrible</span>
                   <div className={styles.barTrack}>
-                    <div className={styles.barFill} style={{ width: "10%" }} />
+                    <div
+                      className={`${styles.barFill} ${styles.autoStylef17960}`}
+                    />
                   </div>
                   <span className={styles.breakdownCount}>100</span>
                 </div>
@@ -549,7 +636,10 @@ export default function VendorDetailPage() {
                 className={`${styles.tabBtn} ${activeTab === "catalog" ? styles.tabBtnActive : ""}`}
                 onClick={() => setActiveTab("catalog")}
               >
-                Product catalog <span className={styles.badgeCount}>{filteredProducts.length}</span>
+                Product catalog{" "}
+                <span className={styles.badgeCount}>
+                  {filteredProducts.length}
+                </span>
               </button>
               <button
                 className={`${styles.tabBtn} ${activeTab === "transaction" ? styles.tabBtnActive : ""}`}
@@ -569,7 +659,7 @@ export default function VendorDetailPage() {
               <>
                 <div className={styles.searchFilterRow}>
                   <div className={styles.searchInputBox}>
-                    <FiSearch style={{ color: "#94a3b8" }} />
+                    <FiSearch className={styles.autoStyle1a1f5b} />
                     <input
                       type="text"
                       placeholder="Search"
@@ -591,7 +681,7 @@ export default function VendorDetailPage() {
                   </select>
                 </div>
 
-                <div style={{ overflowX: "auto" }}>
+                <div className={styles.autoStyle066a5e}>
                   <table className={styles.catalogTable}>
                     <thead>
                       <tr>
@@ -606,38 +696,56 @@ export default function VendorDetailPage() {
                     <tbody>
                       {filteredProducts.length === 0 ? (
                         <tr>
-                          <td colSpan={6} style={{ textAlign: "center", color: "#64748b", padding: "24px" }}>
+                          <td colSpan={6} className={styles.autoStyle507506}>
                             No products found in catalog.
                           </td>
                         </tr>
                       ) : (
                         filteredProducts.map((prod, idx) => {
-                          const stockQty = Number(prod.quantity || prod.stock || 0);
+                          const stockQty = Number(
+                            prod.quantity || prod.stock || 0,
+                          );
                           let statusText = "Active";
                           let statusClass = styles.statusActive;
                           if (stockQty === 0) {
                             statusText = "Inactive";
                             statusClass = styles.statusInactive;
-                          } else if (stockQty <= (prod.lowStockLimit || prod.minStock || 20)) {
+                          } else if (
+                            stockQty <=
+                            (prod.lowStockLimit || prod.minStock || 20)
+                          ) {
                             statusText = "Low Stock";
                             statusClass = styles.statusLowStock;
                           }
 
                           return (
                             <tr key={prod.id || prod.productId || idx}>
-                              <td className={styles.productNameCell}>{prod.name || prod.productName}</td>
-                              <td className={styles.skuCell}>{prod.sku || `NES-IF-10${idx + 1}`}</td>
+                              <td className={styles.productNameCell}>
+                                {prod.name || prod.productName}
+                              </td>
+                              <td className={styles.skuCell}>
+                                {prod.sku || `NES-IF-10${idx + 1}`}
+                              </td>
                               <td>
                                 {typeof prod.category === "object"
-                                  ? prod.category?.categoryName || prod.category?.name
+                                  ? prod.category?.categoryName ||
+                                    prod.category?.name
                                   : prod.category || "General"}
                               </td>
-                              <td>{prod.minOrder || `${prod.lowStockLimit || 50} Packs`}</td>
                               <td>
-                                <span className={statusClass}>{statusText}</span>
+                                {prod.minOrder ||
+                                  `${prod.lowStockLimit || 50} Packs`}
                               </td>
                               <td>
-                                <button className={styles.actionDotsBtn} title="Actions">
+                                <span className={statusClass}>
+                                  {statusText}
+                                </span>
+                              </td>
+                              <td>
+                                <button
+                                  className={styles.actionDotsBtn}
+                                  title="Actions"
+                                >
                                   <FiMoreHorizontal />
                                 </button>
                               </td>
@@ -652,7 +760,7 @@ export default function VendorDetailPage() {
             )}
 
             {activeTab === "transaction" && (
-              <div style={{ overflowX: "auto", marginTop: "12px" }}>
+              <div className={styles.autoStyle5507e4}>
                 <table className={styles.catalogTable}>
                   <thead>
                     <tr>
@@ -666,25 +774,52 @@ export default function VendorDetailPage() {
                   <tbody>
                     {purchaseOrders.length === 0 ? (
                       <tr>
-                        <td colSpan={5} style={{ textAlign: "center", color: "#64748b", padding: "24px" }}>
+                        <td colSpan={5} className={styles.autoStyle112337}>
                           No transactions found for this vendor.
                         </td>
                       </tr>
                     ) : (
                       purchaseOrders.map((po, idx) => (
                         <tr key={po.id || idx}>
-                          <td style={{ fontWeight: 600, color: "#2563eb" }}>
-                            {po.poNumber || po.orderNumber || `PO-#100${idx + 1}`}
+                          <td className={styles.autoStylec99318}>
+                            {po.poNumber ||
+                              po.orderNumber ||
+                              `PO-#100${idx + 1}`}
                           </td>
                           <td>
                             {po.orderDate || po.createdAt
-                              ? new Date((po.orderDate || po.createdAt) as string | number | Date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                              ? new Date(
+                                  (po.orderDate || po.createdAt) as
+                                    | string
+                                    | number
+                                    | Date,
+                                ).toLocaleDateString("en-US", {
+                                  month: "short",
+                                  day: "numeric",
+                                  year: "numeric",
+                                })
                               : "N/A"}
                           </td>
-                          <td>{po.productName || po.description || (po.items?.length ? `${po.items.length} Packs` : "Bulk Order")}</td>
-                          <td style={{ fontWeight: 600 }}>₹{(po.totalAmount || po.grandTotal || po.amount || 0).toLocaleString()}</td>
                           <td>
-                            <span className={styles.statusActive}>{po.status || "Completed"}</span>
+                            {po.productName ||
+                              po.description ||
+                              (po.items?.length
+                                ? `${po.items.length} Packs`
+                                : "Bulk Order")}
+                          </td>
+                          <td className={styles.autoStyle43a479}>
+                            ₹
+                            {(
+                              po.totalAmount ||
+                              po.grandTotal ||
+                              po.amount ||
+                              0
+                            ).toLocaleString()}
+                          </td>
+                          <td>
+                            <span className={styles.statusActive}>
+                              {po.status || "Completed"}
+                            </span>
                           </td>
                         </tr>
                       ))
@@ -695,7 +830,7 @@ export default function VendorDetailPage() {
             )}
 
             {activeTab === "reviews" && (
-              <div style={{ padding: "24px", color: "#64748b", fontSize: "14px" }}>
+              <div className={styles.autoStyleefafa2}>
                 Customer reviews and seller feedbacks section.
               </div>
             )}

@@ -16,7 +16,6 @@ import {
   CategoryItem,
   VendorItem,
   BrandItem,
-  UnitItem,
 } from "@/lib/dashboardApi";
 import { toast } from "react-toastify";
 import api from "@/lib/api";
@@ -66,7 +65,7 @@ export default function AddProductPage() {
       fetchVendorsList(),
       fetchBrands(),
       fetchUnits(),
-    ]).then(([cats, vends, brs, uns]) => {
+    ]).then(([cats, vends, brs]) => {
       if (!isMounted) return;
       setCategories(cats || []);
       setVendors(vends || []);
@@ -278,7 +277,7 @@ export default function AddProductPage() {
                   <CustomSelect
                     options={vendors.map((v) => ({
                       label: String(v.vendorName || v.name || "Vendor"),
-                      value: String((v as Record<string, unknown>).vendorId || v.id || ""),
+                      value: String(v.vendorId || v.id || ""),
                     }))}
                     value={vendorId}
                     onChange={setVendorId}
@@ -401,8 +400,7 @@ export default function AddProductPage() {
                 ref={fileInputRef}
                 accept="image/*"
                 onChange={handleImageFileChange}
-                style={{ display: "none" }}
-              />
+               className={styles.autoStyle9cdce6} />
 
               <div className={styles.dropzoneGrid}>
                 <div
@@ -416,7 +414,7 @@ export default function AddProductPage() {
                 </div>
 
                 {images.map((imgSrc, idx) => (
-                  <div key={idx} style={{ position: "relative" }}>
+                  <div key={idx} className={styles.autoStylefdd5a0}>
                     <Image
                       src={imgSrc}
                       alt="Uploaded preview"
@@ -450,7 +448,7 @@ export default function AddProductPage() {
                 </button>
               </div>
               {addVarient ? (
-                <div style={{ marginTop: 10, fontSize: 12, color: "#2563eb", fontWeight: 600 }}>
+                <div className={styles.autoStyle7a604a}>
                   Selected variant: {addVarient}
                 </div>
               ) : null}

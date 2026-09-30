@@ -6,6 +6,7 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import CustomDatePicker from "@/components/dashboard/CustomDatePicker";
 import CustomSelect, { CustomSelectOption } from "@/components/ui/CustomSelect";
 import { fetchProductsList, ProductItem } from "@/lib/dashboardApi";
+import { APP_IMAGES } from "@/constants/images";
 import styles from "@/styles/pages/products.module.css";
 import { FiSearch, FiUpload, FiPlus } from "react-icons/fi";
 
@@ -109,7 +110,7 @@ export default function ProductsPage() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={5} style={{ textAlign: "center", padding: "32px", color: "#64748b" }}>
+                    <td colSpan={5} className={styles.autoStyle243318}>
                       Loading products from backend database...
                     </td>
                   </tr>
@@ -120,13 +121,13 @@ export default function ProductsPage() {
                     const sku = p.sku || `SKU-${idx + 1}`;
                     const category = p.category?.categoryName || "General";
                     const price = p.sellingPrice || 0;
-                    const imageUrl = p.imageUrl || "/Frontend/Dashboard_product.png";
+                    const imageUrl = p.imageUrl || APP_IMAGES.DASHBOARD_PRODUCT.src;
 
                     return (
                       <tr
                         key={p.id || idx}
                         onClick={() => p.id && router.push(`/products/add?id=${p.id}`)}
-                        style={{ cursor: "pointer" }}
+                        className={styles.autoStyle32a577}
                       >
                         <td>
                           <div className={styles.productCell}>
@@ -165,11 +166,11 @@ export default function ProductsPage() {
                   })
                 ) : (
                   <tr>
-                    <td colSpan={5} style={{ textAlign: "center", padding: "40px", color: "#94a3b8" }}>
-                      <p style={{ fontSize: "15px", fontWeight: 700, color: "#475569", margin: "0 0 6px 0" }}>
+                    <td colSpan={5} className={styles.autoStyle741323}>
+                      <p className={styles.autoStyle0ad6e2}>
                         No products stored in database.
                       </p>
-                      <p style={{ fontSize: "13px", margin: 0 }}>
+                      <p className={styles.autoStyle2f3830}>
                         Click <strong>&quot;+ New Product&quot;</strong> to add products to your backend database.
                       </p>
                     </td>

@@ -51,6 +51,7 @@ export interface VendorTypeItem {
   vendorTypeId?: number;
   id?: number;
   typeName: string;
+  name?: string;
 }
 
 export interface CountryItem {
@@ -168,6 +169,9 @@ export interface ProductItem {
   vendor?: VendorItem;
   brand?: BrandItem;
   unit?: UnitItem;
+  minStock?: number;
+  minOrder?: number;
+  productId?: number | string;
 }
 
 export interface CreateProductPayload {
@@ -203,6 +207,10 @@ export interface PurchaseOrderItem {
   id: number | string;
   poNumber?: string;
   vendorName?: string;
+  vendor?: {
+    vendorName?: string;
+    companyName?: string;
+  };
   totalAmount?: number;
   status?: string;
   productId?: number;
@@ -210,6 +218,7 @@ export interface PurchaseOrderItem {
   quantity?: number;
   unitCost?: number;
   createdAt?: string;
+  items?: { quantity?: number }[];
 }
 
 export interface SalesOrderItem {
@@ -300,7 +309,7 @@ export async function fetchRecentActivities(): Promise<ActivityItem[]> {
       poRes.data.data.forEach((po: Record<string, unknown>, idx: number) => {
         items.push({
           id: `po-${po.id || idx}`,
-          activity: "Reordered Stock",
+          activity: po.notes === "SYSTEM_REORDER" ? "Reordered Stock" : "Purchased Product",
           product: String(po.productName || po.vendorName || "Product Order"),
           sku: String(po.sku || "PO-ORD"),
           qty: po.quantity ? `+${po.quantity}` : `₹${po.totalAmount || 0}`,
@@ -595,6 +604,7 @@ export async function fetchPurchaseOrdersList(): Promise<PurchaseOrderItem[]> {
 export interface CreatePurchaseOrderPayload {
   poNumber: string;
   vendorId: number;
+  vendorName?: string;
   deliveryAddressId: number;
   orderDate: string;
   expectedDeliveryDate: string;

@@ -1,24 +1,26 @@
 import { useEffect, useState, useMemo } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { 
-  fetchPurchaseOrdersList, 
-  PurchaseOrderItem, 
-  fetchRecentActivities, 
+import {
+  fetchPurchaseOrdersList,
+  PurchaseOrderItem,
+  fetchRecentActivities,
   ActivityItem,
   fetchProductsList,
-  ProductItem 
+  ProductItem,
 } from "@/lib/dashboardApi";
 import styles from "@/styles/pages/purchaseOrders.module.css";
 import Image from "next/image";
 import { FiDownload, FiPlus, FiSearch } from "react-icons/fi";
-import { FaAngleDown } from "react-icons/fa6";
+
 import CreatePOModal from "@/components/dashboard/CreatePOModal";
+import CustomDatePicker from "@/components/dashboard/CustomDatePicker";
+import { APP_IMAGES } from "@/constants/images";
 
 export default function PurchaseOrdersPage() {
   const [orders, setOrders] = useState<PurchaseOrderItem[]>([]);
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [lowStockProducts, setLowStockProducts] = useState<ProductItem[]>([]);
-  
+
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All Status");
@@ -28,15 +30,16 @@ export default function PurchaseOrdersPage() {
     Promise.all([
       fetchPurchaseOrdersList(),
       fetchRecentActivities(),
-      fetchProductsList()
+      fetchProductsList(),
     ]).then(([poData, activityData, productsData]) => {
       setOrders(poData || []);
       setActivities((activityData || [])?.slice(0, 5));
-      
-      const lowStock = (productsData || [])?.filter(
-        (p) => Number(p?.quantity || 0) <= Number(p?.lowStockLimit || 10)
-      )?.slice(0, 5);
-      
+
+      const lowStock = (productsData || [])
+        ?.filter(
+          (p) => Number(p?.quantity || 0) <= 70
+        );
+
       setLowStockProducts(lowStock);
       setLoading(false);
     });
@@ -44,15 +47,24 @@ export default function PurchaseOrdersPage() {
 
   const stats = useMemo(() => {
     const total = orders?.length || 0;
-    const pending = orders?.filter((o) => o?.status?.toLowerCase() === "pending")?.length || 0;
-    const completed = orders?.filter((o) => {
-      const s = o?.status?.toLowerCase();
-      return s === "completed" || s === "delivered" || s === "approved" || s === "shipped";
-    })?.length || 0;
-    const canceled = orders?.filter((o) => {
-      const s = o?.status?.toLowerCase();
-      return s === "canceled" || s === "cancelled";
-    })?.length || 0;
+    const pending =
+      orders?.filter((o) => o?.status?.toLowerCase() === "pending")?.length ||
+      0;
+    const completed =
+      orders?.filter((o) => {
+        const s = o?.status?.toLowerCase();
+        return (
+          s === "completed" ||
+          s === "delivered" ||
+          s === "approved" ||
+          s === "shipped"
+        );
+      })?.length || 0;
+    const canceled =
+      orders?.filter((o) => {
+        const s = o?.status?.toLowerCase();
+        return s === "canceled" || s === "cancelled";
+      })?.length || 0;
 
     return { total, pending, completed, canceled };
   }, [orders]);
@@ -62,7 +74,11 @@ export default function PurchaseOrdersPage() {
 
     if (statusFilter !== "All Status") {
       filtered = filtered?.filter(
-        (o) => o?.status?.toLowerCase() === statusFilter?.toLowerCase() || (statusFilter === "Cancelled" && (o?.status?.toLowerCase() === "canceled" || o?.status?.toLowerCase() === "cancelled"))
+        (o) =>
+          o?.status?.toLowerCase() === statusFilter?.toLowerCase() ||
+          (statusFilter === "Cancelled" &&
+            (o?.status?.toLowerCase() === "canceled" ||
+              o?.status?.toLowerCase() === "cancelled")),
       );
     }
 
@@ -72,7 +88,7 @@ export default function PurchaseOrdersPage() {
         (o) =>
           o?.poNumber?.toLowerCase()?.includes(q) ||
           o?.vendorName?.toLowerCase()?.includes(q) ||
-          o?.productName?.toLowerCase()?.includes(q)
+          o?.productName?.toLowerCase()?.includes(q),
       );
     }
 
@@ -83,17 +99,19 @@ export default function PurchaseOrdersPage() {
     const st = status?.toLowerCase() || "pending";
     if (st === "approved") return styles?.statusApproved;
     if (st === "shipped") return styles?.statusShipped;
-    if (st === "delivered" || st === "completed") return styles?.statusDelivered;
+    if (st === "delivered" || st === "completed")
+      return styles?.statusDelivered;
     if (st === "cancelled" || st === "canceled") return styles?.statusCancelled;
     if (st === "delayed") return styles?.statusDelayed;
     if (st === "draft") return styles?.statusDraft;
     return styles?.statusPending; // default is pending
   };
-  
-  const getPriority = (qty: number, limit: number) => {
-    if (qty === 0) return { label: "High", className: styles?.priorityHigh };
-    if (qty <= limit / 2) return { label: "Medium", className: styles?.priorityMedium };
-    return { label: "Low", className: styles?.priorityLow };
+
+  const getPriority = (qty: number) => {
+    if (qty < 20) return { label: "High", className: styles?.priorityHigh };
+    if (qty >= 20 && qty < 40) return { label: "Medium", className: styles?.priorityMedium };
+    if (qty >= 40 && qty <= 70) return { label: "Low", className: styles?.priorityLow };
+    return { label: "Low", className: styles?.priorityLow }; // fallback
   };
 
   return (
@@ -106,7 +124,10 @@ export default function PurchaseOrdersPage() {
             <button className={styles?.btnExport}>
               <FiDownload /> Export
             </button>
-            <button className={styles?.btnPrimary} onClick={() => setIsModalOpen(true)}>
+            <button
+              className={styles?.btnPrimary}
+              onClick={() => setIsModalOpen(true)}
+            >
               <FiPlus /> Create Purchase Order
             </button>
           </div>
@@ -117,8 +138,14 @@ export default function PurchaseOrdersPage() {
           <div className={styles?.statCard}>
             <div className={styles?.statHeader}>
               <span className={styles?.statTitle}>Total Purchase Orders</span>
-              <div className={styles?.statIconWrapper} style={{ backgroundColor: "#2563EB" }}>
-                <Image src="/images/TPO%20icon.png" alt="TPO" width={30} height={30} className={styles?.statIcon} />
+              <div
+                className={`${styles?.statIconWrapper} ${styles.autoStyleac8f25}`}
+              >
+                <Image
+                  {...APP_IMAGES.TPO_ICON}
+                  alt={APP_IMAGES.TPO_ICON.alt}
+                  className={styles?.statIcon}
+                />
               </div>
             </div>
             <div className={styles?.statBody}>
@@ -130,8 +157,14 @@ export default function PurchaseOrdersPage() {
           <div className={styles?.statCard}>
             <div className={styles?.statHeader}>
               <span className={styles?.statTitle}>Pending Orders</span>
-              <div className={styles?.statIconWrapper} style={{ backgroundColor: "#16A34A" }}>
-                <Image src="/images/pending%20order.png" alt="Pending" width={30} height={30} className={styles?.statIcon} />
+              <div
+                className={`${styles?.statIconWrapper} ${styles.autoStyle620b2f}`}
+              >
+                <Image
+                  {...APP_IMAGES.PENDING_ORDER}
+                  alt={APP_IMAGES.PENDING_ORDER.alt}
+                  className={styles?.statIcon}
+                />
               </div>
             </div>
             <div className={styles?.statBody}>
@@ -143,26 +176,42 @@ export default function PurchaseOrdersPage() {
           <div className={styles?.statCard}>
             <div className={styles?.statHeader}>
               <span className={styles?.statTitle}>Completed Orders</span>
-              <div className={styles?.statIconWrapper} style={{ backgroundColor: "#F59E0B" }}>
-                <Image src="/images/complete%20Order.png" alt="Completed" width={30} height={30} className={styles?.statIcon} />
+              <div
+                className={`${styles?.statIconWrapper} ${styles.autoStyle82a292}`}
+              >
+                <Image
+                  {...APP_IMAGES.COMPLETE_ORDER}
+                  alt={APP_IMAGES.COMPLETE_ORDER.alt}
+                  className={styles?.statIcon}
+                />
               </div>
             </div>
             <div className={styles?.statBody}>
               <span className={styles?.statValue}>{stats?.completed}</span>
-              <span className={styles?.statSubtitle}>Successfully delivered</span>
+              <span className={styles?.statSubtitle}>
+                Successfully delivered
+              </span>
             </div>
           </div>
 
           <div className={styles?.statCard}>
             <div className={styles?.statHeader}>
               <span className={styles?.statTitle}>Cancelled Orders</span>
-              <div className={styles?.statIconWrapper} style={{ backgroundColor: "#1F2937" }}>
-                <Image src="/images/cancelorder.png" alt="Cancelled" width={30} height={30} className={styles?.statIcon} />
+              <div
+                className={`${styles?.statIconWrapper} ${styles.autoStyle635e36}`}
+              >
+                <Image
+                  {...APP_IMAGES.CANCEL_ORDER}
+                  alt={APP_IMAGES.CANCEL_ORDER.alt}
+                  className={styles?.statIcon}
+                />
               </div>
             </div>
             <div className={styles?.statBody}>
               <span className={styles?.statValue}>{stats?.canceled}</span>
-              <span className={styles?.statSubtitle}>Cancelled before completion</span>
+              <span className={styles?.statSubtitle}>
+                Cancelled before completion
+              </span>
             </div>
           </div>
         </div>
@@ -192,13 +241,15 @@ export default function PurchaseOrdersPage() {
                     <tr key={act?.id || i}>
                       <td>{act?.activity || "PO Created"}</td>
                       <td>{act?.sku || `PO-102${i}`}</td>
-                      <td>{`Update regarding ${act?.product || 'order'}`}</td>
+                      <td>{`Update regarding ${act?.product || "order"}`}</td>
                       <td>{act?.time || "5 min ago"}</td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={4} style={{ textAlign: "center" }}>No recent activity.</td>
+                    <td colSpan={4} className={styles.autoStyle05cfa7}>
+                      No recent activity.
+                    </td>
                   </tr>
                 )}
               </tbody>
@@ -225,19 +276,27 @@ export default function PurchaseOrdersPage() {
               <tbody>
                 {lowStockProducts?.length > 0 ? (
                   lowStockProducts?.map((p, i) => {
-                    const priority = getPriority(Number(p?.quantity || 0), Number(p?.lowStockLimit || 10));
+                    const priority = getPriority(
+                      Number(p?.quantity || 0)
+                    );
                     return (
                       <tr key={p?.id || i}>
                         <td>{p?.productName}</td>
                         <td>{p?.quantity}</td>
-                        <td className={priority?.className}>{priority?.label}</td>
-                        <td><button className={styles?.actionBtn}>+ PO</button></td>
+                        <td className={priority?.className}>
+                          {priority?.label}
+                        </td>
+                        <td>
+                          <button className={styles?.actionBtn}>+ PO</button>
+                        </td>
                       </tr>
                     );
                   })
                 ) : (
                   <tr>
-                    <td colSpan={4} style={{ textAlign: "center" }}>No items require refill.</td>
+                    <td colSpan={4} className={styles.autoStylef9d5a1}>
+                      No items require refill.
+                    </td>
                   </tr>
                 )}
               </tbody>
@@ -248,7 +307,7 @@ export default function PurchaseOrdersPage() {
         {/* Purchase Order List */}
         <div className={styles?.listSection}>
           <h2 className={styles?.cardTitle}>Purchase Order List</h2>
-          
+
           <div className={styles?.listControls}>
             <div className={styles?.leftControls}>
               <div className={styles?.searchBox}>
@@ -260,15 +319,13 @@ export default function PurchaseOrdersPage() {
                   onChange={(e) => setSearchQuery(e?.target?.value)}
                 />
               </div>
-              <button className={styles?.dateBtn}>
-                11 Jun 2026 <FaAngleDown style={{ marginLeft: 4 }} />
-              </button>
+              <CustomDatePicker variant="blue" icon="chevron" />
             </div>
             <div className={styles?.rightControls}>
               <button className={styles?.btnExport}>
                 <FiDownload /> Export
               </button>
-              <select 
+              <select
                 className={styles?.dropdownSelect}
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e?.target?.value)}
@@ -285,7 +342,7 @@ export default function PurchaseOrdersPage() {
             </div>
           </div>
 
-          <div style={{ overflowX: "auto" }}>
+          <div className={styles.autoStyle2bd881}>
             <table className={styles?.tableList}>
               <thead>
                 <tr>
@@ -301,27 +358,52 @@ export default function PurchaseOrdersPage() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={7} style={{ textAlign: "center", padding: "20px" }}>Loading data...</td>
+                    <td colSpan={7} className={styles.autoStylec1b7f6}>
+                      Loading data...
+                    </td>
                   </tr>
                 ) : filteredOrders?.length > 0 ? (
                   filteredOrders?.map((po, idx) => (
                     <tr key={String(po?.id)}>
-                      <td style={{ fontWeight: 600 }}>{String(po?.poNumber || `PO-100${idx + 1}`)}</td>
-                      <td>{String(po?.vendorName || po?.productName || "Unknown")}</td>
-                      <td>{po?.quantity || (Math.floor(Math.random() * 20) + 1)}</td>
+                      <td className={styles.autoStyleeaee92}>
+                        {String(po?.poNumber || `PO-100${idx + 1}`)}
+                      </td>
+                      <td>
+                        {String(
+                          po?.vendor?.vendorName ||
+                            po?.vendor?.companyName ||
+                            po?.vendorName ||
+                            po?.productName ||
+                            "Unknown",
+                        )}
+                      </td>
+                      <td>
+                        {po?.quantity ||
+                          po?.items?.reduce(
+                            (acc: number, item) =>
+                              acc + (item.quantity || 0),
+                            0,
+                          ) ||
+                          (idx % 20) + 1}
+                      </td>
                       <td>₹{Number(po?.totalAmount || 0).toLocaleString()}</td>
                       <td>
-                        <span className={`${styles?.statusBadge} ${getStatusBadgeClass(po?.status)}`}>
+                        <span
+                          className={`${styles?.statusBadge} ${getStatusBadgeClass(po?.status)}`}
+                        >
                           {String(po?.status || "Pending")}
                         </span>
                       </td>
                       <td>
                         {po?.createdAt
-                          ? new Date(po?.createdAt).toLocaleDateString("en-US", {
-                              year: "numeric",
-                              month: "short",
-                              day: "numeric",
-                            })
+                          ? new Date(po?.createdAt).toLocaleDateString(
+                              "en-US",
+                              {
+                                year: "numeric",
+                                month: "short",
+                                day: "numeric",
+                              },
+                            )
                           : "Jun 14, 2026"}
                       </td>
                       <td>Jun 20, 2026</td>
@@ -329,7 +411,7 @@ export default function PurchaseOrdersPage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={7} style={{ textAlign: "center", padding: "40px", color: "var(--text-muted)" }}>
+                    <td colSpan={7} className={styles.autoStyleb24883}>
                       No purchase orders found matching your criteria.
                     </td>
                   </tr>
@@ -340,7 +422,7 @@ export default function PurchaseOrdersPage() {
 
           <div className={styles?.pagination}>
             <div className={styles?.rowsPerPage}>
-              Rows per page: 
+              Rows per page:
               <select className={styles?.dropdownSelect} defaultValue="10">
                 <option>10</option>
                 <option>20</option>
@@ -349,19 +431,22 @@ export default function PurchaseOrdersPage() {
             </div>
             <div className={styles?.pageControls}>
               <button className={styles?.pageBtnText}>&lt; Previous</button>
-              <button className={`${styles?.pageBtn} ${styles?.active}`}>1</button>
+              <button className={`${styles?.pageBtn} ${styles?.active}`}>
+                1
+              </button>
               <button className={styles?.pageBtn}>2</button>
               <button className={styles?.pageBtnText}>Next &gt;</button>
             </div>
           </div>
-
         </div>
       </div>
-      
-      <CreatePOModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        onSuccess={() => fetchPurchaseOrdersList().then(d => setOrders(d || []))} 
+
+      <CreatePOModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSuccess={() =>
+          fetchPurchaseOrdersList().then((d) => setOrders(d || []))
+        }
       />
     </DashboardLayout>
   );

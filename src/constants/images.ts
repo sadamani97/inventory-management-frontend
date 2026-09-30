@@ -1,0 +1,16 @@
+export const APP_IMAGES = {
+  GOOGLE_LOGO: { src: "/googlelog.svg", alt: "Google logo", width: 20, height: 20 },
+  APPLE_LOGO: { src: "/applelogo.svg", alt: "Apple logo", width: 20, height: 20 },
+  EYE_LOGO: { src: "/eyelogo.svg", alt: "Toggle password visibility", width: 20, height: 20 },
+  INDIAMART: { src: "/product/indiamart.png", alt: "Indiamart", width: 32, height: 32 },
+  TRADEINDIA: { src: "/product/tradeindia.png", alt: "Tradeindia", width: 32, height: 32 },
+  LOGO: { src: "/images/Logo.svg", alt: "Stockflow Logo", width: 24, height: 24 },
+  TPO_ICON: { src: "/images/TPO%20icon.png", alt: "TPO", width: 30, height: 30 },
+  PENDING_ORDER: { src: "/images/pending%20order.png", alt: "Pending", width: 30, height: 30 },
+  COMPLETE_ORDER: { src: "/images/complete%20Order.png", alt: "Completed", width: 30, height: 30 },
+  CANCEL_ORDER: { src: "/images/cancelorder.png", alt: "Cancelled", width: 30, height: 30 },
+  DASHBOARD_LOGO: { src: "/Frontend/DashboardLogo.png", alt: "Stockflow Logo", width: 28, height: 28 },
+  DASHBOARD_PRODUCT: { src: "/Frontend/Dashboard_product.png", alt: "Product", width: 48, height: 48 },
+  STARS: { src: "/product/Stars.png", alt: "Rating Stars", width: 90, height: 18 },
+  DAILY_NEED: { src: "/product/Dailyneed.png", alt: "Daily Need", width: 44, height: 44 },
+};
