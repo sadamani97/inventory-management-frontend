@@ -52,5 +52,5 @@
 
 .bar:hover {
   fill: var(--primary-dark);
-  filter: drop-shadow(0 4px 6px rgba(37, 99, 235, 0.2));
+  filter: drop-shadow(0 4px 6px var(--color-var-8));
 }

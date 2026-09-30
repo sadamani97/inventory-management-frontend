@@ -32,6 +32,7 @@ import {
   FiX,
   FiBookmark,
 } from "react-icons/fi";
+import { showSuccessToast } from "@/components/ui/CustomToast";
 
 export default function InventoryPage() {
   const router = useRouter();
@@ -266,7 +267,7 @@ export default function InventoryPage() {
 
     setOrderVendorName(targetVendor);
     setShowReorderModal(false);
-    setShowOrderModal(true);
+    showSuccessToast("Added New Order", "New Order will be added to your orders list", <FiSend size={44} color="#0f172a" strokeWidth={1.5} />);
   };
 
   // Calculations for Summary Box

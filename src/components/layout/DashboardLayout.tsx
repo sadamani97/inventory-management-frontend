@@ -38,7 +38,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 token,
               })
             );
-          } catch (e) {
+          } catch {
             toast.error("Failed to restore user session");
           }
         }

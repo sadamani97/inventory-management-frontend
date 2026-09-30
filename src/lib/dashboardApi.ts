@@ -47,14 +47,101 @@ export interface UnitItem {
   quantity?: number;
 }
 
+export interface VendorTypeItem {
+  vendorTypeId?: number;
+  id?: number;
+  typeName: string;
+}
+
+export interface CountryItem {
+  countryId?: number;
+  id?: number;
+  countryName: string;
+  countryCode: string;
+}
+
+export interface StateItem {
+  stateId?: number;
+  id?: number;
+  stateName: string;
+  countryId: number;
+}
+
+export interface CityItem {
+  cityId?: number;
+  id?: number;
+  cityName: string;
+  stateId: number;
+}
+
+export interface AddressItem {
+  addressId?: number;
+  id?: number;
+  addressLine: string;
+  cityId: number;
+  stateId: number;
+  countryId: number;
+  pincode: string;
+  vendorId?: number;
+}
+
+export interface VendorContactItem {
+  vendorContactId?: number;
+  id?: number;
+  name: string;
+  email: string;
+  mobile: string;
+  vendorId?: number;
+}
+
+export interface VendorBankDetailsItem {
+  vendorBankDetailId?: number;
+  id?: number;
+  accountHolderName: string;
+  bankName: string;
+  accountNumber: string;
+  ifscCode: string;
+  branchName: string;
+  isPrimary?: boolean;
+  upiId?: string;
+  vendorId?: number;
+}
+
 export interface VendorItem {
   vendorId?: number | string;
-  id: number | string;
-  vendorName?: string;
+  id?: number | string;
+  vendorName: string;
+  companyName: string;
+  vendorTypeId: number;
+  website?: string;
+  gstin: string;
+  status?: "active" | "inactive" | "suspended" | "terminated";
   name?: string;
-  vendorType?: string;
   email?: string;
   phone?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  vendorCode?: string;
+  panNumber?: string;
+  currency?: string;
+  creditLimit?: string | number;
+  productCategory?: string;
+  preferredProducts?: string;
+  leadTime?: string;
+  gstCertificate?: string;
+  agreement?: string;
+  vendorLogo?: string;
+  vendorType?: VendorTypeItem;
+  addresses?: AddressItem[];
+  contacts?: VendorContactItem[];
+  bankDetails?: VendorBankDetailsItem[];
+}
+
+export interface VendorStatsResponse {
+  totalVendors: number;
+  activeVendors: number;
+  newVendors: number;
+  activePurchaseOrders: number;
 }
 
 export interface ProductItem {
@@ -564,4 +651,217 @@ export async function fetchReportKpis(): Promise<ReportKpis | null> {
     toast.error("Failed to fetch report KPI summary.");
   }
   return null;
+}
+
+// ==================== VENDOR MODULE API HELPERS ====================
+
+export async function fetchVendorStats(): Promise<VendorStatsResponse> {
+  try {
+    const response = await api.get("/api/vendors/stats");
+    if (response?.data?.success && response?.data?.data) {
+      return response.data.data;
+    }
+  } catch {
+    // Return empty stats silently on error
+  }
+  return {
+    totalVendors: 0,
+    activeVendors: 0,
+    newVendors: 0,
+    activePurchaseOrders: 0,
+  };
+}
+
+export async function fetchVendorById(id: number | string): Promise<VendorItem | null> {
+  try {
+    const response = await api.get(`/api/vendors/${id}`);
+    if (response?.data?.success && response?.data?.data) {
+      return response.data.data;
+    }
+  } catch {
+    toast.error("Failed to fetch vendor details.");
+  }
+  return null;
+}
+
+export async function createVendor(payload: {
+  vendorName: string;
+  companyName: string;
+  vendorTypeId: number;
+  website?: string;
+  gstin: string;
+  status?: string;
+}): Promise<{ success: boolean; message?: string; data?: VendorItem }> {
+  try {
+    const response = await api.post("/api/vendors", payload);
+    return response?.data || { success: true };
+  } catch (err: unknown) {
+    const axiosErr = err as { response?: { data?: { message?: string } }; message?: string };
+    const msg = axiosErr?.response?.data?.message || axiosErr?.message || "Failed to create vendor";
+    toast.error(msg);
+    return { success: false, message: msg };
+  }
+}
+
+export async function updateVendor(
+  id: number | string,
+  payload: Partial<VendorItem>
+): Promise<{ success: boolean; message?: string; data?: VendorItem }> {
+  try {
+    const response = await api.put(`/api/vendors/${id}`, payload);
+    return response?.data || { success: true };
+  } catch (err: unknown) {
+    const axiosErr = err as { response?: { data?: { message?: string } }; message?: string };
+    const msg = axiosErr?.response?.data?.message || axiosErr?.message || "Failed to update vendor";
+    toast.error(msg);
+    return { success: false, message: msg };
+  }
+}
+
+export async function deleteVendor(id: number | string): Promise<{ success: boolean; message?: string }> {
+  try {
+    const response = await api.delete(`/api/vendors/${id}`);
+    return response?.data || { success: true };
+  } catch (err: unknown) {
+    const axiosErr = err as { response?: { data?: { message?: string } }; message?: string };
+    const msg = axiosErr?.response?.data?.message || axiosErr?.message || "Failed to delete vendor";
+    toast.error(msg);
+    return { success: false, message: msg };
+  }
+}
+
+export async function fetchVendorTypes(): Promise<VendorTypeItem[]> {
+  try {
+    const response = await api.get("/api/vendor-types");
+    if (response?.data?.success && Array.isArray(response?.data?.data)) {
+      return response.data.data;
+    }
+    if (Array.isArray(response?.data)) return response.data;
+  } catch {
+    toast.error("Failed to fetch vendor types.");
+  }
+  return [];
+}
+
+export async function createVendorType(typeName: string): Promise<{ success: boolean; data?: VendorTypeItem }> {
+  try {
+    const response = await api.post("/api/vendor-types", { typeName });
+    return response?.data || { success: true };
+  } catch (err: unknown) {
+    const axiosErr = err as { response?: { data?: { message?: string } }; message?: string };
+    const msg = axiosErr?.response?.data?.message || axiosErr?.message || "Failed to create vendor type";
+    toast.error(msg);
+    return { success: false };
+  }
+}
+
+export async function fetchCountries(): Promise<CountryItem[]> {
+  try {
+    const response = await api.get("/api/countries");
+    if (response?.data?.success && Array.isArray(response?.data?.data)) {
+      return response.data.data;
+    }
+    if (Array.isArray(response?.data)) return response.data;
+  } catch {
+    toast.error("Failed to fetch countries.");
+  }
+  return [];
+}
+
+export async function fetchStates(countryId?: number): Promise<StateItem[]> {
+  try {
+    const response = await api.get("/api/states", { params: countryId ? { countryId } : {} });
+    if (response?.data?.success && Array.isArray(response?.data?.data)) {
+      return response.data.data;
+    }
+    if (Array.isArray(response?.data)) return response.data;
+  } catch {
+    toast.error("Failed to fetch states.");
+  }
+  return [];
+}
+
+export async function fetchCities(stateId?: number): Promise<CityItem[]> {
+  try {
+    const response = await api.get("/api/cities", { params: stateId ? { stateId } : {} });
+    if (response?.data?.success && Array.isArray(response?.data?.data)) {
+      return response.data.data;
+    }
+    if (Array.isArray(response?.data)) return response.data;
+  } catch {
+    toast.error("Failed to fetch cities.");
+  }
+  return [];
+}
+
+export async function createAddress(payload: AddressItem): Promise<{ success: boolean; data?: AddressItem }> {
+  try {
+    const response = await api.post("/api/addresses", payload);
+    return response?.data || { success: true };
+  } catch (err: unknown) {
+    const axiosErr = err as { response?: { data?: { message?: string } }; message?: string };
+    const msg = axiosErr?.response?.data?.message || axiosErr?.message || "Failed to create address";
+    toast.error(msg);
+    return { success: false };
+  }
+}
+
+export async function updateAddress(id: number | string, payload: Partial<AddressItem>): Promise<{ success: boolean; data?: AddressItem }> {
+  try {
+    const response = await api.put(`/api/addresses/${id}`, payload);
+    return response?.data || { success: true };
+  } catch (err: unknown) {
+    const axiosErr = err as { response?: { data?: { message?: string } }; message?: string };
+    const msg = axiosErr?.response?.data?.message || axiosErr?.message || "Failed to update address";
+    toast.error(msg);
+    return { success: false };
+  }
+}
+
+export async function createVendorContact(payload: VendorContactItem): Promise<{ success: boolean; data?: VendorContactItem }> {
+  try {
+    const response = await api.post("/api/vendor-contacts", payload);
+    return response?.data || { success: true };
+  } catch (err: unknown) {
+    const axiosErr = err as { response?: { data?: { message?: string } }; message?: string };
+    const msg = axiosErr?.response?.data?.message || axiosErr?.message || "Failed to create vendor contact";
+    toast.error(msg);
+    return { success: false };
+  }
+}
+
+export async function updateVendorContact(id: number | string, payload: Partial<VendorContactItem>): Promise<{ success: boolean; data?: VendorContactItem }> {
+  try {
+    const response = await api.put(`/api/vendor-contacts/${id}`, payload);
+    return response?.data || { success: true };
+  } catch (err: unknown) {
+    const axiosErr = err as { response?: { data?: { message?: string } }; message?: string };
+    const msg = axiosErr?.response?.data?.message || axiosErr?.message || "Failed to update vendor contact";
+    toast.error(msg);
+    return { success: false };
+  }
+}
+
+export async function createVendorBankDetails(payload: VendorBankDetailsItem): Promise<{ success: boolean; data?: VendorBankDetailsItem }> {
+  try {
+    const response = await api.post("/api/vendor-bank-details", payload);
+    return response?.data || { success: true };
+  } catch (err: unknown) {
+    const axiosErr = err as { response?: { data?: { message?: string } }; message?: string };
+    const msg = axiosErr?.response?.data?.message || axiosErr?.message || "Failed to create vendor bank details";
+    toast.error(msg);
+    return { success: false };
+  }
+}
+
+export async function updateVendorBankDetails(id: number | string, payload: Partial<VendorBankDetailsItem>): Promise<{ success: boolean; data?: VendorBankDetailsItem }> {
+  try {
+    const response = await api.put(`/api/vendor-bank-details/${id}`, payload);
+    return response?.data || { success: true };
+  } catch (err: unknown) {
+    const axiosErr = err as { response?: { data?: { message?: string } }; message?: string };
+    const msg = axiosErr?.response?.data?.message || axiosErr?.message || "Failed to update vendor bank details";
+    toast.error(msg);
+    return { success: false };
+  }
 }
