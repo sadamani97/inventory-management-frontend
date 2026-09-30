@@ -110,7 +110,7 @@ export default function ProductsPage() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={5} className={styles.autoStyle243318}>
+                    <td colSpan={5} className={styles.productsElement1}>
                       Loading products from backend database...
                     </td>
                   </tr>
@@ -127,7 +127,7 @@ export default function ProductsPage() {
                       <tr
                         key={p.id || idx}
                         onClick={() => p.id && router.push(`/products/add?id=${p.id}`)}
-                        className={styles.autoStyle32a577}
+                        className={styles.productsElement2}
                       >
                         <td>
                           <div className={styles.productCell}>
@@ -166,11 +166,11 @@ export default function ProductsPage() {
                   })
                 ) : (
                   <tr>
-                    <td colSpan={5} className={styles.autoStyle741323}>
-                      <p className={styles.autoStyle0ad6e2}>
+                    <td colSpan={5} className={styles.productsElement3}>
+                      <p className={styles.productsElement4}>
                         No products stored in database.
                       </p>
-                      <p className={styles.autoStyle2f3830}>
+                      <p className={styles.productsElement5}>
                         Click <strong>&quot;+ New Product&quot;</strong> to add products to your backend database.
                       </p>
                     </td>

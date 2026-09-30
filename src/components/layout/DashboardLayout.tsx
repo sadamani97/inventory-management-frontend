@@ -51,8 +51,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   if (checkingAuth) {
     return (
-      <div className={styles.autoStyled8d084}>
-        <p className={styles.autoStyle58a4d4}>Checking authentication...</p>
+      <div className={styles.dashboardLayoutElement1}>
+        <p className={styles.dashboardLayoutElement2}>Checking authentication...</p>
       </div>
     );
   }

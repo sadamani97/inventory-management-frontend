@@ -114,7 +114,7 @@ export default function RevenueTrendChart() {
       <div className={styles.revenueRow}>
         <h2 className={styles.revenueAmount}>{totalRevDisplay}</h2>
         <span className={styles.growthBadge}>
-          <FiTrendingUp /> + {growthDisplay} <span className={styles.autoStylebd5973}>from last month</span>
+          <FiTrendingUp /> + {growthDisplay} <span className={styles.revenueTrendChartElement1}>from last month</span>
         </span>
       </div>
 
@@ -176,7 +176,7 @@ export default function RevenueTrendChart() {
             const cy = getY(dp.value);
             const isHovered = i === activeIdx;
             return (
-              <g key={i} className={styles.autoStyleed835e} onMouseEnter={() => setHoverIndex(i)}>
+              <g key={i} className={styles.revenueTrendChartElement2} onMouseEnter={() => setHoverIndex(i)}>
                 <circle
                   cx={cx}
                   cy={cy}
@@ -205,7 +205,7 @@ export default function RevenueTrendChart() {
               top: `${(activeY / (chartHeight + 35)) * 100}%`,
             }}
           >
-            Revenue: <span className={styles.autoStyle5cee78}>{activePoint.label}</span>
+            Revenue: <span className={styles.revenueTrendChartElement3}>{activePoint.label}</span>
           </div>
         )}
       </div>

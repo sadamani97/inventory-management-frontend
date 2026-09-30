@@ -139,7 +139,7 @@ export default function PurchaseOrdersPage() {
             <div className={styles?.statHeader}>
               <span className={styles?.statTitle}>Total Purchase Orders</span>
               <div
-                className={`${styles?.statIconWrapper} ${styles.autoStyleac8f25}`}
+                className={`${styles?.statIconWrapper} ${styles.purchaseOrdersElement1}`}
               >
                 <Image
                   {...APP_IMAGES.TPO_ICON}
@@ -158,7 +158,7 @@ export default function PurchaseOrdersPage() {
             <div className={styles?.statHeader}>
               <span className={styles?.statTitle}>Pending Orders</span>
               <div
-                className={`${styles?.statIconWrapper} ${styles.autoStyle620b2f}`}
+                className={`${styles?.statIconWrapper} ${styles.purchaseOrdersElement2}`}
               >
                 <Image
                   {...APP_IMAGES.PENDING_ORDER}
@@ -177,7 +177,7 @@ export default function PurchaseOrdersPage() {
             <div className={styles?.statHeader}>
               <span className={styles?.statTitle}>Completed Orders</span>
               <div
-                className={`${styles?.statIconWrapper} ${styles.autoStyle82a292}`}
+                className={`${styles?.statIconWrapper} ${styles.purchaseOrdersElement3}`}
               >
                 <Image
                   {...APP_IMAGES.COMPLETE_ORDER}
@@ -198,7 +198,7 @@ export default function PurchaseOrdersPage() {
             <div className={styles?.statHeader}>
               <span className={styles?.statTitle}>Cancelled Orders</span>
               <div
-                className={`${styles?.statIconWrapper} ${styles.autoStyle635e36}`}
+                className={`${styles?.statIconWrapper} ${styles.purchaseOrdersElement4}`}
               >
                 <Image
                   {...APP_IMAGES.CANCEL_ORDER}
@@ -247,7 +247,7 @@ export default function PurchaseOrdersPage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={4} className={styles.autoStyle05cfa7}>
+                    <td colSpan={4} className={styles.purchaseOrdersElement5}>
                       No recent activity.
                     </td>
                   </tr>
@@ -294,7 +294,7 @@ export default function PurchaseOrdersPage() {
                   })
                 ) : (
                   <tr>
-                    <td colSpan={4} className={styles.autoStylef9d5a1}>
+                    <td colSpan={4} className={styles.purchaseOrdersElement6}>
                       No items require refill.
                     </td>
                   </tr>
@@ -342,7 +342,7 @@ export default function PurchaseOrdersPage() {
             </div>
           </div>
 
-          <div className={styles.autoStyle2bd881}>
+          <div className={styles.purchaseOrdersElement7}>
             <table className={styles?.tableList}>
               <thead>
                 <tr>
@@ -358,14 +358,14 @@ export default function PurchaseOrdersPage() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={7} className={styles.autoStylec1b7f6}>
+                    <td colSpan={7} className={styles.purchaseOrdersElement8}>
                       Loading data...
                     </td>
                   </tr>
                 ) : filteredOrders?.length > 0 ? (
                   filteredOrders?.map((po, idx) => (
                     <tr key={String(po?.id)}>
-                      <td className={styles.autoStyleeaee92}>
+                      <td className={styles.purchaseOrdersElement9}>
                         {String(po?.poNumber || `PO-100${idx + 1}`)}
                       </td>
                       <td>
@@ -411,7 +411,7 @@ export default function PurchaseOrdersPage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={7} className={styles.autoStyleb24883}>
+                    <td colSpan={7} className={styles.purchaseOrdersElement10}>
                       No purchase orders found matching your criteria.
                     </td>
                   </tr>

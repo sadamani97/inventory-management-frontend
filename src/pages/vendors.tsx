@@ -581,7 +581,7 @@ export default function VendorsPage() {
 
           <div className={styles.statCard}>
             <p className={styles.statLabel}>Active Vendors</p>
-            <p className={`${styles.statValue} ${styles.autoStyle086964}`}>
+            <p className={`${styles.statValue} ${styles.vendorsElement1}`}>
               {stats.activeVendors || vendors.filter((v) => v.status === "active" || !v.status).length}
             </p>
             <span className={styles.statMeta}>Currently active</span>
@@ -589,7 +589,7 @@ export default function VendorsPage() {
 
           <div className={styles.statCard}>
             <p className={styles.statLabel}>New Vendors (This Month)</p>
-            <p className={`${styles.statValue} ${styles.autoStyle0919da}`}>
+            <p className={`${styles.statValue} ${styles.vendorsElement2}`}>
               {stats.newVendors || 0}
             </p>
             <span className={styles.statMeta}>Added this month</span>
@@ -597,7 +597,7 @@ export default function VendorsPage() {
 
           <div className={styles.statCard}>
             <p className={styles.statLabel}>Active Purchase Orders</p>
-            <p className={`${styles.statValue} ${styles.autoStyle668cc7}`}>
+            <p className={`${styles.statValue} ${styles.vendorsElement3}`}>
               {stats.activePurchaseOrders || 0}
             </p>
             <span className={styles.statMeta}>In-progress orders</span>
@@ -677,20 +677,20 @@ export default function VendorsPage() {
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <th className={styles.autoStyleb883a8}></th>
+                  <th className={styles.vendorsElement4}></th>
                   <th>Vendor Name</th>
                   <th>Category</th>
                   <th>Phone Number</th>
                   <th>Active POs</th>
                   <th>Status</th>
                   <th>Last Delivery</th>
-                  <th className={styles.autoStylee4386d}>Actions</th>
+                  <th className={styles.vendorsElement5}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={8} className={styles.autoStylefc08ab}>
+                    <td colSpan={8} className={styles.vendorsElement6}>
                       Loading vendor records from backend...
                     </td>
                   </tr>
@@ -707,7 +707,7 @@ export default function VendorsPage() {
                       <tr
                         key={rowKey}
                         onClick={() => router.push(`/vendors/${v.vendorId || v.id}`)}
-                        className={styles.autoStyle51893b}
+                        className={styles.vendorsElement7}
                         title="Click to view vendor details"
                       >
                         <td onClick={(e) => {
@@ -734,13 +734,13 @@ export default function VendorsPage() {
                           </div>
                         </td>
                         <td>
-                          <span className={styles.autoStyle6012df}>{categoryName}</span>
+                          <span className={styles.vendorsElement8}>{categoryName}</span>
                         </td>
                         <td>
-                          <span className={styles.autoStyle691ffe}>{contactPhone}</span>
+                          <span className={styles.vendorsElement9}>{contactPhone}</span>
                         </td>
                         <td>
-                          <span className={styles.autoStyleb5e5dd}>
+                          <span className={styles.vendorsElement10}>
                             {(idx % 3 === 0 ? 12 : idx % 2 === 0 ? 5 : 8)} Orders
                           </span>
                         </td>
@@ -750,7 +750,7 @@ export default function VendorsPage() {
                           </span>
                         </td>
                         <td>
-                          <span className={styles.autoStyle7f3fba}>
+                          <span className={styles.vendorsElement11}>
                             {formatTimeAgo(v.createdAt)}
                           </span>
                         </td>
@@ -796,7 +796,7 @@ export default function VendorsPage() {
                   })
                 ) : (
                   <tr>
-                    <td colSpan={8} className={styles.autoStyle15f9a2}>
+                    <td colSpan={8} className={styles.vendorsElement12}>
                       No vendor records found.
                     </td>
                   </tr>
@@ -817,13 +817,13 @@ export default function VendorsPage() {
                 </button>
               </div>
 
-              <form onSubmit={handleSubmitVendor} className={styles.autoStyle926e2d}>
+              <form onSubmit={handleSubmitVendor} className={styles.vendorsElement13}>
                 <div className={styles.drawerBody}>
                   {/* Vendor Details */}
                   <h3 className={styles.sectionTitle}>Vendor Details</h3>
                   <div className={styles.formGrid2}>
                     <div className={styles.fieldGroup}>
-                      <label className={styles.label}>Vendor name <span className={styles.autoStyle3e4228}>*</span></label>
+                      <label className={styles.label}>Vendor name <span className={styles.vendorsElement14}>*</span></label>
                       <input
                         type="text"
                         value={vendorName}
@@ -857,7 +857,7 @@ export default function VendorsPage() {
                       />
                     </div>
                     <div className={styles.fieldGroup}>
-                      <label className={styles.label}>Vendor Type <span className={styles.autoStylee2ad41}>*</span></label>
+                      <label className={styles.label}>Vendor Type <span className={styles.vendorsElement15}>*</span></label>
                       <CustomSelect
                         options={
                           vendorTypes.length > 0
@@ -877,10 +877,10 @@ export default function VendorsPage() {
                   </div>
 
                   {/* Contact Information */}
-                  <h3 className={`${styles.sectionTitle} ${styles.autoStyle433539}`}>Contact Information</h3>
+                  <h3 className={`${styles.sectionTitle} ${styles.vendorsElement16}`}>Contact Information</h3>
                   <div className={styles.formGrid2}>
                     <div className={styles.fieldGroup}>
-                      <label className={styles.label}>Contact Person Name <span className={styles.autoStyle550717}>*</span></label>
+                      <label className={styles.label}>Contact Person Name <span className={styles.vendorsElement17}>*</span></label>
                       <input
                         type="text"
                         value={contactName}
@@ -891,12 +891,12 @@ export default function VendorsPage() {
                       />
                     </div>
                     <div className={styles.fieldGroup}>
-                      <label className={styles.label}>Phone Number <span className={styles.autoStyle95ce14}>*</span></label>
-                      <div className={styles.autoStylefe223f}>
+                      <label className={styles.label}>Phone Number <span className={styles.vendorsElement18}>*</span></label>
+                      <div className={styles.vendorsElement19}>
                         <select 
                           value={phoneCode} 
                           onChange={(e) => setPhoneCode(e.target.value)}
-                          className={`${styles.inputControl} ${styles.autoStyleb8f13a}`}
+                          className={`${styles.inputControl} ${styles.vendorsElement20}`}
                         >
                           <option value="+91">+91 (IN)</option>
                           <option value="+1">+1 (US)</option>
@@ -910,7 +910,7 @@ export default function VendorsPage() {
                           onChange={(e) => setContactMobile(e.target.value)}
                           placeholder="Enter the Phone number"
                           required
-                          className={`${styles.inputControl} ${styles.autoStylee08b89}`}
+                          className={`${styles.inputControl} ${styles.vendorsElement21}`}
                         />
                       </div>
                     </div>
@@ -918,7 +918,7 @@ export default function VendorsPage() {
 
                   <div className={styles.formGrid2}>
                     <div className={styles.fieldGroup}>
-                      <label className={styles.label}>Email Address <span className={styles.autoStylef396f0}>*</span></label>
+                      <label className={styles.label}>Email Address <span className={styles.vendorsElement22}>*</span></label>
                       <input
                         type="email"
                         value={contactEmail}
@@ -941,10 +941,10 @@ export default function VendorsPage() {
                   </div>
 
                   {/* Address Details */}
-                  <h3 className={`${styles.sectionTitle} ${styles.autoStyle68ff68}`}>Address Details</h3>
+                  <h3 className={`${styles.sectionTitle} ${styles.vendorsElement23}`}>Address Details</h3>
                   <div className={styles.formGrid1}>
                     <div className={styles.fieldGroup}>
-                      <label className={styles.label}>Address Line <span className={styles.autoStyle8ebcc8}>*</span></label>
+                      <label className={styles.label}>Address Line <span className={styles.vendorsElement24}>*</span></label>
                       <input
                         type="text"
                         value={addressLine}
@@ -958,7 +958,7 @@ export default function VendorsPage() {
 
                   <div className={styles.formGrid2}>
                     <div className={styles.fieldGroup}>
-                      <label className={styles.label}>City <span className={styles.autoStyle5bd104}>*</span></label>
+                      <label className={styles.label}>City <span className={styles.vendorsElement25}>*</span></label>
                       <input
                         list="city-list"
                         value={cityName}
@@ -974,7 +974,7 @@ export default function VendorsPage() {
                       </datalist>
                     </div>
                     <div className={styles.fieldGroup}>
-                      <label className={styles.label}>State <span className={styles.autoStylea7b623}>*</span></label>
+                      <label className={styles.label}>State <span className={styles.vendorsElement26}>*</span></label>
                       <input
                         list="state-list"
                         value={stateName}
@@ -993,7 +993,7 @@ export default function VendorsPage() {
 
                   <div className={styles.formGrid2}>
                     <div className={styles.fieldGroup}>
-                      <label className={styles.label}>Pincode <span className={styles.autoStyledcf1b3}>*</span></label>
+                      <label className={styles.label}>Pincode <span className={styles.vendorsElement27}>*</span></label>
                       <input
                         type="text"
                         value={pincode}
@@ -1004,7 +1004,7 @@ export default function VendorsPage() {
                       />
                     </div>
                     <div className={styles.fieldGroup}>
-                      <label className={styles.label}>Country <span className={styles.autoStyle426164}>*</span></label>
+                      <label className={styles.label}>Country <span className={styles.vendorsElement28}>*</span></label>
                       <input
                         list="country-list"
                         value={countryName}
@@ -1022,10 +1022,10 @@ export default function VendorsPage() {
                   </div>
 
                   {/* Business Information */}
-                  <h3 className={`${styles.sectionTitle} ${styles.autoStyle731b86}`}>Business Information</h3>
+                  <h3 className={`${styles.sectionTitle} ${styles.vendorsElement29}`}>Business Information</h3>
                   <div className={styles.formGrid2}>
                     <div className={styles.fieldGroup}>
-                      <label className={styles.label}>GST Number <span className={styles.autoStyleb346df}>*</span></label>
+                      <label className={styles.label}>GST Number <span className={styles.vendorsElement30}>*</span></label>
                       <input
                         type="text"
                         value={gstin}
@@ -1049,7 +1049,7 @@ export default function VendorsPage() {
 
                   <div className={styles.formGrid2}>
                     <div className={styles.fieldGroup}>
-                      <label className={styles.label}>Currency <span className={styles.autoStylec54485}>*</span></label>
+                      <label className={styles.label}>Currency <span className={styles.vendorsElement31}>*</span></label>
                       <select 
                         value={currency} 
                         onChange={(e) => setCurrency(e.target.value)} 
@@ -1063,7 +1063,7 @@ export default function VendorsPage() {
                       </select>
                     </div>
                     <div className={styles.fieldGroup}>
-                      <label className={styles.label}>Credit Limit <span className={styles.autoStyleb50a87}>*</span></label>
+                      <label className={styles.label}>Credit Limit <span className={styles.vendorsElement32}>*</span></label>
                       <input
                         type="text"
                         value={creditLimit}
@@ -1076,10 +1076,10 @@ export default function VendorsPage() {
                   </div>
 
                   {/* Product / Supply Details */}
-                  <h3 className={`${styles.sectionTitle} ${styles.autoStylebe58e6}`}>Product / Supply Details</h3>
+                  <h3 className={`${styles.sectionTitle} ${styles.vendorsElement33}`}>Product / Supply Details</h3>
                   <div className={styles.formGrid2}>
                     <div className={styles.fieldGroup}>
-                      <label className={styles.label}>Product Category <span className={styles.autoStyle9115f1}>*</span></label>
+                      <label className={styles.label}>Product Category <span className={styles.vendorsElement34}>*</span></label>
                       <CustomSelect
                         options={categories.map((c) => ({
                           label: String(c.categoryName || c.name || "Category"),
@@ -1109,7 +1109,7 @@ export default function VendorsPage() {
 
                   <div className={styles.formGrid2}>
                     <div className={styles.fieldGroup}>
-                      <label className={styles.label}>Lead time (Delivery Days) <span className={styles.autoStyleead3dd}>*</span></label>
+                      <label className={styles.label}>Lead time (Delivery Days) <span className={styles.vendorsElement35}>*</span></label>
                       <input
                         type="text"
                         value={leadTime}
@@ -1125,10 +1125,10 @@ export default function VendorsPage() {
                   </div>
 
                   {/* Status */}
-                  <h3 className={`${styles.sectionTitle} ${styles.autoStyle8f986f}`}>Status</h3>
+                  <h3 className={`${styles.sectionTitle} ${styles.vendorsElement36}`}>Status</h3>
                   <div className={styles.formGrid2}>
                     <div className={styles.fieldGroup}>
-                      <label className={styles.label}>Vendor Status <span className={styles.autoStyle4e9a07}>*</span></label>
+                      <label className={styles.label}>Vendor Status <span className={styles.vendorsElement37}>*</span></label>
                       <CustomSelect
                         options={[
                           { label: "Active", value: "active" },
@@ -1144,10 +1144,10 @@ export default function VendorsPage() {
                   </div>
 
                   {/* Bank Details */}
-                  <h3 className={`${styles.sectionTitle} ${styles.autoStyle36334e}`}>Bank Details</h3>
+                  <h3 className={`${styles.sectionTitle} ${styles.vendorsElement38}`}>Bank Details</h3>
                   <div className={styles.formGrid2}>
                     <div className={styles.fieldGroup}>
-                      <label className={styles.label}>Bank Name <span className={styles.autoStyle5b0812}>*</span></label>
+                      <label className={styles.label}>Bank Name <span className={styles.vendorsElement39}>*</span></label>
                       <input
                         type="text"
                         value={bankName}
@@ -1158,7 +1158,7 @@ export default function VendorsPage() {
                       />
                     </div>
                     <div className={styles.fieldGroup}>
-                      <label className={styles.label}>Account Number <span className={styles.autoStylea066a6}>*</span></label>
+                      <label className={styles.label}>Account Number <span className={styles.vendorsElement40}>*</span></label>
                       <input
                         type="text"
                         value={accountNumber}
@@ -1172,7 +1172,7 @@ export default function VendorsPage() {
 
                   <div className={styles.formGrid2}>
                     <div className={styles.fieldGroup}>
-                      <label className={styles.label}>IFSC Code <span className={styles.autoStyle3f840a}>*</span></label>
+                      <label className={styles.label}>IFSC Code <span className={styles.vendorsElement41}>*</span></label>
                       <input
                         type="text"
                         value={ifscCode}
@@ -1195,29 +1195,29 @@ export default function VendorsPage() {
                   </div>
 
                   {/* Attachments */}
-                  <h3 className={`${styles.sectionTitle} ${styles.autoStyle2f29c9}`}>Attachments</h3>
+                  <h3 className={`${styles.sectionTitle} ${styles.vendorsElement42}`}>Attachments</h3>
                   <div className={styles.formGrid2}>
                     <div className={styles.fieldGroup}>
                       <label className={styles.label}>Upload GST Certificate</label>
-                      <div className={styles.autoStyle41dade}>
+                      <div className={styles.vendorsElement43}>
                         <input
                           type="file"
                           id="gst-upload"
                           accept=".pdf,.doc,.docx"
-                          className={styles.autoStyle1e407f}
+                          className={styles.vendorsElement44}
                           onChange={(e) => {
                             const file = e.target.files?.[0];
                             if (file) setGstCertificate(file.name);
                           }}
                         />
-                        <label htmlFor="gst-upload" className={styles.autoStyleef312f}>
+                        <label htmlFor="gst-upload" className={styles.vendorsElement45}>
                           <input
                             type="text"
                             readOnly
                             value={gstCertificate}
-                            className={`${styles.inputControl} ${styles.autoStyle96824d}`}
+                            className={`${styles.inputControl} ${styles.vendorsElement46}`}
                           />
-                          <span className={styles.autoStyle324560}>
+                          <span className={styles.vendorsElement47}>
                             <FiPaperclip size={18} />
                           </span>
                         </label>
@@ -1226,25 +1226,25 @@ export default function VendorsPage() {
 
                     <div className={styles.fieldGroup}>
                       <label className={styles.label}>Upload Agreement</label>
-                      <div className={styles.autoStyle67e53d}>
+                      <div className={styles.vendorsElement48}>
                         <input
                           type="file"
                           id="agreement-upload"
                           accept=".pdf,.doc,.docx"
-                          className={styles.autoStyle0a727a}
+                          className={styles.vendorsElement49}
                           onChange={(e) => {
                             const file = e.target.files?.[0];
                             if (file) setAgreement(file.name);
                           }}
                         />
-                        <label htmlFor="agreement-upload" className={styles.autoStyleb5a572}>
+                        <label htmlFor="agreement-upload" className={styles.vendorsElement50}>
                           <input
                             type="text"
                             readOnly
                             value={agreement}
-                            className={`${styles.inputControl} ${styles.autoStyle8312ce}`}
+                            className={`${styles.inputControl} ${styles.vendorsElement51}`}
                           />
-                          <span className={styles.autoStyle28d012}>
+                          <span className={styles.vendorsElement52}>
                             <FiPaperclip size={18} />
                           </span>
                         </label>
@@ -1254,15 +1254,15 @@ export default function VendorsPage() {
 
                 </div>
 
-                <div className={`${styles.drawerFooter} ${styles.autoStylef7edeb}`}>
-                  <div className={styles.autoStylea58f4d}>
-                    <span className={styles.autoStyle6eec55}>🛡️</span> Save Vendor
+                <div className={`${styles.drawerFooter} ${styles.vendorsElement53}`}>
+                  <div className={styles.vendorsElement54}>
+                    <span className={styles.vendorsElement55}>🛡️</span> Save Vendor
                   </div>
-                  <div className={styles.autoStyle8a3bc1}>
+                  <div className={styles.vendorsElement56}>
                     <button type="button" className={styles.cancelBtn} onClick={() => setShowVendorModal(false)}>
                       Cancel
                     </button>
-                    <button type="submit" disabled={submitting} className={`${styles.saveBtn} ${styles.autoStyle993744}`}>
+                    <button type="submit" disabled={submitting} className={`${styles.saveBtn} ${styles.vendorsElement57}`}>
                       {submitting ? "Saving..." : editingVendorId ? "Save and Update Vendor" : "Save and Add Vendor"}
                     </button>
                   </div>

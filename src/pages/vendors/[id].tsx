@@ -167,7 +167,7 @@ export default function VendorDetailPage() {
   if (loading) {
     return (
       <DashboardLayout>
-        <div className={styles.autoStylebce57c}>Loading vendor details...</div>
+        <div className={styles.idElement1}>Loading vendor details...</div>
       </DashboardLayout>
     );
   }
@@ -175,11 +175,11 @@ export default function VendorDetailPage() {
   if (!vendor) {
     return (
       <DashboardLayout>
-        <div className={styles.autoStyle4d0912}>
+        <div className={styles.idElement2}>
           <h3>Vendor not found</h3>
           <button
             onClick={() => router.push("/vendors")}
-            className={styles.autoStylea9279d}
+            className={styles.idElement3}
           >
             Back to Vendors
           </button>
@@ -487,7 +487,7 @@ export default function VendorDetailPage() {
 
             {/* Bank Details */}
             {vendorObj.bankDetails && vendorObj.bankDetails.length > 0 && (
-              <div className={styles.autoStyle8d6061}>
+              <div className={styles.idElement4}>
                 <div className={styles.sectionHeaderTitle}>Bank Details</div>
                 <div className={styles.supplierDetailsList}>
                   <div className={styles.detailRow}>
@@ -549,7 +549,7 @@ export default function VendorDetailPage() {
             <div className={styles.ratingsSection}>
               <div className={styles.ratingsTopRow}>
                 <span
-                  className={`${styles.sectionHeaderTitle} ${styles.autoStylef70074}`}
+                  className={`${styles.sectionHeaderTitle} ${styles.idElement5}`}
                 >
                   Ratings
                 </span>
@@ -578,7 +578,7 @@ export default function VendorDetailPage() {
                   <span className={styles.breakdownLabel}>5 - Excellent</span>
                   <div className={styles.barTrack}>
                     <div
-                      className={`${styles.barFill} ${styles.autoStyled68d26}`}
+                      className={`${styles.barFill} ${styles.idElement6}`}
                     />
                   </div>
                   <span className={styles.breakdownCount}>2,200</span>
@@ -588,7 +588,7 @@ export default function VendorDetailPage() {
                   <span className={styles.breakdownLabel}>4 - Good</span>
                   <div className={styles.barTrack}>
                     <div
-                      className={`${styles.barFill} ${styles.autoStyleabe515}`}
+                      className={`${styles.barFill} ${styles.idElement7}`}
                     />
                   </div>
                   <span className={styles.breakdownCount}>550</span>
@@ -598,7 +598,7 @@ export default function VendorDetailPage() {
                   <span className={styles.breakdownLabel}>3 - Okay</span>
                   <div className={styles.barTrack}>
                     <div
-                      className={`${styles.barFill} ${styles.autoStyle9290b7}`}
+                      className={`${styles.barFill} ${styles.idElement8}`}
                     />
                   </div>
                   <span className={styles.breakdownCount}>550</span>
@@ -610,7 +610,7 @@ export default function VendorDetailPage() {
                   </span>
                   <div className={styles.barTrack}>
                     <div
-                      className={`${styles.barFill} ${styles.autoStylee4d122}`}
+                      className={`${styles.barFill} ${styles.idElement9}`}
                     />
                   </div>
                   <span className={styles.breakdownCount}>407</span>
@@ -620,7 +620,7 @@ export default function VendorDetailPage() {
                   <span className={styles.breakdownLabel}>1 - Terrible</span>
                   <div className={styles.barTrack}>
                     <div
-                      className={`${styles.barFill} ${styles.autoStylef17960}`}
+                      className={`${styles.barFill} ${styles.idElement10}`}
                     />
                   </div>
                   <span className={styles.breakdownCount}>100</span>
@@ -659,7 +659,7 @@ export default function VendorDetailPage() {
               <>
                 <div className={styles.searchFilterRow}>
                   <div className={styles.searchInputBox}>
-                    <FiSearch className={styles.autoStyle1a1f5b} />
+                    <FiSearch className={styles.idElement11} />
                     <input
                       type="text"
                       placeholder="Search"
@@ -681,7 +681,7 @@ export default function VendorDetailPage() {
                   </select>
                 </div>
 
-                <div className={styles.autoStyle066a5e}>
+                <div className={styles.idElement12}>
                   <table className={styles.catalogTable}>
                     <thead>
                       <tr>
@@ -696,7 +696,7 @@ export default function VendorDetailPage() {
                     <tbody>
                       {filteredProducts.length === 0 ? (
                         <tr>
-                          <td colSpan={6} className={styles.autoStyle507506}>
+                          <td colSpan={6} className={styles.idElement13}>
                             No products found in catalog.
                           </td>
                         </tr>
@@ -760,7 +760,7 @@ export default function VendorDetailPage() {
             )}
 
             {activeTab === "transaction" && (
-              <div className={styles.autoStyle5507e4}>
+              <div className={styles.idElement14}>
                 <table className={styles.catalogTable}>
                   <thead>
                     <tr>
@@ -774,14 +774,14 @@ export default function VendorDetailPage() {
                   <tbody>
                     {purchaseOrders.length === 0 ? (
                       <tr>
-                        <td colSpan={5} className={styles.autoStyle112337}>
+                        <td colSpan={5} className={styles.idElement15}>
                           No transactions found for this vendor.
                         </td>
                       </tr>
                     ) : (
                       purchaseOrders.map((po, idx) => (
                         <tr key={po.id || idx}>
-                          <td className={styles.autoStylec99318}>
+                          <td className={styles.idElement16}>
                             {po.poNumber ||
                               po.orderNumber ||
                               `PO-#100${idx + 1}`}
@@ -807,7 +807,7 @@ export default function VendorDetailPage() {
                                 ? `${po.items.length} Packs`
                                 : "Bulk Order")}
                           </td>
-                          <td className={styles.autoStyle43a479}>
+                          <td className={styles.idElement17}>
                             ₹
                             {(
                               po.totalAmount ||
@@ -830,7 +830,7 @@ export default function VendorDetailPage() {
             )}
 
             {activeTab === "reviews" && (
-              <div className={styles.autoStyleefafa2}>
+              <div className={styles.idElement18}>
                 Customer reviews and seller feedbacks section.
               </div>
             )}

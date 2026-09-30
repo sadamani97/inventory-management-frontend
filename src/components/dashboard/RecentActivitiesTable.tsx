@@ -126,7 +126,7 @@ export default function RecentActivitiesTable() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={6} className={styles.autoStyle02f1e5}>
+                <td colSpan={6} className={styles.recentActivitiesTableElement1}>
                   Loading activities from backend...
                 </td>
               </tr>
@@ -147,7 +147,7 @@ export default function RecentActivitiesTable() {
               ))
             ) : (
               <tr>
-                <td colSpan={6} className={styles.autoStylee4fe52}>
+                <td colSpan={6} className={styles.recentActivitiesTableElement2}>
                   No backend products or activities found.
                 </td>
               </tr>

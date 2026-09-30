@@ -53,7 +53,7 @@ export default function Header() {
 
         <button
           onClick={handleLogout}
-          className={`${styles.notificationBtn} ${styles.autoStyle5376a2}`}
+          className={`${styles.notificationBtn} ${styles.headerElement1}`}
           title="Logout"
           aria-label="Logout"
         >

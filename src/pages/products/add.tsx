@@ -400,7 +400,7 @@ export default function AddProductPage() {
                 ref={fileInputRef}
                 accept="image/*"
                 onChange={handleImageFileChange}
-               className={styles.autoStyle9cdce6} />
+               className={styles.addElement1} />
 
               <div className={styles.dropzoneGrid}>
                 <div
@@ -414,7 +414,7 @@ export default function AddProductPage() {
                 </div>
 
                 {images.map((imgSrc, idx) => (
-                  <div key={idx} className={styles.autoStylefdd5a0}>
+                  <div key={idx} className={styles.addElement2}>
                     <Image
                       src={imgSrc}
                       alt="Uploaded preview"
@@ -448,7 +448,7 @@ export default function AddProductPage() {
                 </button>
               </div>
               {addVarient ? (
-                <div className={styles.autoStyle7a604a}>
+                <div className={styles.addElement3}>
                   Selected variant: {addVarient}
                 </div>
               ) : null}

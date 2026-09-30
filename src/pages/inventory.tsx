@@ -444,7 +444,7 @@ export default function InventoryPage() {
                       <g
                         key={idx}
                         onMouseEnter={() => setActiveHoverIdx(idx)}
-                        className={styles.autoStyled60394}
+                        className={styles.inventoryElement1}
                       >
                         {/* Stock Added (Blue at bottom) */}
                         {addedHeight > 0 && (
@@ -642,19 +642,19 @@ export default function InventoryPage() {
           <div className={styles.tableWrapper}>
             <table className={styles.table}>
               <colgroup>
-                <col  className={styles.autoStyle597c24} />
-                <col  className={styles.autoStylee76fe6} />
-                <col  className={styles.autoStyle11c871} />
-                <col  className={styles.autoStyle58f1b6} />
-                <col  className={styles.autoStyle446e4f} />
+                <col  className={styles.inventoryElement2} />
+                <col  className={styles.inventoryElement3} />
+                <col  className={styles.inventoryElement4} />
+                <col  className={styles.inventoryElement5} />
+                <col  className={styles.inventoryElement6} />
               </colgroup>
               <thead>
                 <tr>
-                  <th className={styles.autoStyleb0fe23}>Product name</th>
-                  <th className={styles.autoStyle37b34e}>SKU</th>
-                  <th className={styles.autoStyle314b0f}>Category</th>
-                  <th className={styles.autoStyleba8bb2}>Current Stock</th>
-                  <th className={styles.autoStyle9adde2}>
+                  <th className={styles.inventoryElement7}>Product name</th>
+                  <th className={styles.inventoryElement8}>SKU</th>
+                  <th className={styles.inventoryElement9}>Category</th>
+                  <th className={styles.inventoryElement10}>Current Stock</th>
+                  <th className={styles.inventoryElement11}>
                     Action
                   </th>
                 </tr>
@@ -664,7 +664,7 @@ export default function InventoryPage() {
                   <tr>
                     <td
                       colSpan={5}
-                     className={styles.autoStylebffb96}>
+                     className={styles.inventoryElement12}>
                       Loading inventory items from backend database...
                     </td>
                   </tr>
@@ -704,7 +704,7 @@ export default function InventoryPage() {
                         onClick={() =>
                           p.id && router.push(`/products/add?id=${p.id}`)
                         }
-                        className={styles.autoStylea11bc9}
+                        className={styles.inventoryElement13}
                         title="Click to view/edit product details"
                       >
                         <td>
@@ -798,12 +798,12 @@ export default function InventoryPage() {
                   <tr>
                     <td
                       colSpan={5}
-                     className={styles.autoStylecc1a5d}>
+                     className={styles.inventoryElement14}>
                       <p
-                       className={styles.autoStyleb02676}>
+                       className={styles.inventoryElement15}>
                         No inventory records found.
                       </p>
-                      <p className={styles.autoStyled12ec2}>
+                      <p className={styles.inventoryElement16}>
                         Products added to the backend database will
                         automatically display here.
                       </p>
@@ -923,7 +923,7 @@ export default function InventoryPage() {
             <div className={styles.reorderFormGrid}>
               {/* Select Product */}
               <div
-                className={`${styles.formGroup} ${styles.autoStyle06f730}`}
+                className={`${styles.formGroup} ${styles.inventoryElement17}`}
               >
                 <label className={styles.formLabel}>Select Product</label>
                 <CustomSelect
@@ -1043,7 +1043,7 @@ export default function InventoryPage() {
 
               {/* Note (Full Width) */}
               <div
-                className={`${styles.formGroup} ${styles.autoStyle6b182f}`}
+                className={`${styles.formGroup} ${styles.inventoryElement18}`}
               >
                 <label className={styles.formLabel}>Note</label>
                 <textarea
@@ -1081,12 +1081,12 @@ export default function InventoryPage() {
               <hr className={styles.summaryDivider} />
               <div className={styles.summaryRow}>
                 <span
-                  className={`${styles.summaryLabel} ${styles.autoStyle4a1ff8}`}
+                  className={`${styles.summaryLabel} ${styles.inventoryElement19}`}
                 >
                   Total
                 </span>
                 <span
-                  className={`${styles.summaryVal} ${styles.autoStyle459e18}`}
+                  className={`${styles.summaryVal} ${styles.inventoryElement20}`}
                 >
                   ₹
                   {total.toLocaleString("en-IN", {

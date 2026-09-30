@@ -105,7 +105,7 @@ export default function StatCards() {
                     alt={card.title}
                     width={22}
                     height={22}
-                    className={styles.autoStyleaa658d}
+                    className={styles.statCardsElement1}
                     onError={(e) => {
                       (e.target as HTMLElement).style.display = "none";
                     }}
