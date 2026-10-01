@@ -9,6 +9,8 @@ import { fetchProductsList, ProductItem } from "@/lib/dashboardApi";
 import { APP_IMAGES } from "@/constants/images";
 import styles from "@/styles/pages/products.module.css";
 import { FiSearch, FiUpload, FiPlus } from "react-icons/fi";
+import Pagination from "@/components/ui/Pagination";
+import ExportDialog from "@/components/ui/ExportDialog";
 
 const CATEGORY_OPTIONS: CustomSelectOption[] = [
   { label: "All Category", value: "All Category" },
@@ -26,6 +28,9 @@ export default function ProductsPage() {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All Category");
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [isExportOpen, setIsExportOpen] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -54,6 +59,11 @@ export default function ProductsPage() {
     return matchesSearch && matchesCategory;
   });
 
+  const paginatedProducts = filteredProducts.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
   return (
     <DashboardLayout>
       <div className={styles.pageContainer}>
@@ -61,7 +71,7 @@ export default function ProductsPage() {
         <div className={styles.topRow}>
           <h1 className={styles.title}>Product Management</h1>
           <div className={styles.actionsRight}>
-            <button className={styles.exportBtn}>
+            <button className={styles.exportBtn} onClick={() => setIsExportOpen(true)}>
               <FiUpload /> Export
             </button>
             <Link href="/products/add" className={styles.newProductBtn}>
@@ -114,8 +124,8 @@ export default function ProductsPage() {
                       Loading products from backend database...
                     </td>
                   </tr>
-                ) : filteredProducts.length > 0 ? (
-                  filteredProducts.map((p: ProductItem, idx: number) => {
+                ) : paginatedProducts.length > 0 ? (
+                  paginatedProducts.map((p: ProductItem, idx: number) => {
                     const name = p.productName || "Product";
                     const vendor = p.vendor?.vendorName || p.vendor?.name || "No Vendor";
                     const sku = p.sku || `SKU-${idx + 1}`;
@@ -180,34 +190,31 @@ export default function ProductsPage() {
             </table>
           </div>
 
-          {/* Pagination Footer */}
-          <div className={styles.paginationRow}>
-            <div className={styles.rowsPerPage}>
-              <span>Rows per page</span>
-              <CustomSelect
-                options={[
-                  { label: "10", value: "10" },
-                  { label: "25", value: "25" },
-                  { label: "50", value: "50" },
-                ]}
-                value="10"
-                onChange={() => {}}
-                width="70px"
-                height="32px"
-              />
-            </div>
 
-            <div className={styles.pageControls}>
-              <button className={styles.pageBtn} disabled>
-                &lt; Previous
-              </button>
-              <button className={`${styles.pageBtn} ${styles.activePageBtn}`}>1</button>
-              <button className={styles.pageBtn}>2</button>
-              <button className={styles.pageBtn}>Next &gt;</button>
-            </div>
-          </div>
+          <Pagination
+            currentPage={currentPage}
+            totalItems={filteredProducts.length}
+            pageSize={pageSize}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={setPageSize}
+            pageSizeOptions={[5, 10, 15, 20]}
+          />
         </div>
       </div>
+      <ExportDialog
+        isOpen={isExportOpen}
+        onClose={() => setIsExportOpen(false)}
+        title="Products"
+        columns={["Product Name", "SKU", "Buying Price", "Selling Price", "Quantity"]}
+        data={filteredProducts.map(p => [
+          p.productName || "Unnamed",
+          p.sku || "N/A",
+          `INR ${p.purchaseRate || 0}`,
+          `INR ${p.sellingPrice || 0}`,
+          `${p.quantity || 0} Packets`
+        ])}
+        filename="products_list"
+      />
     </DashboardLayout>
   );
 }

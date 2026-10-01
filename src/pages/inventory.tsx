@@ -3,6 +3,7 @@ import Image from "next/image";
 import { useRouter } from "next/router";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import CustomSelect, { CustomSelectOption } from "@/components/ui/CustomSelect";
+import Pagination from "@/components/ui/Pagination";
 import CustomDatePicker from "@/components/dashboard/CustomDatePicker";
 import {
   fetchProductsList,
@@ -35,6 +36,7 @@ import {
   FiBookmark,
 } from "react-icons/fi";
 import { showSuccessToast } from "@/components/ui/CustomToast";
+import ExportDialog from "@/components/ui/ExportDialog";
 
 export default function InventoryPage() {
   const router = useRouter();
@@ -55,6 +57,8 @@ export default function InventoryPage() {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All Category");
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(5);
 
   // Modal State for "Create Reorder" drawer/modal
   const [showReorderModal, setShowReorderModal] = useState(false);
@@ -83,6 +87,7 @@ export default function InventoryPage() {
   >(null);
 
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrderItem[]>([]);
+  const [isExportOpen, setIsExportOpen] = useState(false);
 
   useEffect(() => {
     function handleClickOutside() {
@@ -98,9 +103,9 @@ export default function InventoryPage() {
 
   const getDaysCount = (filterVal: string) => {
     switch (filterVal) {
-      case "Last 5 days":
-        return 5;
       case "Last 10 days":
+        return 10;
+      case "Last 5 days":
       default:
         return 5;
     }
@@ -312,6 +317,11 @@ export default function InventoryPage() {
     return matchesSearch && matchesCategory;
   });
 
+  const paginatedProducts = filteredProducts.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
   // Calculate dynamic Stock Info stats strictly from live Database products
   const activeProductsCount = stats.totalProducts || products.length;
   const lowStockCount = products.filter(
@@ -344,7 +354,7 @@ export default function InventoryPage() {
         <div className={styles.topRow}>
           <h1 className={styles.title}>Inventory Tracking</h1>
           <div className={styles.actionsRight}>
-            <button type="button" className={styles.exportBtn}>
+            <button type="button" className={styles.exportBtn} onClick={() => setIsExportOpen(true)}>
               <FiUpload /> Export
             </button>
             <button
@@ -622,7 +632,7 @@ export default function InventoryPage() {
                   type="text"
                   placeholder="Search Products by Name / SKU"
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
                   className={styles.searchInput}
                 />
                 <FiSearch className={styles.searchIcon} />
@@ -634,7 +644,7 @@ export default function InventoryPage() {
             <CustomSelect
               options={categoryOptions}
               value={categoryFilter}
-              onChange={setCategoryFilter}
+              onChange={(val) => { setCategoryFilter(val as string); setCurrentPage(1); }}
               width="150px"
             />
           </div>
@@ -668,8 +678,8 @@ export default function InventoryPage() {
                       Loading inventory items from backend database...
                     </td>
                   </tr>
-                ) : filteredProducts.length > 0 ? (
-                  filteredProducts.map((p: ProductItem, idx: number) => {
+                ) : paginatedProducts.length > 0 ? (
+                  paginatedProducts.map((p: ProductItem, idx: number) => {
                     const name = p.productName || "-";
                     const sku = p.sku || "-";
                     const category = p.category?.categoryName || "-";
@@ -814,35 +824,14 @@ export default function InventoryPage() {
             </table>
           </div>
 
-          {/* Pagination Footer */}
-          <div className={styles.paginationRow}>
-            <div className={styles.rowsPerPage}>
-              <span>Rows per page</span>
-              <CustomSelect
-                options={[
-                  { label: "10", value: "10" },
-                  { label: "25", value: "25" },
-                  { label: "50", value: "50" },
-                ]}
-                value="10"
-                onChange={() => {}}
-                width="70px"
-                height="32px"
-              />
-            </div>
-
-            <div className={styles.pageControls}>
-              <button className={styles.pageBtn} disabled>
-                &lt; Previous
-              </button>
-              <button className={`${styles.pageBtn} ${styles.activePageBtn}`}>
-                1
-              </button>
-              <button className={styles.pageBtn}>2</button>
-              <button className={styles.pageBtn}>3</button>
-              <button className={styles.pageBtn}>Next &gt;</button>
-            </div>
-          </div>
+          <Pagination
+            currentPage={currentPage}
+            totalItems={filteredProducts.length}
+            pageSize={pageSize}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={setPageSize}
+            pageSizeOptions={[5, 10, 15]}
+          />
         </div>
       </div>
 
@@ -1152,6 +1141,21 @@ export default function InventoryPage() {
           </div>
         </div>
       )}
+      
+      <ExportDialog
+        isOpen={isExportOpen}
+        onClose={() => setIsExportOpen(false)}
+        title="Inventory"
+        columns={["Product Name", "SKU", "Category", "Vendor", "Quantity"]}
+        data={filteredProducts.map(p => [
+          p.productName || "Unnamed",
+          p.sku || "N/A",
+          p.category?.categoryName || "Uncategorized",
+          p.vendor?.vendorName || "Unknown",
+          `${p.quantity || 0} Units`
+        ])}
+        filename="inventory_list"
+      />
     </DashboardLayout>
   );
 }

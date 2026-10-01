@@ -10,10 +10,14 @@ import {
 } from "@/lib/dashboardApi";
 import styles from "@/styles/pages/purchaseOrders.module.css";
 import Image from "next/image";
-import { FiDownload, FiPlus, FiSearch } from "react-icons/fi";
+import { FiDownload, FiPlus, FiSearch, FiMoreHorizontal } from "react-icons/fi";
 
 import CreatePOModal from "@/components/dashboard/CreatePOModal";
+import ViewPOModal from "@/components/dashboard/ViewPOModal";
 import CustomDatePicker from "@/components/dashboard/CustomDatePicker";
+import CustomSelect from "@/components/ui/CustomSelect";
+import Pagination from "@/components/ui/Pagination";
+import ExportDialog from "@/components/ui/ExportDialog";
 import { APP_IMAGES } from "@/constants/images";
 
 export default function PurchaseOrdersPage() {
@@ -25,6 +29,24 @@ export default function PurchaseOrdersPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All Status");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [viewOrder, setViewOrder] = useState<PurchaseOrderItem | null>(null);
+  const [activeActionMenuId, setActiveActionMenuId] = useState<number | string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [queuePriorityFilter, setQueuePriorityFilter] = useState("All Priority");
+  const [isExportOpen, setIsExportOpen] = useState(false);
+
+  useEffect(() => {
+    function handleClickOutside() {
+      setActiveActionMenuId(null);
+    }
+    if (activeActionMenuId !== null) {
+      document.addEventListener("click", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("click", handleClickOutside);
+    };
+  }, [activeActionMenuId]);
 
   useEffect(() => {
     Promise.all([
@@ -95,6 +117,11 @@ export default function PurchaseOrdersPage() {
     return filtered;
   }, [orders, statusFilter, searchQuery]);
 
+  const paginatedOrders = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    return filteredOrders?.slice(startIndex, startIndex + pageSize) || [];
+  }, [filteredOrders, currentPage, pageSize]);
+
   const getStatusBadgeClass = (status?: string) => {
     const st = status?.toLowerCase() || "pending";
     if (st === "approved") return styles?.statusApproved;
@@ -109,10 +136,14 @@ export default function PurchaseOrdersPage() {
 
   const getPriority = (qty: number) => {
     if (qty < 20) return { label: "High", className: styles?.priorityHigh };
-    if (qty >= 20 && qty < 40) return { label: "Medium", className: styles?.priorityMedium };
-    if (qty >= 40 && qty <= 70) return { label: "Low", className: styles?.priorityLow };
-    return { label: "Low", className: styles?.priorityLow }; // fallback
+    if (qty >= 20 && qty < 40) return { label: "Middle", className: styles?.priorityMedium };
+    return { label: "Low", className: styles?.priorityLow };
   };
+
+  const filteredQueue = lowStockProducts.filter(p => {
+    if (queuePriorityFilter === "All Priority") return true;
+    return getPriority(Number(p?.quantity || 0)).label === queuePriorityFilter;
+  });
 
   return (
     <DashboardLayout>
@@ -121,7 +152,7 @@ export default function PurchaseOrdersPage() {
         <div className={styles?.pageHeader}>
           <h1 className={styles?.pageTitle}>Purchase Order</h1>
           <div className={styles?.headerActions}>
-            <button className={styles?.btnExport}>
+            <button className={styles?.btnExport} onClick={() => setIsExportOpen(true)}>
               <FiDownload /> Export
             </button>
             <button
@@ -260,9 +291,18 @@ export default function PurchaseOrdersPage() {
           <div className={styles?.card}>
             <div className={styles?.cardHeader}>
               <h2 className={styles?.cardTitle}>Inventory Refill Queue</h2>
-              <select className={styles?.dropdownSelect}>
-                <option>All Priority</option>
-              </select>
+              <CustomSelect
+                options={[
+                  { label: "All Priority", value: "All Priority" },
+                  { label: "High", value: "High" },
+                  { label: "Middle", value: "Middle" },
+                  { label: "Low", value: "Low" },
+                ]}
+                value={queuePriorityFilter}
+                onChange={(val) => setQueuePriorityFilter(val as string)}
+                width="140px"
+                height="32px"
+              />
             </div>
             <table className={styles?.dataTable}>
               <thead>
@@ -274,8 +314,8 @@ export default function PurchaseOrdersPage() {
                 </tr>
               </thead>
               <tbody>
-                {lowStockProducts?.length > 0 ? (
-                  lowStockProducts?.map((p, i) => {
+                {filteredQueue?.length > 0 ? (
+                  filteredQueue?.map((p, i) => {
                     const priority = getPriority(
                       Number(p?.quantity || 0)
                     );
@@ -353,17 +393,18 @@ export default function PurchaseOrdersPage() {
                   <th>Status</th>
                   <th>Order Date</th>
                   <th>Del Date</th>
+                  <th>Action</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={7} className={styles.purchaseOrdersElement8}>
+                    <td colSpan={8} className={styles.purchaseOrdersElement8}>
                       Loading data...
                     </td>
                   </tr>
-                ) : filteredOrders?.length > 0 ? (
-                  filteredOrders?.map((po, idx) => (
+                ) : paginatedOrders?.length > 0 ? (
+                  paginatedOrders?.map((po, idx) => (
                     <tr key={String(po?.id)}>
                       <td className={styles.purchaseOrdersElement9}>
                         {String(po?.poNumber || `PO-100${idx + 1}`)}
@@ -407,11 +448,43 @@ export default function PurchaseOrdersPage() {
                           : "Jun 14, 2026"}
                       </td>
                       <td>Jun 20, 2026</td>
+                      <td style={{ position: "relative" }}>
+                        <button
+                          className={styles.actionMenuBtn}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveActionMenuId(
+                              activeActionMenuId === po.id ? null : po.id || null
+                            );
+                          }}
+                        >
+                          <FiMoreHorizontal />
+                        </button>
+                        
+                        {activeActionMenuId === po.id && (
+                          <div
+                            className={styles.actionPopover}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <button
+                              type="button"
+                              className={styles.popoverItem}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveActionMenuId(null);
+                                setViewOrder(po);
+                              }}
+                            >
+                              View Details
+                            </button>
+                          </div>
+                        )}
+                      </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={7} className={styles.purchaseOrdersElement10}>
+                    <td colSpan={8} className={styles.purchaseOrdersElement10}>
                       No purchase orders found matching your criteria.
                     </td>
                   </tr>
@@ -420,24 +493,14 @@ export default function PurchaseOrdersPage() {
             </table>
           </div>
 
-          <div className={styles?.pagination}>
-            <div className={styles?.rowsPerPage}>
-              Rows per page:
-              <select className={styles?.dropdownSelect} defaultValue="10">
-                <option>10</option>
-                <option>20</option>
-                <option>50</option>
-              </select>
-            </div>
-            <div className={styles?.pageControls}>
-              <button className={styles?.pageBtnText}>&lt; Previous</button>
-              <button className={`${styles?.pageBtn} ${styles?.active}`}>
-                1
-              </button>
-              <button className={styles?.pageBtn}>2</button>
-              <button className={styles?.pageBtnText}>Next &gt;</button>
-            </div>
-          </div>
+          <Pagination
+            currentPage={currentPage}
+            totalItems={filteredOrders?.length || 0}
+            pageSize={pageSize}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={setPageSize}
+            pageSizeOptions={[5, 10, 15, 20]}
+          />
         </div>
       </div>
 
@@ -447,6 +510,24 @@ export default function PurchaseOrdersPage() {
         onSuccess={() =>
           fetchPurchaseOrdersList().then((d) => setOrders(d || []))
         }
+      />
+      <ViewPOModal
+        isOpen={!!viewOrder}
+        onClose={() => setViewOrder(null)}
+        order={viewOrder}
+      />
+      <ExportDialog
+        isOpen={isExportOpen}
+        onClose={() => setIsExportOpen(false)}
+        title="Purchase Orders"
+        columns={["PO Number", "Vendor Name", "Total Amount", "Status"]}
+        data={filteredOrders.map(o => [
+          o.poNumber || "N/A",
+          o.vendorName || o.vendor?.vendorName || "Unknown",
+          `INR ${o.totalAmount || 0}`,
+          o.status || "Pending"
+        ])}
+        filename="purchase_orders"
       />
     </DashboardLayout>
   );
