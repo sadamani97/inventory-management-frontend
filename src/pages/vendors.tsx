@@ -1,7 +1,22 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useCallback } from "react";
 import { useRouter } from "next/router";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState, AppDispatch } from "@/store";
+import {
+  setVendors, setStats, setVendorTypes, setCountries, setStates, setCities, setCategories,
+  setLoading, setSubmitting, setSearch, setStatusFilter, setCategoryFilter, setLastDeliveryFilter,
+  setStarredOnly, setActiveActionMenuId, setShowVendorModal, setEditingVendorId,
+  setCurrentPage, setPageSize,
+  openDeleteDialog, closeDeleteDialog,
+  addStarLoadingId, removeStarLoadingId, updateFormField, resetForm, setForm
+} from "@/store/vendorSlice";
+
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import CustomSelect from "@/components/ui/CustomSelect";
+import Pagination from "@/components/ui/Pagination";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import ExportDialog from "@/components/ui/ExportDialog";
+import { useState } from "react";
 import {
   fetchVendorsList,
   fetchVendorStats,
@@ -22,11 +37,6 @@ import {
   createCategory,
   setVendorStarred,
   VendorItem,
-  VendorStatsResponse,
-  VendorTypeItem,
-  CountryItem,
-  StateItem,
-  CityItem,
   CategoryItem,
 } from "@/lib/dashboardApi";
 import styles from "@/styles/pages/vendors.module.css";
@@ -43,7 +53,6 @@ import {
   FiPaperclip,
 } from "react-icons/fi";
 import { toast } from "react-toastify";
-import { showSuccessToast } from "@/components/ui/CustomToast";
 
 const formatTimeAgo = (dateStr?: string) => {
   if (!dateStr) return "N/A";
@@ -65,87 +74,31 @@ const formatTimeAgo = (dateStr?: string) => {
 
 export default function VendorsPage() {
   const router = useRouter();
-  const [vendors, setVendors] = useState<VendorItem[]>([]);
-  const [stats, setStats] = useState<VendorStatsResponse>({
-    totalVendors: 0,
-    activeVendors: 0,
-    newVendors: 0,
-    activePurchaseOrders: 0,
-  });
-  const [vendorTypes, setVendorTypes] = useState<VendorTypeItem[]>([]);
-  const [countries, setCountries] = useState<CountryItem[]>([]);
-  const [states, setStates] = useState<StateItem[]>([]);
-  const [cities, setCities] = useState<CityItem[]>([]);
-  const [categories, setCategories] = useState<CategoryItem[]>([]);
+  const dispatch = useDispatch<AppDispatch>();
+  const {
+    vendors, stats, vendorTypes, countries, states, cities, categories, loading, submitting,
+    search, statusFilter, categoryFilter, lastDeliveryFilter, starredOnly,
+    currentPage, pageSize,
+    activeActionMenuId, showVendorModal, editingVendorId, starLoadingIds: starLoadingIdsArr,
+    deleteDialog,
+    form
+  } = useSelector((state: RootState) => state.vendor);
+  
+  const starLoadingIds = new Set(starLoadingIdsArr);
 
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("All");
-  const [categoryFilter, setCategoryFilter] = useState("All");
-  const [lastDeliveryFilter, setLastDeliveryFilter] = useState("All");
-  const [starredOnly, setStarredOnly] = useState(false);
+  const {
+    vendorName, companyName, vendorTypeId, website, gstin, status, vendorCode, panNumber, currency, creditLimit, productCategory, preferredProducts, leadTime, gstCertificate, agreement, vendorLogo, phoneCode, vendorPhone, vendorEmail,
+    addressLine, countryName, stateName, cityName, pincode,
+    contactName, contactEmail, contactMobile,
+    accountHolderName, bankName, accountNumber, ifscCode, branchName, upiId,
+    addressId, contactId, bankDetailId
+  } = form;
 
-  // Popover State
-  const [activeActionMenuId, setActiveActionMenuId] = useState<number | string | null>(null);
-
-  // Modal / Drawer State
-  const [showVendorModal, setShowVendorModal] = useState(false);
-  const [editingVendorId, setEditingVendorId] = useState<number | string | null>(null);
-
-  // Star Loading State
-  const [starLoadingIds, setStarLoadingIds] = useState<Set<number | string>>(new Set());
-
-  // ID states for editing nested entities
-  const [addressId, setAddressId] = useState<number | string | null>(null);
-  const [contactId, setContactId] = useState<number | string | null>(null);
-  const [bankDetailId, setBankDetailId] = useState<number | string | null>(null);
-
-  // Form Fields
-  const [vendorName, setVendorName] = useState("");
-  const [companyName, setCompanyName] = useState("");
-  const [vendorTypeId, setVendorTypeId] = useState<string>("");
-  const [website, setWebsite] = useState("");
-  const [gstin, setGstin] = useState("");
-  const [status, setStatus] = useState<"active" | "inactive">("active");
-  const [vendorCode, setVendorCode] = useState("");
-  const [panNumber, setPanNumber] = useState("");
-  const [currency, setCurrency] = useState("INR (₹)");
-  const [creditLimit, setCreditLimit] = useState("");
-  const [productCategory, setProductCategory] = useState("");
-  const [preferredProducts, setPreferredProducts] = useState("");
-  const [leadTime, setLeadTime] = useState("");
-  const [gstCertificate, setGstCertificate] = useState("");
-  const [agreement, setAgreement] = useState("");
-  const [vendorLogo, setVendorLogo] = useState("");
-  const [phoneCode, setPhoneCode] = useState("+91");
-  const [vendorPhone, setVendorPhone] = useState("");
-  const [vendorEmail, setVendorEmail] = useState("");
-
-  // Address Fields
-  const [addressLine, setAddressLine] = useState("");
-  const [countryName, setCountryName] = useState("");
-  const [stateName, setStateName] = useState("");
-  const [cityName, setCityName] = useState("");
-  const [pincode, setPincode] = useState("");
-
-  // Contact Person Fields
-  const [contactName, setContactName] = useState("");
-  const [contactEmail, setContactEmail] = useState("");
-  const [contactMobile, setContactMobile] = useState("");
-
-  // Bank Details Fields
-  const [accountHolderName, setAccountHolderName] = useState("");
-  const [bankName, setBankName] = useState("");
-  const [accountNumber, setAccountNumber] = useState("");
-  const [ifscCode, setIfscCode] = useState("");
-  const [branchName, setBranchName] = useState("");
-  const [upiId, setUpiId] = useState("");
-
-  const [submitting, setSubmitting] = useState(false);
+  const [isExportOpen, setIsExportOpen] = useState(false);
 
   // Initial Load Data function
-  const loadPageData = async () => {
-    setLoading(true);
+  const loadPageData = useCallback(async () => {
+    dispatch(setLoading(true));
     const [vList, vStats, vTypes, cList, catList] = await Promise.all([
       fetchVendorsList(),
       fetchVendorStats(),
@@ -154,7 +107,7 @@ export default function VendorsPage() {
       fetchCategories(),
     ]);
 
-    setVendors(vList || []);
+    dispatch(setVendors(vList || []));
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     const calculatedNewVendors = (vList || []).filter((v) => {
@@ -163,17 +116,17 @@ export default function VendorsPage() {
       return createdAtDate >= thirtyDaysAgo;
     }).length;
 
-    setStats({
+    dispatch(setStats({
       totalVendors: vStats?.totalVendors || vList?.length || 0,
       activeVendors: vStats?.activeVendors || vList?.filter((v) => v.status === "active")?.length || 0,
       newVendors: calculatedNewVendors,
       activePurchaseOrders: vStats?.activePurchaseOrders || 0,
-    });
-    setVendorTypes(vTypes || []);
-    setCountries(cList || []);
-    setCategories(catList || []);
-    setLoading(false);
-  };
+    }));
+    dispatch(setVendorTypes(vTypes || []));
+    dispatch(setCountries(cList || []));
+    dispatch(setCategories(catList || []));
+    dispatch(setLoading(false));
+  }, [dispatch]);
 
   // Initial Load Effect
   useEffect(() => {
@@ -181,7 +134,7 @@ export default function VendorsPage() {
       loadPageData();
     }, 0);
     return () => clearTimeout(timer);
-  }, []);
+  }, [loadPageData]);
 
   // Fetch States when Country changes
   useEffect(() => {
@@ -190,17 +143,17 @@ export default function VendorsPage() {
       const foundCountry = countries.find(c => c.countryName.toLowerCase() === countryName.trim().toLowerCase());
       if (foundCountry) {
         fetchStates(Number(foundCountry.countryId || foundCountry.id)).then((data) => {
-          if (isMounted) setStates(data || []);
+          if (isMounted) dispatch(setStates(data || []));
         });
       } else {
-        if (isMounted) setStates([]);
+        if (isMounted) dispatch(setStates([]));
       }
     }, 0);
     return () => {
       isMounted = false;
       clearTimeout(timer);
     };
-  }, [countryName, countries]);
+  }, [countryName, countries, dispatch]);
 
   // Fetch Cities when State changes
   useEffect(() => {
@@ -209,22 +162,22 @@ export default function VendorsPage() {
       const foundState = states.find(s => s.stateName.toLowerCase() === stateName.trim().toLowerCase());
       if (foundState) {
         fetchCities(Number(foundState.stateId || foundState.id)).then((data) => {
-          if (isMounted) setCities(data || []);
+          if (isMounted) dispatch(setCities(data || []));
         });
       } else {
-        if (isMounted) setCities([]);
+        if (isMounted) dispatch(setCities([]));
       }
     }, 0);
     return () => {
       isMounted = false;
       clearTimeout(timer);
     };
-  }, [stateName, states]);
+  }, [stateName, states, dispatch]);
 
   // Close Action Popover on click outside
   useEffect(() => {
     function handleClickOutside() {
-      setActiveActionMenuId(null);
+      dispatch(setActiveActionMenuId(null));
     }
     if (activeActionMenuId !== null) {
       document.addEventListener("click", handleClickOutside);
@@ -232,148 +185,111 @@ export default function VendorsPage() {
     return () => {
       document.removeEventListener("click", handleClickOutside);
     };
-  }, [activeActionMenuId]);
+  }, [activeActionMenuId, dispatch]);
   // Handler for adding a new category from the dropdown
   const handleAddNewCategory = async (newCatName: string): Promise<string | void> => {
     const res = await createCategory(newCatName);
     if (res && res.success && res.data) {
       const newCat = res.data;
-      setCategories((prev) => [...prev, newCat]);
+      dispatch(setCategories([...categories, newCat]));
       const newName = String(newCat.categoryName || newCatName);
-      setProductCategory(newName);
+      dispatch(updateFormField({ field: "productCategory", value: newName }));
       return newName;
     } else {
-      const tempCat = { categoryId: Date.now() as unknown as number, categoryName: newCatName };
-      setCategories((prev) => [...prev, tempCat]);
-      setProductCategory(newCatName);
+      const tempCat: CategoryItem = { id: Date.now(), categoryId: Date.now(), categoryName: newCatName, name: newCatName };
+      dispatch(setCategories([...categories, tempCat]));
+      dispatch(updateFormField({ field: "productCategory", value: newCatName }));
       return newCatName;
     }
   };
 
   // Reset Form
-  const resetForm = () => {
-    setEditingVendorId(null);
-    setAddressId(null);
-    setContactId(null);
-    setBankDetailId(null);
-    setVendorName("");
-    setCompanyName("");
-    setVendorTypeId("");
-    setWebsite("");
-    setGstin("");
-    setStatus("active");
-    setVendorCode("");
-    setPanNumber("");
-    setCurrency("INR (₹)");
-    setCreditLimit("");
-    setProductCategory("");
-    setPreferredProducts("");
-    setLeadTime("");
-    setGstCertificate("");
-    setAgreement("");
-    setVendorLogo("");
-    setPhoneCode("+91");
-    setVendorPhone("");
-    setVendorEmail("");
-
-    setAddressLine("");
-    setCountryName("");
-    setStateName("");
-    setCityName("");
-    setPincode("");
-
-    setContactName("");
-    setContactEmail("");
-    setContactMobile("");
-
-    setAccountHolderName("");
-    setBankName("");
-    setAccountNumber("");
-    setIfscCode("");
-    setBranchName("");
-  };
+  const doResetForm = () => { dispatch(resetForm()); dispatch(setEditingVendorId(null)); };
 
   const openCreateModal = () => {
-    resetForm();
-    setShowVendorModal(true);
+    doResetForm();
+    dispatch(setShowVendorModal(true));
   };
 
   const openEditModal = (vendor: VendorItem) => {
-    resetForm();
-    setEditingVendorId(vendor.vendorId || vendor.id || null);
-    setVendorName(vendor.vendorName || vendor.name || "");
-    setCompanyName(vendor.companyName || "");
-    setVendorTypeId(String(vendor.vendorTypeId || (vendorTypes.length > 0 ? vendorTypes[0].vendorTypeId || vendorTypes[0].id : "")));
-    setWebsite(vendor.website || "");
-    setGstin(vendor.gstin || "");
-    setStatus(vendor.status === "inactive" ? "inactive" : "active");
-    setVendorCode(vendor.vendorCode || "");
-    setPanNumber(vendor.panNumber || "");
-    setCurrency(vendor.currency || "INR (₹)");
-    setCreditLimit(String(vendor.creditLimit || ""));
-    setProductCategory(vendor.productCategory || "");
-    setPreferredProducts(vendor.preferredProducts || "");
-    setLeadTime(vendor.leadTime || "");
-    setGstCertificate(vendor.gstCertificate || "");
-    setAgreement(vendor.agreement || "");
-    setVendorLogo(vendor.vendorLogo || "");
-    setVendorPhone(vendor.phone || "");
-    setVendorEmail(vendor.email || "");
+    doResetForm();
+    dispatch(setEditingVendorId(vendor.vendorId || vendor.id || null));
+    
+    const formUpdates: Partial<typeof form> = {};
+    formUpdates.vendorName = vendor.vendorName || vendor.name || "";
+    formUpdates.companyName = vendor.companyName || "";
+    formUpdates.vendorTypeId = String(vendor.vendorTypeId || (vendorTypes.length > 0 ? vendorTypes[0].vendorTypeId || vendorTypes[0].id : ""));
+    formUpdates.website = vendor.website || "";
+    formUpdates.gstin = vendor.gstin || "";
+    formUpdates.status = vendor.status === "inactive" ? "inactive" : "active";
+    formUpdates.vendorCode = vendor.vendorCode || "";
+    formUpdates.panNumber = vendor.panNumber || "";
+    formUpdates.currency = vendor.currency || "INR (₹)";
+    formUpdates.creditLimit = String(vendor.creditLimit || "");
+    formUpdates.productCategory = vendor.productCategory || "";
+    formUpdates.preferredProducts = vendor.preferredProducts || "";
+    formUpdates.leadTime = vendor.leadTime || "";
+    formUpdates.gstCertificate = vendor.gstCertificate || "";
+    formUpdates.agreement = vendor.agreement || "";
+    formUpdates.vendorLogo = vendor.vendorLogo || "";
+    formUpdates.vendorPhone = vendor.phone || "";
+    formUpdates.vendorEmail = vendor.email || "";
 
     if (vendor.addresses && vendor.addresses.length > 0) {
       const addr = vendor.addresses[0];
-      setAddressId(addr.addressId || addr.id || null);
-      setAddressLine(addr.addressLine || "");
-      
-      const cName = countries.find(c => c.countryId === addr.countryId || c.id === addr.countryId)?.countryName || "";
-      setCountryName(cName);
-      
-      const sName = states.find(s => s.stateId === addr.stateId || s.id === addr.stateId)?.stateName || "";
-      setStateName(sName);
-      
-      const ctName = cities.find(ct => ct.cityId === addr.cityId || ct.id === addr.cityId)?.cityName || "";
-      setCityName(ctName);
-      
-      setPincode(addr.pincode || "");
+      formUpdates.addressId = addr.addressId || addr.id || null;
+      formUpdates.addressLine = addr.addressLine || "";
+      formUpdates.countryName = countries.find((c) => c.countryId === addr.countryId || c.id === addr.countryId)?.countryName || "";
+      formUpdates.stateName = states.find((s) => s.stateId === addr.stateId || s.id === addr.stateId)?.stateName || "";
+      formUpdates.cityName = cities.find((ct) => ct.cityId === addr.cityId || ct.id === addr.cityId)?.cityName || "";
+      formUpdates.pincode = addr.pincode || "";
     }
 
     if (vendor.contacts && vendor.contacts.length > 0) {
       const cnt = vendor.contacts[0];
-      setContactId(cnt.vendorContactId || cnt.id || null);
-      setContactName(cnt.name || "");
-      setContactEmail(cnt.email || "");
+      formUpdates.contactId = cnt.vendorContactId || cnt.id || null;
+      formUpdates.contactName = cnt.name || "";
+      formUpdates.contactEmail = cnt.email || "";
       const mob = cnt.mobile || "";
       if (mob.startsWith("+") && mob.includes(" ")) {
         const [code, ...rest] = mob.split(" ");
-        setPhoneCode(code);
-        setContactMobile(rest.join(" "));
+        formUpdates.phoneCode = code;
+        formUpdates.contactMobile = rest.join(" ");
       } else {
-        setPhoneCode("+91");
-        setContactMobile(mob);
+        formUpdates.phoneCode = "+91";
+        formUpdates.contactMobile = mob;
       }
     }
 
     if (vendor.bankDetails && vendor.bankDetails.length > 0) {
       const bnk = vendor.bankDetails[0];
-      setBankDetailId(bnk.vendorBankDetailId || bnk.id || null);
-      setAccountHolderName(bnk.accountHolderName || "");
-      setBankName(bnk.bankName || "");
-      setAccountNumber(bnk.accountNumber || "");
-      setIfscCode(bnk.ifscCode || "");
-      setBranchName(bnk.branchName || "");
-      setUpiId(bnk.upiId || "");
+      formUpdates.bankDetailId = bnk.vendorBankDetailId || bnk.id || null;
+      formUpdates.accountHolderName = bnk.accountHolderName || "";
+      formUpdates.bankName = bnk.bankName || "";
+      formUpdates.accountNumber = bnk.accountNumber || "";
+      formUpdates.ifscCode = bnk.ifscCode || "";
+      formUpdates.branchName = bnk.branchName || "";
+      formUpdates.upiId = bnk.upiId || "";
     }
 
-    setShowVendorModal(true);
+    dispatch(setForm(formUpdates));
+    dispatch(setShowVendorModal(true));
   };
 
-  const handleDeleteVendor = async (id: number | string) => {
-    if (!window.confirm("Are you sure you want to delete this vendor?")) return;
-    const res = await deleteVendor(id);
+  const handleDeleteVendor = (id: number | string) => {
+    dispatch(openDeleteDialog(id));
+  };
+
+  const confirmDeleteVendor = async () => {
+    if (!deleteDialog.vendorId) return;
+    const res = await deleteVendor(deleteDialog.vendorId);
     if (res.success) {
-      showSuccessToast("Deleted Vendor", "Vendor has been removed from your vendor list", <FiTrash2 size={44} color="#0f172a" strokeWidth={1.5} />);
+      toast.success("Vendor has been removed successfully.");
       loadPageData();
+    } else {
+      toast.error("Failed to delete vendor.");
     }
+    dispatch(closeDeleteDialog());
   };
 
   const handleSubmitVendor = async (e: React.FormEvent) => {
@@ -392,7 +308,7 @@ export default function VendorsPage() {
       return;
     }
 
-    setSubmitting(true);
+    dispatch(setSubmitting(true));
 
     const typeIdVal = Number(vendorTypeId) || (vendorTypes.length > 0 ? Number(vendorTypes[0].vendorTypeId || vendorTypes[0].id) : 1);
 
@@ -422,13 +338,13 @@ export default function VendorsPage() {
     if (editingVendorId) {
       const res = await updateVendor(editingVendorId, payload);
       if (res.success) {
-        showSuccessToast("Updated Vendor", "Vendor has been updated in your vendor list", <FiEdit size={44} color="#0f172a" strokeWidth={1.5} />);
+        toast.success("Vendor has been updated in your vendor list");
         createdVendorId = Number(editingVendorId);
       }
     } else {
       const res = await createVendor(payload);
       if (res.success) {
-        showSuccessToast("Added New Vendor", "New Vendor will be added to your vendor list", <FiUserPlus size={44} color="#0f172a" strokeWidth={1.5} />);
+        toast.success("New Vendor will be added to your vendor list");
         if (res.data && (res.data.vendorId || res.data.id)) {
           createdVendorId = Number(res.data.vendorId || res.data.id);
         }
@@ -492,8 +408,8 @@ export default function VendorsPage() {
       }
     }
 
-    setSubmitting(false);
-    setShowVendorModal(false);
+    dispatch(setSubmitting(false));
+    dispatch(setShowVendorModal(false));
     loadPageData();
   };
 
@@ -525,34 +441,36 @@ export default function VendorsPage() {
     return matchesSearch && matchesStatus && matchesCategory && matchesStarred;
   });
 
+  // Calculate pagination
+  const paginatedVendors = filteredVendors.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
   const toggleStarVendor = async (e: React.MouseEvent, vendor: VendorItem) => {
     e.stopPropagation();
     const id = vendor.vendorId || vendor.id;
     if (!id || starLoadingIds.has(id)) return;
 
-    setStarLoadingIds((prev) => new Set(prev).add(id));
+    dispatch(addStarLoadingId(id));
 
     const nextStarred = !vendor.isStarred;
-    setVendors((prev) =>
-      prev.map((item) =>
+    dispatch(setVendors(
+      vendors.map((item) =>
         (item.vendorId || item.id) === id ? { ...item, isStarred: nextStarred } : item
       )
-    );
+    ));
 
     const res = await setVendorStarred(id, nextStarred);
     if (!res.success) {
-      setVendors((prev) =>
-        prev.map((item) =>
+      dispatch(setVendors(
+        vendors.map((item) =>
           (item.vendorId || item.id) === id ? { ...item, isStarred: vendor.isStarred } : item
         )
-      );
+      ));
     }
     
-    setStarLoadingIds((prev) => {
-      const newSet = new Set(prev);
-      newSet.delete(id);
-      return newSet;
-    });
+    dispatch(removeStarLoadingId(id));
   };
 
   return (
@@ -562,7 +480,7 @@ export default function VendorsPage() {
         <div className={styles.topRow}>
           <h1 className={styles.title}>My Vendors</h1>
           <div className={styles.actionsRight}>
-            <button type="button" className={styles.exportBtn}>
+            <button type="button" className={styles.exportBtn} onClick={() => setIsExportOpen(true)}>
               <FiUpload /> Export
             </button>
             <button type="button" className={styles.primaryBtn} onClick={openCreateModal}>
@@ -612,7 +530,7 @@ export default function VendorsPage() {
                 type="text"
                 placeholder="Search Products by Name / SKU"
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => { dispatch(setSearch(e.target.value)); dispatch(setCurrentPage(1)); }}
                 className={styles.searchInput}
               />
               <FiSearch className={styles.searchIcon} />
@@ -622,7 +540,7 @@ export default function VendorsPage() {
               <CustomSelect
                 options={categoriesList.map((cat) => ({ label: `Category: ${cat}`, value: String(cat) }))}
                 value={categoryFilter}
-                onChange={setCategoryFilter}
+                onChange={(val) => { dispatch(setCategoryFilter(val as string)); dispatch(setCurrentPage(1)); }}
                 width="160px"
               />
 
@@ -633,7 +551,7 @@ export default function VendorsPage() {
                   { label: "Status: Inactive", value: "Inactive" },
                 ]}
                 value={statusFilter}
-                onChange={setStatusFilter}
+                onChange={(val) => { dispatch(setStatusFilter(val as string)); dispatch(setCurrentPage(1)); }}
                 width="150px"
               />
 
@@ -644,14 +562,14 @@ export default function VendorsPage() {
                   { label: "Last 30 Days", value: "30days" },
                 ]}
                 value={lastDeliveryFilter}
-                onChange={setLastDeliveryFilter}
+                onChange={(val) => { dispatch(setLastDeliveryFilter(val as string)); dispatch(setCurrentPage(1)); }}
                 width="170px"
               />
 
               <button
                 type="button"
                 className={`${styles.filterBtn} ${starredOnly ? styles.filterBtnActive : ""}`}
-                onClick={() => setStarredOnly(!starredOnly)}
+                onClick={() => { dispatch(setStarredOnly(!starredOnly)); dispatch(setCurrentPage(1)); }}
               >
                 <FiStar style={{ color: starredOnly ? "#f59e0b" : "#94a3b8" }} />
                 Starred
@@ -661,11 +579,12 @@ export default function VendorsPage() {
                 type="button"
                 className={styles.filterBtn}
                 onClick={() => {
-                  setSearch("");
-                  setStatusFilter("All");
-                  setCategoryFilter("All");
-                  setLastDeliveryFilter("All");
-                  setStarredOnly(false);
+                  dispatch(setSearch(""));
+                  dispatch(setStatusFilter("All"));
+                  dispatch(setCategoryFilter("All"));
+                  dispatch(setLastDeliveryFilter("All"));
+                  dispatch(setStarredOnly(false));
+                  dispatch(setCurrentPage(1));
                 }}
               >
                 See all
@@ -694,8 +613,8 @@ export default function VendorsPage() {
                       Loading vendor records from backend...
                     </td>
                   </tr>
-                ) : filteredVendors.length > 0 ? (
-                  filteredVendors.map((v, idx) => {
+                ) : paginatedVendors.length > 0 ? (
+                  paginatedVendors.map((v, idx) => {
                     const rowKey = v.vendorId || v.id || idx;
                     const vName = v.vendorName || v.name || "Unnamed Vendor";
                     const contact = v.contacts && v.contacts.length > 0 ? v.contacts[0] : null;
@@ -760,7 +679,7 @@ export default function VendorsPage() {
                             className={styles.actionMenuBtn}
                             onClick={(e) => {
                               e.stopPropagation();
-                              setActiveActionMenuId(activeActionMenuId === rowKey ? null : rowKey);
+                              dispatch(setActiveActionMenuId(activeActionMenuId === rowKey ? null : rowKey));
                             }}
                           >
                             <FiMoreVertical />
@@ -772,7 +691,7 @@ export default function VendorsPage() {
                                 type="button"
                                 className={styles.popoverItem}
                                 onClick={() => {
-                                  setActiveActionMenuId(null);
+                                  dispatch(setActiveActionMenuId(null));
                                   openEditModal(v);
                                 }}
                               >
@@ -782,7 +701,7 @@ export default function VendorsPage() {
                                 type="button"
                                 className={`${styles.popoverItem} ${styles.popoverItemDanger}`}
                                 onClick={() => {
-                                  setActiveActionMenuId(null);
+                                  dispatch(setActiveActionMenuId(null));
                                   handleDeleteVendor(v.vendorId || v.id || 0);
                                 }}
                               >
@@ -804,6 +723,14 @@ export default function VendorsPage() {
               </tbody>
             </table>
           </div>
+          
+          <Pagination
+            currentPage={currentPage}
+            totalItems={filteredVendors.length}
+            pageSize={pageSize}
+            onPageChange={(page) => dispatch(setCurrentPage(page))}
+            onPageSizeChange={(size) => dispatch(setPageSize(size))}
+          />
         </div>
 
         {/* Add / Edit Vendor Drawer */}
@@ -827,7 +754,7 @@ export default function VendorsPage() {
                       <input
                         type="text"
                         value={vendorName}
-                        onChange={(e) => setVendorName(e.target.value)}
+                        onChange={(e) => dispatch(updateFormField({ field: 'vendorName', value: e.target.value }))}
                         placeholder="Enter The Vendor Name"
                         required
                         className={styles.inputControl}
@@ -838,7 +765,7 @@ export default function VendorsPage() {
                       <input
                         type="text"
                         value={vendorCode}
-                        onChange={(e) => setVendorCode(e.target.value)}
+                        onChange={(e) => dispatch(updateFormField({ field: 'vendorCode', value: e.target.value }))}
                         placeholder="VEN-DNW-001"
                         className={styles.inputControl}
                       />
@@ -851,7 +778,7 @@ export default function VendorsPage() {
                       <input
                         type="text"
                         value={companyName}
-                        onChange={(e) => setCompanyName(e.target.value)}
+                        onChange={(e) => dispatch(updateFormField({ field: 'companyName', value: e.target.value }))}
                         placeholder="Enter The Company Name"
                         className={styles.inputControl}
                       />
@@ -868,7 +795,7 @@ export default function VendorsPage() {
                             : [{ label: "Wholesaler", value: "1" }]
                         }
                         value={vendorTypeId || (vendorTypes.length > 0 ? String(vendorTypes[0].vendorTypeId || vendorTypes[0].id) : "1")}
-                        onChange={setVendorTypeId}
+                        onChange={(val) => dispatch(updateFormField({ field: "vendorTypeId", value: val }))}
                         placeholder="Select Vendor Type"
                         width="100%"
                         height="40px"
@@ -884,7 +811,7 @@ export default function VendorsPage() {
                       <input
                         type="text"
                         value={contactName}
-                        onChange={(e) => setContactName(e.target.value)}
+                        onChange={(e) => dispatch(updateFormField({ field: 'contactName', value: e.target.value }))}
                         placeholder="Enter the Contact Person Name"
                         required
                         className={styles.inputControl}
@@ -895,7 +822,7 @@ export default function VendorsPage() {
                       <div className={styles.vendorsElement19}>
                         <select 
                           value={phoneCode} 
-                          onChange={(e) => setPhoneCode(e.target.value)}
+                          onChange={(e) => dispatch(updateFormField({ field: "phoneCode", value: e.target.value }))}
                           className={`${styles.inputControl} ${styles.vendorsElement20}`}
                         >
                           <option value="+91">+91 (IN)</option>
@@ -907,7 +834,7 @@ export default function VendorsPage() {
                         <input
                           type="tel"
                           value={contactMobile}
-                          onChange={(e) => setContactMobile(e.target.value)}
+                          onChange={(e) => dispatch(updateFormField({ field: 'contactMobile', value: e.target.value }))}
                           placeholder="Enter the Phone number"
                           required
                           className={`${styles.inputControl} ${styles.vendorsElement21}`}
@@ -922,7 +849,7 @@ export default function VendorsPage() {
                       <input
                         type="email"
                         value={contactEmail}
-                        onChange={(e) => setContactEmail(e.target.value)}
+                        onChange={(e) => dispatch(updateFormField({ field: 'contactEmail', value: e.target.value }))}
                         placeholder="Enter the Emailid"
                         required
                         className={styles.inputControl}
@@ -933,7 +860,7 @@ export default function VendorsPage() {
                       <input
                         type="url"
                         value={website}
-                        onChange={(e) => setWebsite(e.target.value)}
+                        onChange={(e) => dispatch(updateFormField({ field: 'website', value: e.target.value }))}
                         placeholder="Enter the Website"
                         className={styles.inputControl}
                       />
@@ -948,7 +875,7 @@ export default function VendorsPage() {
                       <input
                         type="text"
                         value={addressLine}
-                        onChange={(e) => setAddressLine(e.target.value)}
+                        onChange={(e) => dispatch(updateFormField({ field: 'addressLine', value: e.target.value }))}
                         placeholder="Enter The Address"
                         required
                         className={styles.inputControl}
@@ -962,7 +889,7 @@ export default function VendorsPage() {
                       <input
                         list="city-list"
                         value={cityName}
-                        onChange={(e) => setCityName(e.target.value)}
+                        onChange={(e) => dispatch(updateFormField({ field: 'cityName', value: e.target.value }))}
                         placeholder="Enter City Name"
                         required
                         className={styles.inputControl}
@@ -978,7 +905,7 @@ export default function VendorsPage() {
                       <input
                         list="state-list"
                         value={stateName}
-                        onChange={(e) => setStateName(e.target.value)}
+                        onChange={(e) => dispatch(updateFormField({ field: 'stateName', value: e.target.value }))}
                         placeholder="Enter State Name"
                         required
                         className={styles.inputControl}
@@ -997,7 +924,7 @@ export default function VendorsPage() {
                       <input
                         type="text"
                         value={pincode}
-                        onChange={(e) => setPincode(e.target.value)}
+                        onChange={(e) => dispatch(updateFormField({ field: 'pincode', value: e.target.value }))}
                         placeholder="Enter Pincode"
                         required
                         className={styles.inputControl}
@@ -1008,7 +935,7 @@ export default function VendorsPage() {
                       <input
                         list="country-list"
                         value={countryName}
-                        onChange={(e) => setCountryName(e.target.value)}
+                        onChange={(e) => dispatch(updateFormField({ field: 'countryName', value: e.target.value }))}
                         placeholder="Enter Country Name"
                         required
                         className={styles.inputControl}
@@ -1029,7 +956,7 @@ export default function VendorsPage() {
                       <input
                         type="text"
                         value={gstin}
-                        onChange={(e) => setGstin(e.target.value)}
+                        onChange={(e) => dispatch(updateFormField({ field: 'gstin', value: e.target.value }))}
                         placeholder="Enter GST No"
                         required
                         className={styles.inputControl}
@@ -1040,7 +967,7 @@ export default function VendorsPage() {
                       <input
                         type="text"
                         value={panNumber}
-                        onChange={(e) => setPanNumber(e.target.value)}
+                        onChange={(e) => dispatch(updateFormField({ field: 'panNumber', value: e.target.value }))}
                         placeholder="Enter PAN No"
                         className={styles.inputControl}
                       />
@@ -1052,7 +979,7 @@ export default function VendorsPage() {
                       <label className={styles.label}>Currency <span className={styles.vendorsElement31}>*</span></label>
                       <select 
                         value={currency} 
-                        onChange={(e) => setCurrency(e.target.value)} 
+                        onChange={(e) => dispatch(updateFormField({ field: "currency", value: e.target.value }))} 
                         className={styles.inputControl}
                       >
                         <option value="INR (₹)">INR (₹)</option>
@@ -1067,7 +994,7 @@ export default function VendorsPage() {
                       <input
                         type="text"
                         value={creditLimit}
-                        onChange={(e) => setCreditLimit(e.target.value)}
+                        onChange={(e) => dispatch(updateFormField({ field: 'creditLimit', value: e.target.value }))}
                         placeholder="Enter Credit Limit"
                         required
                         className={styles.inputControl}
@@ -1086,7 +1013,7 @@ export default function VendorsPage() {
                           value: String(c.categoryName || c.name || "Category"),
                         }))}
                         value={productCategory}
-                        onChange={setProductCategory}
+                        onChange={(val) => dispatch(updateFormField({ field: "productCategory", value: val }))}
                         placeholder="Select Category"
                         onAddNew={handleAddNewCategory}
                         addNewButtonText="+ Add new category"
@@ -1100,7 +1027,7 @@ export default function VendorsPage() {
                       <input
                         type="text"
                         value={preferredProducts}
-                        onChange={(e) => setPreferredProducts(e.target.value)}
+                        onChange={(e) => dispatch(updateFormField({ field: 'preferredProducts', value: e.target.value }))}
                         placeholder="Enter Preferred Products"
                         className={styles.inputControl}
                       />
@@ -1113,7 +1040,7 @@ export default function VendorsPage() {
                       <input
                         type="text"
                         value={leadTime}
-                        onChange={(e) => setLeadTime(e.target.value)}
+                        onChange={(e) => dispatch(updateFormField({ field: 'leadTime', value: e.target.value }))}
                         placeholder="Enter Delivery Days"
                         required
                         className={styles.inputControl}
@@ -1135,7 +1062,7 @@ export default function VendorsPage() {
                           { label: "Inactive", value: "inactive" },
                         ]}
                         value={status}
-                        onChange={(val) => setStatus(val as "active" | "inactive")}
+                        onChange={(val) => dispatch(updateFormField({ field: "status", value: val }))}
                         width="100%"
                         height="40px"
                       />
@@ -1151,7 +1078,7 @@ export default function VendorsPage() {
                       <input
                         type="text"
                         value={bankName}
-                        onChange={(e) => setBankName(e.target.value)}
+                        onChange={(e) => dispatch(updateFormField({ field: 'bankName', value: e.target.value }))}
                         placeholder="Enter Bank Name"
                         required
                         className={styles.inputControl}
@@ -1162,7 +1089,7 @@ export default function VendorsPage() {
                       <input
                         type="text"
                         value={accountNumber}
-                        onChange={(e) => setAccountNumber(e.target.value)}
+                        onChange={(e) => dispatch(updateFormField({ field: 'accountNumber', value: e.target.value }))}
                         placeholder="Enter Account Number"
                         required
                         className={styles.inputControl}
@@ -1176,7 +1103,7 @@ export default function VendorsPage() {
                       <input
                         type="text"
                         value={ifscCode}
-                        onChange={(e) => setIfscCode(e.target.value.toUpperCase())}
+                        onChange={(e) => dispatch(updateFormField({ field: 'ifscCode', value: e.target.value.toUpperCase() }))}
                         placeholder="Enter IFSC Code"
                         required
                         className={styles.inputControl}
@@ -1187,7 +1114,7 @@ export default function VendorsPage() {
                       <input
                         type="text"
                         value={upiId}
-                        onChange={(e) => setUpiId(e.target.value)}
+                        onChange={(e) => dispatch(updateFormField({ field: 'upiId', value: e.target.value }))}
                         placeholder="Enter UPI ID"
                         className={styles.inputControl}
                       />
@@ -1207,7 +1134,7 @@ export default function VendorsPage() {
                           className={styles.vendorsElement44}
                           onChange={(e) => {
                             const file = e.target.files?.[0];
-                            if (file) setGstCertificate(file.name);
+                            if (file) dispatch(updateFormField({ field: "gstCertificate", value: file.name }));
                           }}
                         />
                         <label htmlFor="gst-upload" className={styles.vendorsElement45}>
@@ -1234,7 +1161,7 @@ export default function VendorsPage() {
                           className={styles.vendorsElement49}
                           onChange={(e) => {
                             const file = e.target.files?.[0];
-                            if (file) setAgreement(file.name);
+                            if (file) dispatch(updateFormField({ field: "agreement", value: file.name }));
                           }}
                         />
                         <label htmlFor="agreement-upload" className={styles.vendorsElement50}>
@@ -1271,6 +1198,30 @@ export default function VendorsPage() {
             </div>
           </div>
         )}
+        
+        <ConfirmDialog
+          isOpen={deleteDialog.isOpen}
+          title="Delete Vendor"
+          message="Are you sure you want to delete this vendor? This action cannot be undone."
+          confirmText="Yes, Delete"
+          cancelText="Cancel"
+          onConfirm={confirmDeleteVendor}
+          onCancel={() => dispatch(closeDeleteDialog())}
+        />
+
+        <ExportDialog
+          isOpen={isExportOpen}
+          onClose={() => setIsExportOpen(false)}
+          title="Vendors"
+          columns={["Vendor Name", "Category", "Phone Number", "Status"]}
+          data={filteredVendors.map(v => [
+            v.vendorName || v.name || "Unnamed",
+            typeof v.vendorType === "object" && v.vendorType !== null ? v.vendorType.typeName : (typeof v.vendorType === "string" ? v.vendorType : "General"),
+            v.phone || "+91 0000000000",
+            v.status === "inactive" ? "Inactive" : "Active"
+          ])}
+          filename="vendors_list"
+        />
       </div>
     </DashboardLayout>
   );
