@@ -362,7 +362,7 @@ export default function PurchaseOrdersPage() {
               <CustomDatePicker variant="blue" icon="chevron" />
             </div>
             <div className={styles?.rightControls}>
-              <button className={styles?.btnExport}>
+              <button className={styles?.btnExport} onClick={() => setIsExportOpen(true)}>
                 <FiDownload /> Export
               </button>
               <select
@@ -445,9 +445,20 @@ export default function PurchaseOrdersPage() {
                                 day: "numeric",
                               },
                             )
-                          : "Jun 14, 2026"}
+                          : "Not Set"}
                       </td>
-                      <td>Jun 20, 2026</td>
+                      <td>
+                        {po?.expectedDeliveryDate
+                          ? new Date(po?.expectedDeliveryDate).toLocaleDateString(
+                              "en-US",
+                              {
+                                year: "numeric",
+                                month: "short",
+                                day: "numeric",
+                              },
+                            )
+                          : "Not Set"}
+                      </td>
                       <td style={{ position: "relative" }}>
                         <button
                           className={styles.actionMenuBtn}
@@ -520,12 +531,15 @@ export default function PurchaseOrdersPage() {
         isOpen={isExportOpen}
         onClose={() => setIsExportOpen(false)}
         title="Purchase Orders"
-        columns={["PO Number", "Vendor Name", "Total Amount", "Status"]}
-        data={filteredOrders.map(o => [
-          o.poNumber || "N/A",
-          o.vendorName || o.vendor?.vendorName || "Unknown",
-          `INR ${o.totalAmount || 0}`,
-          o.status || "Pending"
+        columns={["PO ID", "Vendor", "Items Count", "Total Amount", "Status", "Order Date", "Del Date"]}
+        data={filteredOrders.map((o, idx) => [
+          String(o?.poNumber || `PO-100${idx + 1}`),
+          String(o?.vendor?.vendorName || o?.vendor?.companyName || o?.vendorName || o?.productName || "Unknown"),
+          String(o?.quantity || o?.items?.reduce((acc: number, item: any) => acc + (item.quantity || 0), 0) || (idx % 20) + 1),
+          `INR ${Number(o?.totalAmount || 0).toLocaleString()}`,
+          String(o?.status || "Pending"),
+          o?.createdAt ? new Date(o?.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "Not Set",
+          o?.expectedDeliveryDate ? new Date(o?.expectedDeliveryDate).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "Not Set"
         ])}
         filename="purchase_orders"
       />

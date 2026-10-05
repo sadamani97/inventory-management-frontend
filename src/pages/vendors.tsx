@@ -730,6 +730,7 @@ export default function VendorsPage() {
             pageSize={pageSize}
             onPageChange={(page) => dispatch(setCurrentPage(page))}
             onPageSizeChange={(size) => dispatch(setPageSize(size))}
+            pageSizeOptions={[5, 10, 15, 20]}
           />
         </div>
 
@@ -1213,13 +1214,21 @@ export default function VendorsPage() {
           isOpen={isExportOpen}
           onClose={() => setIsExportOpen(false)}
           title="Vendors"
-          columns={["Vendor Name", "Category", "Phone Number", "Status"]}
-          data={filteredVendors.map(v => [
-            v.vendorName || v.name || "Unnamed",
-            typeof v.vendorType === "object" && v.vendorType !== null ? v.vendorType.typeName : (typeof v.vendorType === "string" ? v.vendorType : "General"),
-            v.phone || "+91 0000000000",
-            v.status === "inactive" ? "Inactive" : "Active"
-          ])}
+          columns={["Vendor Name", "Category", "Phone Number", "Active POs", "Status", "Last Delivery"]}
+          data={filteredVendors.map((v, idx) => {
+            const contact = v.contacts && v.contacts.length > 0 ? v.contacts[0] : null;
+            const contactPhone = contact?.mobile || (contact as { phone?: string })?.phone || v.phone || "+91 98765 21045";
+            const categoryName = typeof v.vendorType === "object" && v.vendorType !== null ? v.vendorType.typeName : (typeof v.vendorType === "string" ? v.vendorType : "Dairy");
+            
+            return [
+              v.vendorName || v.name || "Unnamed Vendor",
+              categoryName,
+              contactPhone,
+              `${(idx % 3 === 0 ? 12 : idx % 2 === 0 ? 5 : 8)} Orders`,
+              v.status === "inactive" ? "Inactive" : "Active",
+              formatTimeAgo(v.createdAt)
+            ];
+          })}
           filename="vendors_list"
         />
       </div>

@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import styles from "./RecentActivitiesTable.module.css";
 import CustomSelect from "@/components/ui/CustomSelect";
+import Pagination from "@/components/ui/Pagination";
 import { fetchRecentActivities, fetchProductsList, ActivityItem, ProductItem, formatRelativeTime } from "@/lib/dashboardApi";
 import { FiSearch } from "react-icons/fi";
 
@@ -9,6 +10,8 @@ export default function RecentActivitiesTable() {
   const [statusFilter, setStatusFilter] = useState("All Status");
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => {
     let isMounted = true;
@@ -52,17 +55,24 @@ export default function RecentActivitiesTable() {
     };
   }, []);
 
-  const filteredActivities = activities.filter((act) => {
-    const matchesSearch =
-      act.activity.toLowerCase().includes(search.toLowerCase()) ||
-      act.product.toLowerCase().includes(search.toLowerCase()) ||
-      act.sku.toLowerCase().includes(search.toLowerCase());
+  const filteredActivities = useMemo(() => {
+    return activities.filter((act) => {
+      const matchesSearch =
+        act.activity.toLowerCase().includes(search.toLowerCase()) ||
+        act.product.toLowerCase().includes(search.toLowerCase()) ||
+        act.sku.toLowerCase().includes(search.toLowerCase());
 
-    const matchesStatus =
-      statusFilter === "All Status" || act.status === statusFilter;
+      const matchesStatus =
+        statusFilter === "All Status" || act.status === statusFilter;
 
-    return matchesSearch && matchesStatus;
-  });
+      return matchesSearch && matchesStatus;
+    });
+  }, [activities, search, statusFilter]);
+
+  const paginatedActivities = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    return filteredActivities.slice(startIndex, startIndex + pageSize);
+  }, [filteredActivities, currentPage, pageSize]);
 
   const getStatusClass = (status: ActivityItem["status"]) => {
     switch (status) {
@@ -130,8 +140,8 @@ export default function RecentActivitiesTable() {
                   Loading activities from backend...
                 </td>
               </tr>
-            ) : filteredActivities.length > 0 ? (
-              filteredActivities.map((act) => (
+            ) : paginatedActivities.length > 0 ? (
+              paginatedActivities.map((act) => (
                 <tr key={act.id}>
                   <td className={styles.activityName}>{act.activity}</td>
                   <td className={styles.productName}>{act.product}</td>
@@ -155,6 +165,14 @@ export default function RecentActivitiesTable() {
           </tbody>
         </table>
       </div>
+      <Pagination
+        currentPage={currentPage}
+        totalItems={filteredActivities.length}
+        pageSize={pageSize}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={setPageSize}
+        pageSizeOptions={[5, 10, 15, 20]}
+      />
     </div>
   );
 }

@@ -218,6 +218,7 @@ export interface PurchaseOrderItem {
   quantity?: number;
   unitCost?: number;
   createdAt?: string;
+  expectedDeliveryDate?: string;
   items?: { quantity?: number }[];
 }
 
