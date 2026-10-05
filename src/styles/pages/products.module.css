@@ -293,7 +293,7 @@
 .productsElement1 {
   text-align: center;
   padding: 32px;
-  color: #64748b;
+  color: var(--text-subtle);
 }
 
 .productsElement2 {
@@ -303,13 +303,13 @@
 .productsElement3 {
   text-align: center;
   padding: 40px;
-  color: #94a3b8;
+  color: var(--text-light);
 }
 
 .productsElement4 {
   font-size: 15px;
   font-weight: 700;
-  color: #475569;
+  color: var(--text-muted);
   margin: 0 0 6px 0;
 }
 

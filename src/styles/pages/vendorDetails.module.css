@@ -489,20 +489,20 @@
 .idElement1 {
   padding: 40px;
   text-align: center;
-  color: #64748b;
+  color: var(--text-subtle);
 }
 
 .idElement2 {
   padding: 40px;
   text-align: center;
-  color: #64748b;
+  color: var(--text-subtle);
 }
 
 .idElement3 {
   margin-top: 16px;
   padding: 8px 16px;
-  background-color: #2563eb;
-  color: #fff;
+  background-color: var(--primary);
+  color: var(--surface);
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -537,7 +537,7 @@
 }
 
 .idElement11 {
-  color: #94a3b8;
+  color: var(--text-light);
 }
 
 .idElement12 {
@@ -546,7 +546,7 @@
 
 .idElement13 {
   text-align: center;
-  color: #64748b;
+  color: var(--text-subtle);
   padding: 24px;
 }
 
@@ -557,13 +557,13 @@
 
 .idElement15 {
   text-align: center;
-  color: #64748b;
+  color: var(--text-subtle);
   padding: 24px;
 }
 
 .idElement16 {
   font-weight: 600;
-  color: #2563eb;
+  color: var(--primary);
 }
 
 .idElement17 {
@@ -572,6 +572,6 @@
 
 .idElement18 {
   padding: 24px;
-  color: #64748b;
+  color: var(--text-subtle);
   font-size: 14px;
 }

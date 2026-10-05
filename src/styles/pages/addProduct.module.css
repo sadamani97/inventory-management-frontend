@@ -344,6 +344,6 @@
 .addElement3 {
   margin-top: 10;
   font-size: 12;
-  color: #2563eb;
+  color: var(--primary);
   font-weight: 600;
 }
