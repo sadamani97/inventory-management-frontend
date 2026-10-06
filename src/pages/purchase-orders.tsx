@@ -535,7 +535,7 @@ export default function PurchaseOrdersPage() {
         data={filteredOrders.map((o, idx) => [
           String(o?.poNumber || `PO-100${idx + 1}`),
           String(o?.vendor?.vendorName || o?.vendor?.companyName || o?.vendorName || o?.productName || "Unknown"),
-          String(o?.quantity || o?.items?.reduce((acc: number, item: any) => acc + (item.quantity || 0), 0) || (idx % 20) + 1),
+          String(o?.quantity || o?.items?.reduce((acc: number, item: { quantity?: number }) => acc + (item.quantity || 0), 0) || (idx % 20) + 1),
           `INR ${Number(o?.totalAmount || 0).toLocaleString()}`,
           String(o?.status || "Pending"),
           o?.createdAt ? new Date(o?.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "Not Set",

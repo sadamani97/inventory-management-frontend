@@ -219,6 +219,7 @@ export interface PurchaseOrderItem {
   unitCost?: number;
   createdAt?: string;
   expectedDeliveryDate?: string;
+  orderDate?: string;
   items?: { quantity?: number }[];
 }
 
@@ -231,6 +232,7 @@ export interface SalesOrderItem {
   status?: string;
   createdAt?: string;
   orderDate?: string;
+  customerType?: string;
   items?: { quantity?: number }[];
 }
 
@@ -414,7 +416,15 @@ export async function fetchRecentActivities(): Promise<ActivityItem[]> {
 
     items.sort((a, b) => b.timestamp - a.timestamp);
     
-    return items.map(({ timestamp, ...rest }) => rest).slice(0, 50);
+    return items.map(it => ({
+      id: it.id,
+      activity: it.activity,
+      product: it.product,
+      sku: it.sku,
+      qty: it.qty,
+      status: it.status,
+      time: it.time
+    })).slice(0, 50);
   } catch {
     toast.error("Failed to load recent activity data.");
   }
