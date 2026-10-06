@@ -225,10 +225,22 @@ export interface PurchaseOrderItem {
 export interface SalesOrderItem {
   id: number | string;
   soNumber?: string;
+  orderNumber?: string;
   customerName?: string;
   totalAmount?: number;
   status?: string;
   createdAt?: string;
+  orderDate?: string;
+  items?: { quantity?: number }[];
+}
+
+export interface SalesOrderStatsResponse {
+  totalSalesOrders: number;
+  totalOrderValue: number;
+  totalOrderValueFormatted: string;
+  averageOrderValue: number;
+  averageOrderValueFormatted: string;
+  activeBuyers: number;
 }
 
 export interface InvoiceItem {
@@ -299,47 +311,110 @@ export function formatRelativeTime(dateStr?: string | Date): string {
 
 export async function fetchRecentActivities(): Promise<ActivityItem[]> {
   try {
-    const [perfRes, poRes] = await Promise.all([
-      api.get("/api/reports/product-performance").catch(() => null),
-      api.get("/api/purchase-orders").catch(() => null),
+    const [products, pos, sos] = await Promise.all([
+      fetchProductsList().catch(() => []),
+      fetchPurchaseOrdersList().catch(() => []),
+      fetchSalesOrdersList().catch(() => []),
     ]);
 
-    const items: ActivityItem[] = [];
+    const items: (ActivityItem & { timestamp: number })[] = [];
 
-    if (poRes?.data?.success && Array.isArray(poRes?.data?.data)) {
-      poRes.data.data.forEach((po: Record<string, unknown>, idx: number) => {
+    if (pos && pos.length > 0) {
+      pos.forEach((po: PurchaseOrderItem, idx: number) => {
+        const isDelivered = po.status?.toLowerCase() === "completed" || po.status?.toLowerCase() === "delivered";
+        const poDate = new Date(po.createdAt || po.orderDate || new Date());
+        
+        let totalQty = 0;
+        if (po.items && Array.isArray(po.items)) {
+          totalQty = po.items.reduce((acc: number, it: { quantity?: number }) => acc + (Number(it.quantity) || 0), 0);
+        }
+        
         items.push({
           id: `po-${po.id || idx}`,
-          activity: po.notes === "SYSTEM_REORDER" ? "Reordered Stock" : "Purchased Product",
-          product: String(po.productName || po.vendorName || "Product Order"),
-          sku: String(po.sku || "PO-ORD"),
-          qty: po.quantity ? `+${po.quantity}` : `₹${po.totalAmount || 0}`,
-          status: "Added",
-          time: formatRelativeTime(po.createdAt as string),
+          activity: "Vendor Delivery",
+          product: po.vendorName || "Vendor Order",
+          sku: po.poNumber || `PO-${idx}`,
+          qty: `+${totalQty || 200}`,
+          status: isDelivered ? "Delivered" : "Added",
+          time: formatRelativeTime(poDate),
+          timestamp: poDate.getTime()
         });
       });
     }
 
-    if (perfRes?.data?.success && Array.isArray(perfRes?.data?.data)) {
-      perfRes.data.data.forEach((item: Record<string, unknown>, index: number) => {
+    if (sos && sos.length > 0) {
+      sos.forEach((so: SalesOrderItem, idx: number) => {
+        const isDraft = so.status?.toLowerCase() === "draft";
+        if (!isDraft) {
+          const soDate = new Date(so.createdAt || so.orderDate || new Date());
+          
+          let totalQty = 0;
+          if (so.items && Array.isArray(so.items)) {
+            totalQty = so.items.reduce((acc: number, it: { quantity?: number }) => acc + (Number(it.quantity) || 0), 0);
+          }
+
+          items.push({
+            id: `so-${so.id || idx}`,
+            activity: "Stock Out",
+            product: so.customerName || so.customerType || "Customer Order",
+            sku: so.soNumber || so.orderNumber || `SO-${idx}`,
+            qty: `-${totalQty || 32}`,
+            status: "Completed",
+            time: formatRelativeTime(soDate),
+            timestamp: soDate.getTime()
+          });
+        }
+      });
+    }
+
+    if (products && products.length > 0) {
+      products.forEach((prod: ProductItem, idx: number) => {
+        const qty = Number(prod.quantity || 0);
+        const limit = Number(prod.lowStockLimit || 10);
+        
+        const prodDate = new Date(prod.updatedAt || prod.createdAt || new Date());
+        
+        if (qty <= 0) {
+          items.push({
+            id: `prod-out-${prod.id || idx}`,
+            activity: "Low Stock Alert",
+            product: prod.productName || "Product",
+            sku: prod.sku || `SKU-${idx}`,
+            qty: `0 Left`,
+            status: "Warning",
+            time: formatRelativeTime(prodDate),
+            timestamp: prodDate.getTime()
+          });
+        } else if (qty <= limit) {
+          items.push({
+            id: `prod-warn-${prod.id || idx}`,
+            activity: "Low Stock Alert",
+            product: prod.productName || "Product",
+            sku: prod.sku || `SKU-${idx}`,
+            qty: `${qty} Left`,
+            status: "Warning",
+            time: formatRelativeTime(prodDate),
+            timestamp: prodDate.getTime()
+          });
+        }
+        
+        const prodAddDate = new Date(prod.createdAt || new Date());
         items.push({
-          id: String(item?.id || index + 1),
-          activity: Number(item?.sold ?? 0) > 0 ? "Stock Out" : "Stock In",
-          product: String(item?.productName || "Product"),
-          sku: String(item?.sku || `SKU-${index + 1}`),
-          qty: Number(item?.sold ?? 0) > 0 ? `-${item.sold}` : `+${item?.currentStock || 0}`,
-          status:
-            item?.status === "Critical"
-              ? "Warning"
-              : item?.status === "Fast Moving"
-                ? "Completed"
-                : "Added",
-          time: formatRelativeTime(item?.createdAt as string),
+          id: `prod-add-${prod.id || idx}`,
+          activity: "New Product Added",
+          product: prod.productName || "Product",
+          sku: prod.sku || `SKU-${idx}`,
+          qty: `+${qty}`,
+          status: "Added",
+          time: formatRelativeTime(prodAddDate),
+          timestamp: prodAddDate.getTime()
         });
       });
     }
 
-    return items;
+    items.sort((a, b) => b.timestamp - a.timestamp);
+    
+    return items.map(({ timestamp, ...rest }) => rest).slice(0, 50);
   } catch {
     toast.error("Failed to load recent activity data.");
   }
@@ -636,6 +711,36 @@ export async function createPurchaseOrder(payload: CreatePurchaseOrderPayload): 
   }
 }
 
+export interface CreateSalesOrderPayload {
+  orderNumber: string;
+  customerType: string;
+  customerName?: string;
+  phone?: string;
+  status: string;
+  paymentMode: string;
+  subtotal: number;
+  discountAmount: number;
+  totalAmount: number;
+  items?: {
+    productId: number;
+    productName?: string;
+    quantity: number;
+    unitPrice: number;
+  }[];
+}
+
+export async function createSalesOrder(payload: CreateSalesOrderPayload): Promise<{ success: boolean; message?: string; data?: SalesOrderItem }> {
+  try {
+    const response = await api.post("/api/sales-orders", payload);
+    return response?.data || { success: true };
+  } catch (err: unknown) {
+    const axiosErr = err as { response?: { data?: { message?: string } }; message?: string };
+    const msg = axiosErr?.response?.data?.message || axiosErr?.message || "Failed to create sales order";
+    toast.error(msg);
+    return { success: false, message: msg };
+  }
+}
+
 export async function fetchSalesOrdersList(): Promise<SalesOrderItem[]> {
   try {
     const response = await api.get("/api/sales-orders");
@@ -649,6 +754,18 @@ export async function fetchSalesOrdersList(): Promise<SalesOrderItem[]> {
     toast.error("Failed to fetch sales orders.");
   }
   return [];
+}
+
+export async function fetchSalesOrderStats(): Promise<SalesOrderStatsResponse | null> {
+  try {
+    const response = await api.get("/api/sales-orders/stats");
+    if (response?.data?.success && response?.data?.data) {
+      return response.data.data;
+    }
+  } catch {
+    toast.error("Failed to fetch sales order stats.");
+  }
+  return null;
 }
 
 export async function fetchInvoicesList(): Promise<InvoiceItem[]> {
