@@ -12,6 +12,7 @@ import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Link from "next/link";
 import Image from "next/image";
+import { APP_IMAGES } from "@/constants/images";
 import styles from "@/styles/pages/signup.module.css";
 import { toast } from "react-toastify";
 
@@ -142,11 +143,11 @@ export default function SignupPage() {
 
         <div className="social-btn-group">
           <button type="button" className="social-btn">
-            <Image src="/googlelog.svg" alt="Google logo" width={20} height={20} />
+            <Image {...APP_IMAGES.GOOGLE_LOGO} alt={APP_IMAGES.GOOGLE_LOGO.alt} />
             Google
           </button>
           <button type="button" className="social-btn">
-            <Image src="/applelogo.svg" alt="Apple logo" width={20} height={20} />
+            <Image {...APP_IMAGES.APPLE_LOGO} alt={APP_IMAGES.APPLE_LOGO.alt} />
             Apple
           </button>
         </div>

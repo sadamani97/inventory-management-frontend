@@ -146,7 +146,7 @@ export default function CustomSelect({
                   className={styles.addBtnAction}
                   onClick={() => setIsAdding(true)}
                 >
-                  <FiPlus style={{ marginRight: 4 }} /> {addNewButtonText.replace(/^\+\s*/, "")}
+                  <FiPlus  className={styles.customSelectElement1} /> {addNewButtonText.replace(/^\+\s*/, "")}
                 </button>
               )}
             </div>

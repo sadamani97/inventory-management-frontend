@@ -3,6 +3,7 @@ import Image from "next/image";
 import { useRouter } from "next/router";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import CustomSelect, { CustomSelectOption } from "@/components/ui/CustomSelect";
+import Pagination from "@/components/ui/Pagination";
 import CustomDatePicker from "@/components/dashboard/CustomDatePicker";
 import {
   fetchProductsList,
@@ -19,7 +20,9 @@ import {
   createPurchaseOrder,
   fetchPurchaseOrdersList,
   PurchaseOrderItem,
+  CreatePurchaseOrderPayload,
 } from "@/lib/dashboardApi";
+import { APP_IMAGES } from "@/constants/images";
 import styles from "@/styles/pages/inventory.module.css";
 import {
   FiSearch,
@@ -33,6 +36,7 @@ import {
   FiBookmark,
 } from "react-icons/fi";
 import { showSuccessToast } from "@/components/ui/CustomToast";
+import ExportDialog from "@/components/ui/ExportDialog";
 
 export default function InventoryPage() {
   const router = useRouter();
@@ -53,6 +57,8 @@ export default function InventoryPage() {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All Category");
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(5);
 
   // Modal State for "Create Reorder" drawer/modal
   const [showReorderModal, setShowReorderModal] = useState(false);
@@ -81,6 +87,7 @@ export default function InventoryPage() {
   >(null);
 
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrderItem[]>([]);
+  const [isExportOpen, setIsExportOpen] = useState(false);
 
   useEffect(() => {
     function handleClickOutside() {
@@ -96,9 +103,9 @@ export default function InventoryPage() {
 
   const getDaysCount = (filterVal: string) => {
     switch (filterVal) {
-      case "Last 5 days":
-        return 5;
       case "Last 10 days":
+        return 10;
+      case "Last 5 days":
       default:
         return 5;
     }
@@ -237,15 +244,28 @@ export default function InventoryPage() {
       const currentQty = selectedProduct.quantity ?? 0;
       const newQty = currentQty + (reorderQty || 0);
 
-      await createPurchaseOrder({
+      const payload: CreatePurchaseOrderPayload = {
+        poNumber: `PO-${Math.floor(1000 + Math.random() * 9000)}`,
+        vendorId: selectedProduct.vendorId || 1,
         vendorName: targetVendor,
-        totalAmount: (reorderQty || 0) * (reorderUnitCost || 0),
+        deliveryAddressId: 1,
+        orderDate: new Date().toISOString().split("T")[0],
+        expectedDeliveryDate: new Date().toISOString().split("T")[0],
+        paymentTerms: "COD",
+        shipmentMethod: "Default",
+        notes: "SYSTEM_REORDER",
         status: "Completed",
-        productId: Number(selectedProduct.id),
-        productName: selectedProduct.productName,
-        quantity: reorderQty,
-        unitCost: reorderUnitCost,
-      });
+        totalAmount: (reorderQty || 0) * (reorderUnitCost || 0),
+        items: [
+          {
+            productId: Number(selectedProduct.id),
+            quantity: reorderQty || 0,
+            unitPrice: reorderUnitCost || 0,
+          },
+        ],
+      };
+      
+      await createPurchaseOrder(payload);
 
       await updateProduct(selectedProduct.id, {
         quantity: newQty,
@@ -297,6 +317,11 @@ export default function InventoryPage() {
     return matchesSearch && matchesCategory;
   });
 
+  const paginatedProducts = filteredProducts.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
   // Calculate dynamic Stock Info stats strictly from live Database products
   const activeProductsCount = stats.totalProducts || products.length;
   const lowStockCount = products.filter(
@@ -329,7 +354,7 @@ export default function InventoryPage() {
         <div className={styles.topRow}>
           <h1 className={styles.title}>Inventory Tracking</h1>
           <div className={styles.actionsRight}>
-            <button type="button" className={styles.exportBtn}>
+            <button type="button" className={styles.exportBtn} onClick={() => setIsExportOpen(true)}>
               <FiUpload /> Export
             </button>
             <button
@@ -429,7 +454,7 @@ export default function InventoryPage() {
                       <g
                         key={idx}
                         onMouseEnter={() => setActiveHoverIdx(idx)}
-                        style={{ cursor: "pointer" }}
+                        className={styles.inventoryElement1}
                       >
                         {/* Stock Added (Blue at bottom) */}
                         {addedHeight > 0 && (
@@ -607,7 +632,7 @@ export default function InventoryPage() {
                   type="text"
                   placeholder="Search Products by Name / SKU"
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
                   className={styles.searchInput}
                 />
                 <FiSearch className={styles.searchIcon} />
@@ -619,7 +644,7 @@ export default function InventoryPage() {
             <CustomSelect
               options={categoryOptions}
               value={categoryFilter}
-              onChange={setCategoryFilter}
+              onChange={(val) => { setCategoryFilter(val as string); setCurrentPage(1); }}
               width="150px"
             />
           </div>
@@ -627,19 +652,19 @@ export default function InventoryPage() {
           <div className={styles.tableWrapper}>
             <table className={styles.table}>
               <colgroup>
-                <col style={{ width: "28%" }} />
-                <col style={{ width: "20%" }} />
-                <col style={{ width: "18%" }} />
-                <col style={{ width: "22%" }} />
-                <col style={{ width: "12%" }} />
+                <col  className={styles.inventoryElement2} />
+                <col  className={styles.inventoryElement3} />
+                <col  className={styles.inventoryElement4} />
+                <col  className={styles.inventoryElement5} />
+                <col  className={styles.inventoryElement6} />
               </colgroup>
               <thead>
                 <tr>
-                  <th style={{ textAlign: "left" }}>Product name</th>
-                  <th style={{ textAlign: "left" }}>SKU</th>
-                  <th style={{ textAlign: "left" }}>Category</th>
-                  <th style={{ textAlign: "left" }}>Current Stock</th>
-                  <th style={{ textAlign: "right", paddingRight: "28px" }}>
+                  <th className={styles.inventoryElement7}>Product name</th>
+                  <th className={styles.inventoryElement8}>SKU</th>
+                  <th className={styles.inventoryElement9}>Category</th>
+                  <th className={styles.inventoryElement10}>Current Stock</th>
+                  <th className={styles.inventoryElement11}>
                     Action
                   </th>
                 </tr>
@@ -649,17 +674,12 @@ export default function InventoryPage() {
                   <tr>
                     <td
                       colSpan={5}
-                      style={{
-                        textAlign: "center",
-                        padding: "32px",
-                        color: "#64748b",
-                      }}
-                    >
+                     className={styles.inventoryElement12}>
                       Loading inventory items from backend database...
                     </td>
                   </tr>
-                ) : filteredProducts.length > 0 ? (
-                  filteredProducts.map((p: ProductItem, idx: number) => {
+                ) : paginatedProducts.length > 0 ? (
+                  paginatedProducts.map((p: ProductItem, idx: number) => {
                     const name = p.productName || "-";
                     const sku = p.sku || "-";
                     const category = p.category?.categoryName || "-";
@@ -694,13 +714,13 @@ export default function InventoryPage() {
                         onClick={() =>
                           p.id && router.push(`/products/add?id=${p.id}`)
                         }
-                        style={{ cursor: "pointer" }}
+                        className={styles.inventoryElement13}
                         title="Click to view/edit product details"
                       >
                         <td>
                           <div className={styles.productCell}>
                             <Image
-                              src={imageUrl}
+                              src={imageUrl || APP_IMAGES.LOGO.src}
                               alt={name}
                               width={36}
                               height={36}
@@ -788,23 +808,12 @@ export default function InventoryPage() {
                   <tr>
                     <td
                       colSpan={5}
-                      style={{
-                        textAlign: "center",
-                        padding: "40px",
-                        color: "#94a3b8",
-                      }}
-                    >
+                     className={styles.inventoryElement14}>
                       <p
-                        style={{
-                          fontSize: "15px",
-                          fontWeight: 700,
-                          color: "#475569",
-                          margin: "0 0 6px 0",
-                        }}
-                      >
+                       className={styles.inventoryElement15}>
                         No inventory records found.
                       </p>
-                      <p style={{ fontSize: "13px", margin: 0 }}>
+                      <p className={styles.inventoryElement16}>
                         Products added to the backend database will
                         automatically display here.
                       </p>
@@ -815,35 +824,14 @@ export default function InventoryPage() {
             </table>
           </div>
 
-          {/* Pagination Footer */}
-          <div className={styles.paginationRow}>
-            <div className={styles.rowsPerPage}>
-              <span>Rows per page</span>
-              <CustomSelect
-                options={[
-                  { label: "10", value: "10" },
-                  { label: "25", value: "25" },
-                  { label: "50", value: "50" },
-                ]}
-                value="10"
-                onChange={() => {}}
-                width="70px"
-                height="32px"
-              />
-            </div>
-
-            <div className={styles.pageControls}>
-              <button className={styles.pageBtn} disabled>
-                &lt; Previous
-              </button>
-              <button className={`${styles.pageBtn} ${styles.activePageBtn}`}>
-                1
-              </button>
-              <button className={styles.pageBtn}>2</button>
-              <button className={styles.pageBtn}>3</button>
-              <button className={styles.pageBtn}>Next &gt;</button>
-            </div>
-          </div>
+          <Pagination
+            currentPage={currentPage}
+            totalItems={filteredProducts.length}
+            pageSize={pageSize}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={setPageSize}
+            pageSizeOptions={[5, 10, 15]}
+          />
         </div>
       </div>
 
@@ -886,7 +874,7 @@ export default function InventoryPage() {
                   <Image
                     src={
                       selectedProduct.imageUrl ||
-                      "/Frontend/Dashboard_product.png"
+                      APP_IMAGES.DASHBOARD_PRODUCT.src
                     }
                     alt={selectedProduct.productName || "Product"}
                     width={48}
@@ -924,8 +912,7 @@ export default function InventoryPage() {
             <div className={styles.reorderFormGrid}>
               {/* Select Product */}
               <div
-                className={styles.formGroup}
-                style={{ gridColumn: "1 / -1" }}
+                className={`${styles.formGroup} ${styles.inventoryElement17}`}
               >
                 <label className={styles.formLabel}>Select Product</label>
                 <CustomSelect
@@ -1045,8 +1032,7 @@ export default function InventoryPage() {
 
               {/* Note (Full Width) */}
               <div
-                className={styles.formGroup}
-                style={{ gridColumn: "1 / -1" }}
+                className={`${styles.formGroup} ${styles.inventoryElement18}`}
               >
                 <label className={styles.formLabel}>Note</label>
                 <textarea
@@ -1084,14 +1070,12 @@ export default function InventoryPage() {
               <hr className={styles.summaryDivider} />
               <div className={styles.summaryRow}>
                 <span
-                  className={styles.summaryLabel}
-                  style={{ fontWeight: 700, color: "#0f172a" }}
+                  className={`${styles.summaryLabel} ${styles.inventoryElement19}`}
                 >
                   Total
                 </span>
                 <span
-                  className={styles.summaryVal}
-                  style={{ fontSize: "15px", color: "#0f172a" }}
+                  className={`${styles.summaryVal} ${styles.inventoryElement20}`}
                 >
                   ₹
                   {total.toLocaleString("en-IN", {
@@ -1157,6 +1141,21 @@ export default function InventoryPage() {
           </div>
         </div>
       )}
+      
+      <ExportDialog
+        isOpen={isExportOpen}
+        onClose={() => setIsExportOpen(false)}
+        title="Inventory"
+        columns={["Product Name", "SKU", "Category", "Vendor", "Quantity"]}
+        data={filteredProducts.map(p => [
+          p.productName || "Unnamed",
+          p.sku || "N/A",
+          p.category?.categoryName || "Uncategorized",
+          p.vendor?.vendorName || "Unknown",
+          `${p.quantity || 0} Units`
+        ])}
+        filename="inventory_list"
+      />
     </DashboardLayout>
   );
 }

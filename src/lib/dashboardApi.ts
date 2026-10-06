@@ -51,6 +51,7 @@ export interface VendorTypeItem {
   vendorTypeId?: number;
   id?: number;
   typeName: string;
+  name?: string;
 }
 
 export interface CountryItem {
@@ -131,6 +132,7 @@ export interface VendorItem {
   gstCertificate?: string;
   agreement?: string;
   vendorLogo?: string;
+  isStarred?: boolean;
   vendorType?: VendorTypeItem;
   addresses?: AddressItem[];
   contacts?: VendorContactItem[];
@@ -167,6 +169,9 @@ export interface ProductItem {
   vendor?: VendorItem;
   brand?: BrandItem;
   unit?: UnitItem;
+  minStock?: number;
+  minOrder?: number;
+  productId?: number | string;
 }
 
 export interface CreateProductPayload {
@@ -202,6 +207,10 @@ export interface PurchaseOrderItem {
   id: number | string;
   poNumber?: string;
   vendorName?: string;
+  vendor?: {
+    vendorName?: string;
+    companyName?: string;
+  };
   totalAmount?: number;
   status?: string;
   productId?: number;
@@ -209,6 +218,8 @@ export interface PurchaseOrderItem {
   quantity?: number;
   unitCost?: number;
   createdAt?: string;
+  expectedDeliveryDate?: string;
+  items?: { quantity?: number }[];
 }
 
 export interface SalesOrderItem {
@@ -299,7 +310,7 @@ export async function fetchRecentActivities(): Promise<ActivityItem[]> {
       poRes.data.data.forEach((po: Record<string, unknown>, idx: number) => {
         items.push({
           id: `po-${po.id || idx}`,
-          activity: "Reordered Stock",
+          activity: po.notes === "SYSTEM_REORDER" ? "Reordered Stock" : "Purchased Product",
           product: String(po.productName || po.vendorName || "Product Order"),
           sku: String(po.sku || "PO-ORD"),
           qty: po.quantity ? `+${po.quantity}` : `₹${po.totalAmount || 0}`,
@@ -591,15 +602,29 @@ export async function fetchPurchaseOrdersList(): Promise<PurchaseOrderItem[]> {
   return [];
 }
 
-export async function createPurchaseOrder(payload: {
-  vendorName: string;
-  totalAmount: number;
+export interface CreatePurchaseOrderPayload {
+  poNumber: string;
+  vendorId: number;
+  vendorName?: string;
+  deliveryAddressId: number;
+  orderDate: string;
+  expectedDeliveryDate: string;
+  paymentTerms: string;
+  shipmentMethod: string;
+  notes?: string;
   status?: string;
-  productId?: number;
-  productName?: string;
-  quantity?: number;
-  unitCost?: number;
-}): Promise<{ success: boolean; message?: string; data?: PurchaseOrderItem }> {
+  subtotal?: number;
+  taxPercentage?: number;
+  taxAmount?: number;
+  totalAmount?: number;
+  items?: {
+    productId: number;
+    quantity: number;
+    unitPrice: number;
+  }[];
+}
+
+export async function createPurchaseOrder(payload: CreatePurchaseOrderPayload): Promise<{ success: boolean; message?: string; data?: PurchaseOrderItem }> {
   try {
     const response = await api.post("/api/purchase-orders", payload);
     return response?.data || { success: true };
@@ -713,6 +738,21 @@ export async function updateVendor(
   } catch (err: unknown) {
     const axiosErr = err as { response?: { data?: { message?: string } }; message?: string };
     const msg = axiosErr?.response?.data?.message || axiosErr?.message || "Failed to update vendor";
+    toast.error(msg);
+    return { success: false, message: msg };
+  }
+}
+
+export async function setVendorStarred(
+  id: number | string,
+  isStarred: boolean
+): Promise<{ success: boolean; message?: string; data?: VendorItem }> {
+  try {
+    const response = await api.patch(`/api/vendors/${id}/star`, { isStarred });
+    return response?.data || { success: true };
+  } catch (err: unknown) {
+    const axiosErr = err as { response?: { data?: { message?: string } }; message?: string };
+    const msg = axiosErr?.response?.data?.message || axiosErr?.message || "Failed to update starred vendor";
     toast.error(msg);
     return { success: false, message: msg };
   }

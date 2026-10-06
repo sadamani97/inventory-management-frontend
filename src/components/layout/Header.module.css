@@ -155,3 +155,7 @@
   color: var(--text-subtle);
   margin: 0;
 }
+
+.headerElement1 {
+  margin-left: 8;
+}

@@ -289,3 +289,31 @@
   color: var(--text-inverse) !important;
   border-color: var(--primary);
 }
+
+.productsElement1 {
+  text-align: center;
+  padding: 32px;
+  color: var(--text-subtle);
+}
+
+.productsElement2 {
+  cursor: pointer;
+}
+
+.productsElement3 {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-light);
+}
+
+.productsElement4 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin: 0 0 6px 0;
+}
+
+.productsElement5 {
+  font-size: 13px;
+  margin: 0;
+}

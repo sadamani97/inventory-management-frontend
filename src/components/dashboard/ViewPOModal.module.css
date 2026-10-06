@@ -1,0 +1,310 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+}
+
+.modalContent {
+  background-color: var(--surface);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  animation: fadeIn 0.2s ease-out;
+  padding: 30px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.title {
+  margin: 0;
+  color: var(--text-dark);
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.closeBtn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.closeBtn:hover {
+  background-color: var(--hover-bg);
+  color: var(--text-dark);
+}
+
+.topInfo {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.poLeft {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.iconBox {
+  width: 48px;
+  height: 48px;
+  background-color: var(--primary);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.poText {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.poTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.poNum {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+.badge {
+  padding: 2px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.pendingBadge {
+  background-color: #fff7ed;
+  color: #ea580c;
+  border: 1px solid #fed7aa;
+}
+
+.poSubtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.darkText {
+  color: var(--text-dark);
+  font-weight: 600;
+}
+
+.poRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.orderTimeLabel {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.orderTimeValue {
+  font-size: 13px;
+  color: var(--text-dark);
+  font-weight: 600;
+}
+
+.cardsRow {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.infoCard {
+  flex: 1;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.infoRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.infoLabel {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.infoValueDark {
+  color: var(--text-dark);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.sectionTitle {
+  font-size: 16px;
+  color: var(--text-dark);
+  font-weight: 600;
+  margin: 0 0 16px;
+}
+
+.tableWrapper {
+  width: 100%;
+  overflow-x: auto;
+  margin-bottom: 24px;
+}
+
+.productTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.productTable th {
+  text-align: left;
+  padding: 12px;
+  background-color: var(--primary-light);
+  color: var(--primary);
+  font-weight: 600;
+  font-size: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.productTable td {
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.productNameDark {
+  color: var(--text-dark);
+  font-weight: 500;
+}
+
+.billSummary {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.billRow {
+  display: flex;
+  justify-content: space-between;
+  width: 250px;
+}
+
+.billLabel {
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.billValue {
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.totalRow {
+  margin-top: 8px;
+}
+
+.totalLabel {
+  color: var(--text-dark);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.totalValue {
+  color: var(--primary);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+
+.btnOutline {
+  padding: 10px 24px;
+  border: 1px solid var(--primary-border);
+  background-color: var(--surface);
+  color: var(--primary);
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btnOutline:hover {
+  background-color: var(--primary-light);
+}
+
+.btnPrimary {
+  padding: 10px 24px;
+  border: none;
+  background-color: var(--primary);
+  color: white;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+
+.btnPrimary:hover {
+  background-color: var(--primary-dark);
+}
+
+.btnIcon {
+  font-size: 16px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}

@@ -139,3 +139,16 @@
   display: block;
   width: 0;
 }
+
+.revenueTrendChartElement1 {
+  color: #64748b;
+  font-weight: 400;
+}
+
+.revenueTrendChartElement2 {
+  cursor: pointer;
+}
+
+.revenueTrendChartElement3 {
+  color: #2563eb;
+}

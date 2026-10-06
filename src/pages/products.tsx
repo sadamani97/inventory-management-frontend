@@ -6,8 +6,11 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import CustomDatePicker from "@/components/dashboard/CustomDatePicker";
 import CustomSelect, { CustomSelectOption } from "@/components/ui/CustomSelect";
 import { fetchProductsList, ProductItem } from "@/lib/dashboardApi";
+import { APP_IMAGES } from "@/constants/images";
 import styles from "@/styles/pages/products.module.css";
 import { FiSearch, FiUpload, FiPlus } from "react-icons/fi";
+import Pagination from "@/components/ui/Pagination";
+import ExportDialog from "@/components/ui/ExportDialog";
 
 const CATEGORY_OPTIONS: CustomSelectOption[] = [
   { label: "All Category", value: "All Category" },
@@ -25,6 +28,9 @@ export default function ProductsPage() {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All Category");
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [isExportOpen, setIsExportOpen] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -53,6 +59,11 @@ export default function ProductsPage() {
     return matchesSearch && matchesCategory;
   });
 
+  const paginatedProducts = filteredProducts.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
   return (
     <DashboardLayout>
       <div className={styles.pageContainer}>
@@ -60,7 +71,7 @@ export default function ProductsPage() {
         <div className={styles.topRow}>
           <h1 className={styles.title}>Product Management</h1>
           <div className={styles.actionsRight}>
-            <button className={styles.exportBtn}>
+            <button className={styles.exportBtn} onClick={() => setIsExportOpen(true)}>
               <FiUpload /> Export
             </button>
             <Link href="/products/add" className={styles.newProductBtn}>
@@ -109,24 +120,24 @@ export default function ProductsPage() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={5} style={{ textAlign: "center", padding: "32px", color: "#64748b" }}>
+                    <td colSpan={5} className={styles.productsElement1}>
                       Loading products from backend database...
                     </td>
                   </tr>
-                ) : filteredProducts.length > 0 ? (
-                  filteredProducts.map((p: ProductItem, idx: number) => {
+                ) : paginatedProducts.length > 0 ? (
+                  paginatedProducts.map((p: ProductItem, idx: number) => {
                     const name = p.productName || "Product";
                     const vendor = p.vendor?.vendorName || p.vendor?.name || "No Vendor";
                     const sku = p.sku || `SKU-${idx + 1}`;
                     const category = p.category?.categoryName || "General";
                     const price = p.sellingPrice || 0;
-                    const imageUrl = p.imageUrl || "/Frontend/Dashboard_product.png";
+                    const imageUrl = p.imageUrl || APP_IMAGES.DASHBOARD_PRODUCT.src;
 
                     return (
                       <tr
                         key={p.id || idx}
                         onClick={() => p.id && router.push(`/products/add?id=${p.id}`)}
-                        style={{ cursor: "pointer" }}
+                        className={styles.productsElement2}
                       >
                         <td>
                           <div className={styles.productCell}>
@@ -165,11 +176,11 @@ export default function ProductsPage() {
                   })
                 ) : (
                   <tr>
-                    <td colSpan={5} style={{ textAlign: "center", padding: "40px", color: "#94a3b8" }}>
-                      <p style={{ fontSize: "15px", fontWeight: 700, color: "#475569", margin: "0 0 6px 0" }}>
+                    <td colSpan={5} className={styles.productsElement3}>
+                      <p className={styles.productsElement4}>
                         No products stored in database.
                       </p>
-                      <p style={{ fontSize: "13px", margin: 0 }}>
+                      <p className={styles.productsElement5}>
                         Click <strong>&quot;+ New Product&quot;</strong> to add products to your backend database.
                       </p>
                     </td>
@@ -179,34 +190,31 @@ export default function ProductsPage() {
             </table>
           </div>
 
-          {/* Pagination Footer */}
-          <div className={styles.paginationRow}>
-            <div className={styles.rowsPerPage}>
-              <span>Rows per page</span>
-              <CustomSelect
-                options={[
-                  { label: "10", value: "10" },
-                  { label: "25", value: "25" },
-                  { label: "50", value: "50" },
-                ]}
-                value="10"
-                onChange={() => {}}
-                width="70px"
-                height="32px"
-              />
-            </div>
 
-            <div className={styles.pageControls}>
-              <button className={styles.pageBtn} disabled>
-                &lt; Previous
-              </button>
-              <button className={`${styles.pageBtn} ${styles.activePageBtn}`}>1</button>
-              <button className={styles.pageBtn}>2</button>
-              <button className={styles.pageBtn}>Next &gt;</button>
-            </div>
-          </div>
+          <Pagination
+            currentPage={currentPage}
+            totalItems={filteredProducts.length}
+            pageSize={pageSize}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={setPageSize}
+            pageSizeOptions={[5, 10, 15, 20]}
+          />
         </div>
       </div>
+      <ExportDialog
+        isOpen={isExportOpen}
+        onClose={() => setIsExportOpen(false)}
+        title="Products"
+        columns={["Product Name", "SKU", "Buying Price", "Selling Price", "Quantity"]}
+        data={filteredProducts.map(p => [
+          p.productName || "Unnamed",
+          p.sku || "N/A",
+          `INR ${p.purchaseRate || 0}`,
+          `INR ${p.sellingPrice || 0}`,
+          `${p.quantity || 0} Packets`
+        ])}
+        filename="products_list"
+      />
     </DashboardLayout>
   );
 }

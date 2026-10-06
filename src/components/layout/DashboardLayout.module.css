@@ -18,3 +18,16 @@
   max-width: 1400px;
   width: 100%;
 }
+
+.dashboardLayoutElement1 {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #f8fafc;
+}
+
+.dashboardLayoutElement2 {
+  color: #64748b;
+  font-weight: 500;
+}

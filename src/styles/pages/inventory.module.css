@@ -1041,3 +1041,94 @@
 .submitOrderBtn:hover {
   background-color: var(--primary-dark);
 }
+
+.inventoryElement1 {
+  cursor: pointer;
+}
+
+.inventoryElement2 {
+  width: 28%;
+}
+
+.inventoryElement3 {
+  width: 20%;
+}
+
+.inventoryElement4 {
+  width: 18%;
+}
+
+.inventoryElement5 {
+  width: 22%;
+}
+
+.inventoryElement6 {
+  width: 12%;
+}
+
+.inventoryElement7 {
+  text-align: left;
+}
+
+.inventoryElement8 {
+  text-align: left;
+}
+
+.inventoryElement9 {
+  text-align: left;
+}
+
+.inventoryElement10 {
+  text-align: left;
+}
+
+.inventoryElement11 {
+  text-align: right;
+  padding-right: 28px;
+}
+
+.inventoryElement12 {
+  text-align: center;
+  padding: 32px;
+  color: #64748b;
+}
+
+.inventoryElement13 {
+  cursor: pointer;
+}
+
+.inventoryElement14 {
+  text-align: center;
+  padding: 40px;
+  color: #94a3b8;
+}
+
+.inventoryElement15 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #475569;
+  margin: 0 0 6px 0;
+}
+
+.inventoryElement16 {
+  font-size: 13px;
+  margin: 0;
+}
+
+.inventoryElement17 {
+  grid-column: 1 / -1;
+}
+
+.inventoryElement18 {
+  grid-column: 1 / -1;
+}
+
+.inventoryElement19 {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.inventoryElement20 {
+  font-size: 15px;
+  color: #0f172a;
+}
