@@ -559,3 +559,133 @@
   font-weight: 600;
   color: var(--text);
 }
+
+.modalHeaderTop {
+  padding: 20px 24px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modalHeaderTitle {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.orderInfoBlock {
+  padding: 20px 24px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.orderInfoLeft {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.orderInfoDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.orderInfoTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.orderInfoTitle {
+  margin: 0;
+  font-size: 18px;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.badgePaid {
+  background: var(--success-light);
+  color: var(--success-dark);
+}
+
+.paymentText {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.paymentTextStrong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.headerMetaAlignRight {
+  text-align: right;
+  gap: 4px;
+}
+
+.orderTimeLabel {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.orderTimeValue {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.paidDateValue {
+  color: var(--text);
+}
+
+.tableHeaderFourCols {
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+}
+
+.productItemFourCols {
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+}
+
+.browseProductLabel {
+  position: absolute;
+  top: -10px;
+  background: var(--surface);
+  padding: 0 4px;
+}
+
+.qtyControlButtonsContainer {
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--border);
+}
+
+.qtyControlBtnTop {
+  padding: 0 6px;
+  font-size: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.qtyControlBtnBottom {
+  padding: 0 6px;
+  font-size: 10px;
+}
+
+.sectionTitleSmall {
+  font-size: 14px;
+}
+
+.footerRightExport {
+  width: 100%;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.exportIcon {
+  margin-right: 6px;
+  margin-bottom: -2px;
+}

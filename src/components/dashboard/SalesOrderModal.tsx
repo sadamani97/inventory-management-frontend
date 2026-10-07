@@ -38,38 +38,48 @@ export default function SalesOrderModal({ isOpen, onClose, onSuccess, mode, orde
       fetchProductsList().then(data => setProducts(data || []));
       
       if (mode === "create") {
-        const lastSeq = parseInt(localStorage.getItem("lastSoNumber") || "10241", 10);
-        setSoNumber(`SO-${lastSeq + 1}`);
-        setCustomerType("Walk In Customer");
-        setCustomerName("");
-        setPhone("");
-        setOrderItems([]);
-        setPaymentMode("Cash");
-        setLocalDraftId(null);
-      } else if (order) {
-        setSoNumber(order.orderNumber || order.soNumber || "");
-        setCustomerType((order as any).customerType || "Walk In Customer");
-        setCustomerName(order.customerName || "");
-        setPhone((order as any).phone || "");
-        setPaymentMode((order as any).paymentMode || "Cash");
-        setLocalDraftId((order as any).isDraft ? order.id : null);
-        
-        // Map items if any
-        if (order.items && Array.isArray(order.items)) {
-          // Just mock mapping since full product details might not be in order.items
-          const mapped = order.items.map((it: any, idx) => ({
-            id: it.productId || idx,
-            productName: it.productName || "Product",
-            quantity: it.quantity || 1, // mapping product quantity to stock for UI
-            qty: it.quantity || 1,
-            sellingPrice: it.unitPrice || 0,
-            imageUrl: "",
-            sku: `SKU-${idx}`
-          })) as any;
-          setOrderItems(mapped);
-        } else {
+        setTimeout(() => {
+          const lastSeq = parseInt(localStorage.getItem("lastSoNumber") || "10241", 10);
+          setSoNumber(`SO-${lastSeq + 1}`);
+          setCustomerType("Walk In Customer");
+          setCustomerName("");
+          setPhone("");
           setOrderItems([]);
-        }
+          setPaymentMode("Cash");
+          setLocalDraftId(null);
+        }, 0);
+      } else if (order) {
+        setTimeout(() => {
+          const extOrder = order as SalesOrderItem & { 
+            phone?: string; 
+            paymentMode?: string; 
+            isDraft?: boolean; 
+            items?: { productId?: number; productName?: string; quantity?: number; unitPrice?: number }[] 
+          };
+          setSoNumber(extOrder.orderNumber || extOrder.soNumber || "");
+          setCustomerType(extOrder.customerType || "Walk In Customer");
+          setCustomerName(extOrder.customerName || "");
+          setPhone(extOrder.phone || "");
+          setPaymentMode(extOrder.paymentMode || "Cash");
+          setLocalDraftId(extOrder.isDraft ? extOrder.id : null);
+          
+          // Map items if any
+          if (extOrder.items && Array.isArray(extOrder.items)) {
+            // Just mock mapping since full product details might not be in order.items
+            const mapped = extOrder.items.map((it: { productId?: number; productName?: string; quantity?: number; unitPrice?: number }, idx: number) => ({
+              id: it.productId || idx,
+              productName: it.productName || "Product",
+              quantity: it.quantity || 1, // mapping product quantity to stock for UI
+              qty: it.quantity || 1,
+              sellingPrice: it.unitPrice || 0,
+              imageUrl: "",
+              sku: `SKU-${idx}`
+            })) as (ProductItem & { qty: number })[];
+            setOrderItems(mapped);
+          } else {
+            setOrderItems([]);
+          }
+        }, 0);
       }
     }
   }, [isOpen, mode, order]);
@@ -145,7 +155,7 @@ export default function SalesOrderModal({ isOpen, onClose, onSuccess, mode, orde
     const existingDrafts = JSON.parse(localStorage.getItem("draftSalesOrders") || "[]");
     
     if (localDraftId) {
-      const idx = existingDrafts.findIndex((d: any) => d.id === localDraftId);
+      const idx = existingDrafts.findIndex((d: { id: string | number }) => d.id === localDraftId);
       if (idx !== -1) existingDrafts[idx] = draftOrder;
       else existingDrafts.push(draftOrder);
     } else {
@@ -169,7 +179,7 @@ export default function SalesOrderModal({ isOpen, onClose, onSuccess, mode, orde
 
   const removeDraft = (id: string | number) => {
     const existingDrafts = JSON.parse(localStorage.getItem("draftSalesOrders") || "[]");
-    const updated = existingDrafts.filter((d: any) => d.id !== id);
+    const updated = existingDrafts.filter((d: { id: string | number }) => d.id !== id);
     localStorage.setItem("draftSalesOrders", JSON.stringify(updated));
   };
 
@@ -183,7 +193,7 @@ export default function SalesOrderModal({ isOpen, onClose, onSuccess, mode, orde
       return;
     }
 
-    const payload: any = {
+    const payload: import("@/lib/dashboardApi").CreateSalesOrderPayload = {
       orderNumber: soNumber,
       customerType,
       paymentMode,
@@ -232,35 +242,35 @@ export default function SalesOrderModal({ isOpen, onClose, onSuccess, mode, orde
       <div className={styles.modal}>
         
         {/* Header (Top Level) */}
-        <div style={{ padding: "20px 24px 0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h2 style={{ margin: 0, fontSize: "20px", fontWeight: 600, color: "var(--text)" }}>Sales Order Details</h2>
+        <div className={styles.modalHeaderTop}>
+          <h2 className={styles.modalHeaderTitle}>Sales Order Details</h2>
           <button className={styles.closeBtn} onClick={onClose}><FiX /></button>
         </div>
 
         {/* Order Info Block */}
-        <div style={{ padding: "20px 24px 16px", display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: "1px solid var(--border-subtle)" }}>
-          <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
+        <div className={styles.orderInfoBlock}>
+          <div className={styles.orderInfoLeft}>
             <div className={styles.headerIcon}>
               <Image {...APP_IMAGES.ORDER_PAGE_LOGO} alt="Order Logo" />
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                <h3 style={{ margin: 0, fontSize: "18px", color: "var(--text)", fontWeight: 600 }}>{soNumber}</h3>
+            <div className={styles.orderInfoDetails}>
+              <div className={styles.orderInfoTitleRow}>
+                <h3 className={styles.orderInfoTitle}>{soNumber}</h3>
                 {order?.status?.toLowerCase() === "draft" || mode === "edit" || mode === "create" ? (
                   <span className={styles.badgeDraft}>Draft</span>
                 ) : (
-                  <span className={styles.badgeDraft} style={{ background: "var(--success-light)", color: "var(--success-dark)" }}>Paid</span>
+                  <span className={`${styles.badgeDraft} ${styles.badgePaid}`}>Paid</span>
                 )}
               </div>
-              <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>
-                Payment: <strong style={{ color: "var(--text)", fontWeight: 600 }}>{order?.status?.toLowerCase() === "draft" || mode === "create" ? "NIL" : paymentMode}</strong>
+              <span className={styles.paymentText}>
+                Payment: <strong className={styles.paymentTextStrong}>{order?.status?.toLowerCase() === "draft" || mode === "create" ? "NIL" : paymentMode}</strong>
               </span>
             </div>
           </div>
           
-          <div className={styles.headerMeta} style={{ textAlign: "right", gap: "4px" }}>
-            <span style={{ color: "var(--text-muted)", fontSize: "12px", fontWeight: 500 }}>Order time</span>
-            <strong style={{ color: "var(--text)", fontSize: "13px", fontWeight: 600 }}>
+          <div className={`${styles.headerMeta} ${styles.headerMetaAlignRight}`}>
+            <span className={styles.orderTimeLabel}>Order time</span>
+            <strong className={styles.orderTimeValue}>
               {mode === "create" 
                 ? new Date().toLocaleString('en-US', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })
                 : (order?.createdAt ? new Date(order.createdAt).toLocaleString('en-US', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : "-")}
@@ -302,7 +312,7 @@ export default function SalesOrderModal({ isOpen, onClose, onSuccess, mode, orde
                   </div>
                   <div className={styles.viewRow}>
                     <span>Paid</span>
-                    <span style={{ color: "var(--text)" }}>
+                    <span className={styles.paidDateValue}>
                       {order?.createdAt ? new Date(order.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : "-"}
                     </span>
                   </div>
@@ -311,7 +321,7 @@ export default function SalesOrderModal({ isOpen, onClose, onSuccess, mode, orde
               
               <h3 className={styles.sectionTitle}>Purchased Product</h3>
               
-              <div className={styles.tableHeader} style={{ gridTemplateColumns: "2fr 1fr 1fr 1fr" }}>
+              <div className={`${styles.tableHeader} ${styles.tableHeaderFourCols}`}>
                 <span>Product</span>
                 <span>Price</span>
                 <span>Quantity</span>
@@ -319,7 +329,7 @@ export default function SalesOrderModal({ isOpen, onClose, onSuccess, mode, orde
               </div>
               
               {orderItems.map((item, idx) => (
-                <div key={item.id || idx} className={styles.productItem} style={{ gridTemplateColumns: "2fr 1fr 1fr 1fr" }}>
+                <div key={item.id || idx} className={`${styles.productItem} ${styles.productItemFourCols}`}>
                   <div className={styles.productInfo}>
                     <h4>{item.productName}</h4>
                   </div>
@@ -344,7 +354,7 @@ export default function SalesOrderModal({ isOpen, onClose, onSuccess, mode, orde
                   <CustomSelect 
                     options={customerTypeOptions} 
                     value={customerType} 
-                    onChange={setCustomerType as any}
+                    onChange={(val: string) => setCustomerType(val)}
                     width="100%"
                     height="42px"
                   />
@@ -363,7 +373,7 @@ export default function SalesOrderModal({ isOpen, onClose, onSuccess, mode, orde
               </div>
 
               <div className={styles.searchProductGroup}>
-                <label className={styles.label} style={{ position: "absolute", top: "-10px", background: "var(--surface)", padding: "0 4px" }}>Browse Product</label>
+                <label className={`${styles.label} ${styles.browseProductLabel}`}>Browse Product</label>
                 <div className={styles.searchBox}>
                   <input 
                     type="text" 
@@ -420,9 +430,9 @@ export default function SalesOrderModal({ isOpen, onClose, onSuccess, mode, orde
                         onChange={(e) => updateItemQty(item.id, parseInt(e.target.value) || 1)}
                         min="1"
                       />
-                      <div style={{ display: "flex", flexDirection: "column", borderLeft: "1px solid var(--border)" }}>
-                        <button className={styles.qtyControlBtn} onClick={() => updateItemQty(item.id, item.qty + 1)} style={{ padding: "0 6px", fontSize: "10px", borderBottom: "1px solid var(--border)" }}>▲</button>
-                        <button className={styles.qtyControlBtn} onClick={() => updateItemQty(item.id, item.qty - 1)} style={{ padding: "0 6px", fontSize: "10px" }}>▼</button>
+                      <div className={styles.qtyControlButtonsContainer}>
+                        <button className={`${styles.qtyControlBtn} ${styles.qtyControlBtnTop}`} onClick={() => updateItemQty(item.id, item.qty + 1)}>▲</button>
+                        <button className={`${styles.qtyControlBtn} ${styles.qtyControlBtnBottom}`} onClick={() => updateItemQty(item.id, item.qty - 1)}>▼</button>
                       </div>
                     </div>
                     <div className={styles.totalCol}>₹{(price * item.qty).toFixed(2)}</div>
@@ -437,7 +447,7 @@ export default function SalesOrderModal({ isOpen, onClose, onSuccess, mode, orde
           )}
 
           <div className={styles.billSummary}>
-            <h4 className={styles.sectionTitle} style={{ fontSize: "14px" }}>Bill Summary</h4>
+            <h4 className={`${styles.sectionTitle} ${styles.sectionTitleSmall}`}>Bill Summary</h4>
             <div className={styles.summaryRow}>
               <span>Subtotal:</span>
               <span>₹{subtotal.toFixed(2)}</span>
@@ -454,7 +464,7 @@ export default function SalesOrderModal({ isOpen, onClose, onSuccess, mode, orde
 
           {mode !== "view" && (
             <div className={styles.paymentSection}>
-              <h4 className={styles.sectionTitle} style={{ fontSize: "14px" }}>Payment</h4>
+              <h4 className={`${styles.sectionTitle} ${styles.sectionTitleSmall}`}>Payment</h4>
               <div className={styles.paymentOptions}>
                 {["Cash", "UPI", "Card"].map((opt) => (
                   <div 
@@ -489,9 +499,9 @@ export default function SalesOrderModal({ isOpen, onClose, onSuccess, mode, orde
               </div>
             </>
           ) : (
-            <div className={styles.footerRight} style={{ width: "100%", justifyContent: "flex-end", gap: "12px" }}>
+            <div className={`${styles.footerRight} ${styles.footerRightExport}`}>
               <button className={styles.btnNext} onClick={() => setIsExportOpen(true)}>
-                <FiUploadCloud style={{ marginRight: "6px", marginBottom: "-2px" }} /> Export
+                <FiUploadCloud className={styles.exportIcon} /> Export
               </button>
             </div>
           )}
