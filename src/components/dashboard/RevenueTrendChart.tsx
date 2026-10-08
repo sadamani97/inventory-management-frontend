@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import styles from "./RevenueTrendChart.module.css";
 import CustomSelect from "@/components/ui/CustomSelect";
-import { fetchSalesAnalytics, SalesAnalyticsResponse } from "@/lib/dashboardApi";
+import { SalesAnalyticsResponse } from "@/lib/dashboardApi";
 import { FiTrendingUp } from "react-icons/fi";
 
 interface DataPoint {
