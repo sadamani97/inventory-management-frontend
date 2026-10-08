@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import styles from "./RevenueTrendChart.module.css";
 import CustomSelect from "@/components/ui/CustomSelect";
-import { fetchSalesAnalytics, SalesAnalyticsResponse } from "@/lib/dashboardApi";
+import { SalesAnalyticsResponse } from "@/lib/dashboardApi";
 import { FiTrendingUp } from "react-icons/fi";
 
 interface DataPoint {
@@ -17,47 +17,88 @@ export default function RevenueTrendChart() {
 
   useEffect(() => {
     let isMounted = true;
-    fetchSalesAnalytics().then((data) => {
-      if (isMounted) {
-        setAnalytics(data);
-        if (data.chartData.length > 0) {
-          setHoverIndex(data.chartData.length - 1);
+    
+    // Fetch real sales orders instead of static analytics
+    import("@/lib/dashboardApi").then(({ fetchSalesOrdersList }) => {
+      fetchSalesOrdersList().then((sos) => {
+        if (!isMounted) return;
+        
+        const completedOrders = sos.filter(o => o.status?.toLowerCase() !== "draft");
+        
+        // Group by month
+        const monthlySales: Record<string, number> = {};
+        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        
+        months.forEach(m => monthlySales[m] = 0);
+        
+        let totalSales = 0;
+        completedOrders.forEach(o => {
+          if (o.createdAt) {
+            const date = new Date(o.createdAt);
+            const month = months[date.getMonth()];
+            const amount = Number(o.totalAmount || 0);
+            monthlySales[month] += amount;
+            totalSales += amount;
+          }
+        });
+
+        // Current month and previous month for growth
+        const currentMonthIdx = new Date().getMonth();
+        const prevMonthIdx = currentMonthIdx === 0 ? 11 : currentMonthIdx - 1;
+        const currentMonthSales = monthlySales[months[currentMonthIdx]];
+        const prevMonthSales = monthlySales[months[prevMonthIdx]];
+        
+        let growth = 0;
+        if (prevMonthSales > 0) {
+          growth = Math.round(((currentMonthSales - prevMonthSales) / prevMonthSales) * 100);
+        } else if (currentMonthSales > 0) {
+          growth = 100;
         }
-      }
+        
+        // Create chart data
+        const chartData = months.map(m => ({
+          date: m,
+          sales: monthlySales[m]
+        }));
+        
+        // Only show up to current month to make chart look progressive
+        const relevantChartData = chartData.slice(0, currentMonthIdx + 1);
+
+        setAnalytics({
+          totalSales,
+          percentageGrowth: growth,
+          chartData: relevantChartData
+        });
+        
+        if (relevantChartData.length > 0) {
+          setHoverIndex(relevantChartData.length - 1);
+        }
+      });
     });
+
     return () => {
       isMounted = false;
     };
   }, []);
 
   const defaultPoints: DataPoint[] = [
-    { month: "Jan", value: 16, label: "₹ 16L" },
-    { month: "Feb", value: 14, label: "₹ 14L" },
-    { month: "Mar", value: 19, label: "₹ 19L" },
-    { month: "May", value: 18, label: "₹ 18L" },
-    { month: "Jun", value: 23, label: "₹ 23L" },
-    { month: "Jul", value: 17, label: "₹ 17L" },
-    { month: "Aug", value: 19, label: "₹ 19L" },
-    { month: "Sep", value: 23, label: "₹ 23L" },
-    { month: "Oct", value: 18, label: "₹ 18L" },
-    { month: "Nov", value: 15, label: "₹ 15L" },
-    { month: "Dec", value: 20, label: "₹ 20L" },
+    { month: "Jan", value: 0, label: "₹ 0" }
   ];
 
   let dataPoints = defaultPoints;
   if (analytics && analytics.chartData && analytics.chartData.length > 0) {
     dataPoints = analytics.chartData.map((cd) => ({
       month: cd.date,
-      value: cd.sales > 0 ? Number((cd.sales / 100000).toFixed(1)) : 10,
+      value: cd.sales > 0 ? Number((cd.sales / 1000).toFixed(1)) : 0, // scale down for chart Y axis
       label: `₹ ${cd.sales.toLocaleString()}`,
     }));
   }
 
   const totalRevDisplay = analytics
     ? `₹ ${analytics.totalSales.toLocaleString()}`
-    : "₹ 23,07,349";
+    : "₹ 0";
 
-  const growthDisplay = analytics ? `${analytics.percentageGrowth}%` : "20%";
+  const growthDisplay = analytics ? `${analytics.percentageGrowth}%` : "0%";
 
   const minY = 0;
   const maxY = Math.max(...dataPoints.map((d) => d.value), 30);

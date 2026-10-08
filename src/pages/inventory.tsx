@@ -267,10 +267,14 @@ export default function InventoryPage() {
       
       await createPurchaseOrder(payload);
 
+      // Preserve image and all other properties while updating quantity
       await updateProduct(selectedProduct.id, {
+        ...selectedProduct,
         quantity: newQty,
         purchaseRate: reorderUnitCost || selectedProduct.purchaseRate,
       });
+
+
 
       const daysNum = getDaysCount(daysFilter);
       const [prodsData, statsData, flowData, poData] = await Promise.all([
