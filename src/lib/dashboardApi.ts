@@ -240,11 +240,15 @@ export interface SalesOrderItem {
 
 export interface SalesOrderStatsResponse {
   totalSalesOrders: number;
+  totalOrders?: number;
   totalOrderValue: number;
   totalOrderValueFormatted: string;
   averageOrderValue: number;
   averageOrderValueFormatted: string;
   activeBuyers: number;
+  paidOrders?: number;
+  pendingOrders?: number;
+  draftOrders?: number;
 }
 
 export interface InvoiceItem {
@@ -527,9 +531,27 @@ export async function fetchStockFlowChartData(daysCount: number = 10): Promise<S
   return [];
 }
 
-export async function fetchProductsList(): Promise<ProductItem[]> {
+export interface PaginationParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: string;
+  category?: string;
+  categoryName?: string;
+  starredOnly?: boolean;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  totalItems: number;
+  page?: number;
+  limit?: number;
+  totalPages?: number;
+}
+
+export async function fetchProductsList(params?: PaginationParams): Promise<ProductItem[]> {
   try {
-    const response = await api.get("/api/products");
+    const response = await api.get("/api/products", { params });
     if (response?.data?.success && Array.isArray(response?.data?.data)) {
       return response.data.data;
     }
@@ -540,6 +562,33 @@ export async function fetchProductsList(): Promise<ProductItem[]> {
     toast.error("Failed to fetch products list from backend.");
   }
   return [];
+}
+
+export async function fetchPaginatedProducts(params: PaginationParams): Promise<PaginatedResponse<ProductItem>> {
+  try {
+    const response = await api.get("/api/products", { params });
+    if (response?.data?.success && Array.isArray(response?.data?.data)) {
+      return {
+        data: response.data.data,
+        totalItems: typeof response.data.totalItems === "number" ? response.data.totalItems : response.data.data.length,
+        page: response.data.page ?? params.page ?? 1,
+        limit: response.data.limit ?? params.limit ?? 10,
+        totalPages: response.data.totalPages ?? 1,
+      };
+    }
+    if (Array.isArray(response?.data)) {
+      return {
+        data: response.data,
+        totalItems: response.data.length,
+        page: params.page ?? 1,
+        limit: params.limit ?? 10,
+        totalPages: 1,
+      };
+    }
+  } catch {
+    toast.error("Failed to fetch products from backend.");
+  }
+  return { data: [], totalItems: 0, page: params.page ?? 1, limit: params.limit ?? 10, totalPages: 0 };
 }
 
 export async function fetchProductById(id: number | string): Promise<ProductItem | null> {
@@ -663,9 +712,9 @@ export async function fetchAlertSummary(): Promise<Record<string, unknown> | nul
   return null;
 }
 
-export async function fetchVendorsList(): Promise<VendorItem[]> {
+export async function fetchVendorsList(params?: PaginationParams): Promise<VendorItem[]> {
   try {
-    const response = await api.get("/api/vendors");
+    const response = await api.get("/api/vendors", { params });
     if (response?.data?.success && Array.isArray(response?.data?.data)) {
       return response.data.data;
     }
@@ -678,9 +727,36 @@ export async function fetchVendorsList(): Promise<VendorItem[]> {
   return [];
 }
 
-export async function fetchPurchaseOrdersList(): Promise<PurchaseOrderItem[]> {
+export async function fetchPaginatedVendors(params: PaginationParams): Promise<PaginatedResponse<VendorItem>> {
   try {
-    const response = await api.get("/api/purchase-orders");
+    const response = await api.get("/api/vendors", { params });
+    if (response?.data?.success && Array.isArray(response?.data?.data)) {
+      return {
+        data: response.data.data,
+        totalItems: typeof response.data.totalItems === "number" ? response.data.totalItems : response.data.data.length,
+        page: response.data.page ?? params.page ?? 1,
+        limit: response.data.limit ?? params.limit ?? 10,
+        totalPages: response.data.totalPages ?? 1,
+      };
+    }
+    if (Array.isArray(response?.data)) {
+      return {
+        data: response.data,
+        totalItems: response.data.length,
+        page: params.page ?? 1,
+        limit: params.limit ?? 10,
+        totalPages: 1,
+      };
+    }
+  } catch {
+    toast.error("Failed to fetch vendors.");
+  }
+  return { data: [], totalItems: 0, page: params.page ?? 1, limit: params.limit ?? 10, totalPages: 0 };
+}
+
+export async function fetchPurchaseOrdersList(params?: PaginationParams): Promise<PurchaseOrderItem[]> {
+  try {
+    const response = await api.get("/api/purchase-orders", { params });
     if (response?.data?.success && Array.isArray(response?.data?.data)) {
       return response.data.data;
     }
@@ -691,6 +767,54 @@ export async function fetchPurchaseOrdersList(): Promise<PurchaseOrderItem[]> {
     toast.error("Failed to fetch purchase orders.");
   }
   return [];
+}
+
+export async function fetchPaginatedPurchaseOrders(params: PaginationParams): Promise<PaginatedResponse<PurchaseOrderItem>> {
+  try {
+    const response = await api.get("/api/purchase-orders", { params });
+    if (response?.data?.success && Array.isArray(response?.data?.data)) {
+      return {
+        data: response.data.data,
+        totalItems: typeof response.data.totalItems === "number" ? response.data.totalItems : response.data.data.length,
+        page: response.data.page ?? params.page ?? 1,
+        limit: response.data.limit ?? params.limit ?? 10,
+        totalPages: response.data.totalPages ?? 1,
+      };
+    }
+    if (Array.isArray(response?.data)) {
+      return {
+        data: response.data,
+        totalItems: response.data.length,
+        page: params.page ?? 1,
+        limit: params.limit ?? 10,
+        totalPages: 1,
+      };
+    }
+  } catch {
+    toast.error("Failed to fetch purchase orders.");
+  }
+  return { data: [], totalItems: 0, page: params.page ?? 1, limit: params.limit ?? 10, totalPages: 0 };
+}
+
+export interface PurchaseOrderStatsResponse {
+  totalPurchaseOrders?: number;
+  totalOrders: number;
+  pendingOrders: number;
+  completedOrders: number;
+  cancelledOrders: number;
+  totalPOValue?: number;
+}
+
+export async function fetchPurchaseOrderStats(): Promise<PurchaseOrderStatsResponse | null> {
+  try {
+    const response = await api.get("/api/purchase-orders/stats");
+    if (response?.data?.success && response?.data?.data) {
+      return response.data.data;
+    }
+  } catch {
+    // Graceful fallback
+  }
+  return null;
 }
 
 export interface CreatePurchaseOrderPayload {
@@ -781,9 +905,9 @@ export async function deleteSalesOrder(id: number | string): Promise<{ success: 
   }
 }
 
-export async function fetchSalesOrdersList(): Promise<SalesOrderItem[]> {
+export async function fetchSalesOrdersList(params?: PaginationParams): Promise<SalesOrderItem[]> {
   try {
-    const response = await api.get("/api/sales-orders");
+    const response = await api.get("/api/sales-orders", { params });
     if (response?.data?.success && Array.isArray(response?.data?.data)) {
       return response.data.data;
     }
@@ -794,6 +918,33 @@ export async function fetchSalesOrdersList(): Promise<SalesOrderItem[]> {
     toast.error("Failed to fetch sales orders.");
   }
   return [];
+}
+
+export async function fetchPaginatedSalesOrders(params: PaginationParams): Promise<PaginatedResponse<SalesOrderItem>> {
+  try {
+    const response = await api.get("/api/sales-orders", { params });
+    if (response?.data?.success && Array.isArray(response?.data?.data)) {
+      return {
+        data: response.data.data,
+        totalItems: typeof response.data.totalItems === "number" ? response.data.totalItems : response.data.data.length,
+        page: response.data.page ?? params.page ?? 1,
+        limit: response.data.limit ?? params.limit ?? 10,
+        totalPages: response.data.totalPages ?? 1,
+      };
+    }
+    if (Array.isArray(response?.data)) {
+      return {
+        data: response.data,
+        totalItems: response.data.length,
+        page: params.page ?? 1,
+        limit: params.limit ?? 10,
+        totalPages: 1,
+      };
+    }
+  } catch {
+    toast.error("Failed to fetch sales orders.");
+  }
+  return { data: [], totalItems: 0, page: params.page ?? 1, limit: params.limit ?? 10, totalPages: 0 };
 }
 
 export async function fetchSalesOrderStats(): Promise<SalesOrderStatsResponse | null> {

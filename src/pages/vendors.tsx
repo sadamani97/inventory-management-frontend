@@ -8,7 +8,8 @@ import {
   setStarredOnly, setActiveActionMenuId, setShowVendorModal, setEditingVendorId,
   setCurrentPage, setPageSize,
   openDeleteDialog, closeDeleteDialog,
-  addStarLoadingId, removeStarLoadingId, updateFormField, resetForm, setForm
+  addStarLoadingId, removeStarLoadingId, updateFormField, resetForm, setForm,
+  fetchVendorsThunk
 } from "@/store/vendorSlice";
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
@@ -75,7 +76,7 @@ export default function VendorsPage() {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const {
-    vendors, stats, vendorTypes, countries, states, cities, categories, loading, submitting,
+    vendors, totalVendorsCount, stats, vendorTypes, countries, states, cities, categories, loading, submitting,
     search, statusFilter, categoryFilter, lastDeliveryFilter, starredOnly,
     currentPage, pageSize,
     activeActionMenuId, showVendorModal, editingVendorId, starLoadingIds: starLoadingIdsArr,
@@ -95,36 +96,27 @@ export default function VendorsPage() {
 
   const [isExportOpen, setIsExportOpen] = useState(false);
 
-  // Initial Load Data function
+  // Server-side paginated fetch on filter / page change
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      dispatch(fetchVendorsThunk());
+    }, search ? 300 : 0);
+    return () => clearTimeout(timer);
+  }, [dispatch, currentPage, pageSize, statusFilter, categoryFilter, starredOnly, search]);
+
+  // Initial Load Metadata & Stats
   const loadPageData = useCallback(async () => {
-    dispatch(setLoading(true));
-    const [vList, vStats, vTypes, cList, catList] = await Promise.all([
-      fetchVendorsList(),
+    const [vStats, vTypes, cList, catList] = await Promise.all([
       fetchVendorStats(),
       fetchVendorTypes(),
       fetchCountries(),
       fetchCategories(),
     ]);
 
-    dispatch(setVendors(vList || []));
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const calculatedNewVendors = (vList || []).filter((v) => {
-      if (!v.createdAt) return false;
-      const createdAtDate = new Date(v.createdAt);
-      return createdAtDate >= thirtyDaysAgo;
-    }).length;
-
-    dispatch(setStats({
-      totalVendors: vStats?.totalVendors || vList?.length || 0,
-      activeVendors: vStats?.activeVendors || vList?.filter((v) => v.status === "active")?.length || 0,
-      newVendors: calculatedNewVendors,
-      activePurchaseOrders: vStats?.activePurchaseOrders || 0,
-    }));
+    if (vStats) dispatch(setStats(vStats));
     dispatch(setVendorTypes(vTypes || []));
     dispatch(setCountries(cList || []));
     dispatch(setCategories(catList || []));
-    dispatch(setLoading(false));
   }, [dispatch]);
 
   // Initial Load Effect
@@ -440,11 +432,8 @@ export default function VendorsPage() {
     return matchesSearch && matchesStatus && matchesCategory && matchesStarred;
   });
 
-  // Calculate pagination
-  const paginatedVendors = filteredVendors.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+  // Server-side paginated vendors from Redux
+  const paginatedVendors = vendors;
 
   const toggleStarVendor = async (e: React.MouseEvent, vendor: VendorItem) => {
     e.stopPropagation();
@@ -725,7 +714,7 @@ export default function VendorsPage() {
           
           <Pagination
             currentPage={currentPage}
-            totalItems={filteredVendors.length}
+            totalItems={totalVendorsCount || vendors.length}
             pageSize={pageSize}
             onPageChange={(page) => dispatch(setCurrentPage(page))}
             onPageSizeChange={(size) => dispatch(setPageSize(size))}

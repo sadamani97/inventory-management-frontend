@@ -184,6 +184,21 @@
   margin-left: 8px;
 }
 
+.subHeader {
+  margin-bottom: 16px;
+}
+
+.filterSelect {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  outline: none;
+  background-color: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+}
+
 .tableListWrapper {
   overflow-x: auto;
 }
@@ -209,6 +224,10 @@
   font-weight: 500;
   color: var(--text);
   border-bottom: 1px solid var(--border-subtle);
+}
+
+.boldCell {
+  font-weight: 600;
 }
 
 .statusBadge {

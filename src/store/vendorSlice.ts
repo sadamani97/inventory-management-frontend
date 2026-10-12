@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import {
   VendorItem,
   VendorStatsResponse,
@@ -7,7 +7,9 @@ import {
   StateItem,
   CityItem,
   CategoryItem,
+  fetchPaginatedVendors,
 } from "@/lib/dashboardApi";
+import type { RootState } from "./index";
 
 interface VendorFormState {
   vendorName: string;
@@ -96,6 +98,7 @@ const initialFormState: VendorFormState = {
 interface VendorState {
   // Data
   vendors: VendorItem[];
+  totalVendorsCount: number;
   stats: VendorStatsResponse;
   vendorTypes: VendorTypeItem[];
   countries: CountryItem[];
@@ -132,6 +135,7 @@ interface VendorState {
 
 const initialState: VendorState = {
   vendors: [],
+  totalVendorsCount: 0,
   stats: {
     totalVendors: 0,
     activeVendors: 0,
@@ -264,8 +268,41 @@ const vendorSlice = createSlice({
     setForm(state, action: PayloadAction<Partial<VendorFormState>>) {
       state.form = { ...state.form, ...action.payload };
     },
+    setTotalVendorsCount(state, action: PayloadAction<number>) {
+      state.totalVendorsCount = action.payload;
+    },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchVendorsThunk.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchVendorsThunk.fulfilled, (state, action) => {
+        state.loading = false;
+        state.vendors = action.payload.data;
+        state.totalVendorsCount = action.payload.totalItems;
+      })
+      .addCase(fetchVendorsThunk.rejected, (state) => {
+        state.loading = false;
+      });
   },
 });
+
+export const fetchVendorsThunk = createAsyncThunk(
+  "vendor/fetchList",
+  async (_, { getState }) => {
+    const state = (getState() as RootState).vendor;
+    const response = await fetchPaginatedVendors({
+      page: state.currentPage,
+      limit: state.pageSize,
+      search: state.search.trim() || undefined,
+      status: state.statusFilter !== "All" ? state.statusFilter : undefined,
+      category: state.categoryFilter !== "All" ? state.categoryFilter : undefined,
+      starredOnly: state.starredOnly || undefined,
+    });
+    return response;
+  }
+);
 
 export const {
   setVendors,
@@ -294,6 +331,7 @@ export const {
   updateFormField,
   resetForm,
   setForm,
+  setTotalVendorsCount,
 } = vendorSlice.actions;
 
 export default vendorSlice.reducer;
