@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { fetchReportKpis, fetchSalesAnalytics } from "@/lib/dashboardApi";
+import { fetchReportKpis, fetchSalesAnalytics, ReportKpis, SalesAnalyticsResponse } from "@/lib/dashboardApi";
 
 export default function ReportsPage() {
-  const [kpi, setKpi] = useState<Record<string, unknown> | null>(null);
-  const [analytics, setAnalytics] = useState<Record<string, unknown> | null>(null);
+  const [kpi, setKpi] = useState<ReportKpis | null>(null);
+  const [analytics, setAnalytics] = useState<SalesAnalyticsResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -15,7 +15,7 @@ export default function ReportsPage() {
     });
   }, []);
 
-  const chartDataList = (analytics?.chartData as Record<string, unknown>[] | undefined) || [];
+  const chartDataList = analytics?.chartData || [];
 
   return (
     <DashboardLayout>
@@ -27,22 +27,18 @@ export default function ReportsPage() {
           <p style={{ color: "#64748b", margin: "20px 0" }}>Loading backend analytics reports...</p>
         ) : (
           <>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px", margin: "20px 0" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px", margin: "20px 0" }}>
               <div style={{ background: "#ffffff", padding: "16px", borderRadius: "10px", border: "1px solid #eaecf0" }}>
-                <div style={{ color: "#64748b", fontSize: "12px" }}>Inventory Value</div>
-                <div style={{ fontSize: "20px", fontWeight: 800, color: "#2563eb" }}>₹ {Number(kpi?.inventoryValue || 0).toLocaleString()}</div>
+                <div style={{ color: "#64748b", fontSize: "12px" }}>Total Revenue</div>
+                <div style={{ fontSize: "20px", fontWeight: 800, color: "#16a34a" }}>₹ {Number(kpi?.totalRevenue || 0).toLocaleString()}</div>
               </div>
               <div style={{ background: "#ffffff", padding: "16px", borderRadius: "10px", border: "1px solid #eaecf0" }}>
-                <div style={{ color: "#64748b", fontSize: "12px" }}>Today&apos;s Revenue</div>
-                <div style={{ fontSize: "20px", fontWeight: 800, color: "#16a34a" }}>₹ {Number(kpi?.todaysRevenue || 0).toLocaleString()}</div>
+                <div style={{ color: "#64748b", fontSize: "12px" }}>Total Orders</div>
+                <div style={{ fontSize: "20px", fontWeight: 800, color: "#0f172a" }}>{String(kpi?.totalOrders || 0)}</div>
               </div>
               <div style={{ background: "#ffffff", padding: "16px", borderRadius: "10px", border: "1px solid #eaecf0" }}>
-                <div style={{ color: "#64748b", fontSize: "12px" }}>Today&apos;s Orders</div>
-                <div style={{ fontSize: "20px", fontWeight: 800, color: "#0f172a" }}>{String(kpi?.todaysTotalOrders || 0)}</div>
-              </div>
-              <div style={{ background: "#ffffff", padding: "16px", borderRadius: "10px", border: "1px solid #eaecf0" }}>
-                <div style={{ color: "#64748b", fontSize: "12px" }}>Total Sales</div>
-                <div style={{ fontSize: "20px", fontWeight: 800, color: "#0f172a" }}>₹ {Number(analytics?.totalSales || 0).toLocaleString()}</div>
+                <div style={{ color: "#64748b", fontSize: "12px" }}>Average Order Value</div>
+                <div style={{ fontSize: "20px", fontWeight: 800, color: "#2563eb" }}>₹ {Number(kpi?.averageOrderValue || 0).toLocaleString()}</div>
               </div>
             </div>
 
