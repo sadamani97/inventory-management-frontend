@@ -49,7 +49,6 @@ import {
   FiTrash2,
   FiX,
   FiStar,
-  FiUserPlus,
   FiPaperclip,
 } from "react-icons/fi";
 import { toast } from "react-toastify";

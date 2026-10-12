@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import { FiX, FiSearch, FiTrash2, FiFileText, FiUploadCloud } from "react-icons/fi";
-import { fetchProductsList, ProductItem, createSalesOrder, SalesOrderItem } from "@/lib/dashboardApi";
+import { fetchProductsList, ProductItem, createSalesOrder, updateSalesOrder, SalesOrderItem, fetchSalesOrdersList } from "@/lib/dashboardApi";
 import CustomSelect from "@/components/ui/CustomSelect";
 import ExportDialog from "@/components/ui/ExportDialog";
 import styles from "@/styles/components/salesOrderModal.module.css";
@@ -38,9 +38,23 @@ export default function SalesOrderModal({ isOpen, onClose, onSuccess, mode, orde
       fetchProductsList().then(data => setProducts(data || []));
       
       if (mode === "create") {
-        setTimeout(() => {
-          const lastSeq = parseInt(localStorage.getItem("lastSoNumber") || "10241", 10);
-          setSoNumber(`SO-${lastSeq + 1}`);
+        setTimeout(async () => {
+          try {
+            const orders = await fetchSalesOrdersList();
+            let maxSeq = 10241;
+            if (orders && orders.length > 0) {
+              orders.forEach(o => {
+                const numStr = (o.orderNumber || o.soNumber || "").replace(/[^0-9]/g, '');
+                const num = parseInt(numStr, 10);
+                if (!isNaN(num) && num > maxSeq) {
+                  maxSeq = num;
+                }
+              });
+            }
+            setSoNumber(`SO-${maxSeq + 1}`);
+          } catch {
+            setSoNumber(`SO-10242`);
+          }
           setCustomerType("Walk In Customer");
           setCustomerName("");
           setPhone("");
@@ -56,22 +70,22 @@ export default function SalesOrderModal({ isOpen, onClose, onSuccess, mode, orde
             isDraft?: boolean; 
             items?: { productId?: number; productName?: string; quantity?: number; unitPrice?: number }[] 
           };
-          setSoNumber(extOrder.orderNumber || extOrder.soNumber || "");
-          setCustomerType(extOrder.customerType || "Walk In Customer");
-          setCustomerName(extOrder.customerName || "");
-          setPhone(extOrder.phone || "");
-          setPaymentMode(extOrder.paymentMode || "Cash");
-          setLocalDraftId(extOrder.isDraft ? extOrder.id : null);
+          setSoNumber(extOrder.orderNumber ?? extOrder.soNumber ?? "");
+          setCustomerType(extOrder.customerType ?? "Walk In Customer");
+          setCustomerName(extOrder.customerName ?? "");
+          setPhone(extOrder.phone ?? "");
+          setPaymentMode(extOrder.paymentMode ?? "Cash");
+          setLocalDraftId(mode === "edit" || extOrder.status?.toLowerCase() === "draft" ? extOrder.id : null);
           
           // Map items if any
           if (extOrder.items && Array.isArray(extOrder.items)) {
             // Just mock mapping since full product details might not be in order.items
             const mapped = extOrder.items.map((it: { productId?: number; productName?: string; quantity?: number; unitPrice?: number }, idx: number) => ({
-              id: it.productId || idx,
-              productName: it.productName || "Product",
-              quantity: it.quantity || 1, // mapping product quantity to stock for UI
-              qty: it.quantity || 1,
-              sellingPrice: it.unitPrice || 0,
+              id: it.productId ?? idx,
+              productName: it.productName ?? "Product",
+              quantity: it.quantity ?? 1, // mapping product quantity to stock for UI
+              qty: it.quantity ?? 1,
+              sellingPrice: it.unitPrice ?? 0,
               imageUrl: "",
               sku: `SKU-${idx}`
             })) as (ProductItem & { qty: number })[];
@@ -125,62 +139,41 @@ export default function SalesOrderModal({ isOpen, onClose, onSuccess, mode, orde
     setOrderItems(orderItems.filter(item => item.id !== id));
   };
 
-  const saveToLocalDraft = () => {
+  const saveDraft = async () => {
     if (!soNumber) {
       toast.error("SO number is required");
       return;
     }
 
-    const draftOrder = {
-      id: localDraftId || `draft-${Date.now()}`,
-      soNumber,
+    const payload: import("@/lib/dashboardApi").CreateSalesOrderPayload = {
       orderNumber: soNumber,
       customerType,
-      customerName,
-      phone,
       paymentMode,
       status: "Draft",
-      isDraft: true,
-      createdAt: new Date().toISOString(),
-      orderDate: new Date().toISOString(),
+      subtotal,
+      discountAmount: discount,
       totalAmount,
-      items: orderItems.map(it => ({
-        productId: Number(it.id),
-        productName: it.productName,
-        quantity: it.qty,
-        unitPrice: Number(it.sellingPrice || it.purchaseRate || 0)
+      items: orderItems.map(item => ({
+        productId: Number(item.id),
+        productName: item.productName,
+        quantity: item.qty,
+        unitPrice: Number(item.sellingPrice || item.purchaseRate || 0)
       }))
     };
 
-    const existingDrafts = JSON.parse(localStorage.getItem("draftSalesOrders") || "[]");
-    
-    if (localDraftId) {
-      const idx = existingDrafts.findIndex((d: { id: string | number }) => d.id === localDraftId);
-      if (idx !== -1) existingDrafts[idx] = draftOrder;
-      else existingDrafts.push(draftOrder);
-    } else {
-      existingDrafts.push(draftOrder);
-    }
+    if (customerName) payload.customerName = customerName;
+    if (phone) payload.phone = phone;
 
-    localStorage.setItem("draftSalesOrders", JSON.stringify(existingDrafts));
-    
-    const currentNumStr = soNumber.replace(/[^0-9]/g, '');
-    const currentNum = parseInt(currentNumStr, 10);
-    if (!isNaN(currentNum)) {
-      const lastSeq = parseInt(localStorage.getItem("lastSoNumber") || "10241", 10);
-      if (currentNum > lastSeq) {
-        localStorage.setItem("lastSoNumber", String(currentNum));
-      }
+    const res = localDraftId 
+      ? await updateSalesOrder(localDraftId, payload)
+      : await createSalesOrder(payload);
+      
+    if (res?.success) {
+      toast.success("Draft saved successfully");
+      // DB is now the source of truth, no need to update local storage
+      onSuccess?.();
+      onClose();
     }
-    toast.success("Saved as draft");
-    onSuccess?.();
-    onClose();
-  };
-
-  const removeDraft = (id: string | number) => {
-    const existingDrafts = JSON.parse(localStorage.getItem("draftSalesOrders") || "[]");
-    const updated = existingDrafts.filter((d: { id: string | number }) => d.id !== id);
-    localStorage.setItem("draftSalesOrders", JSON.stringify(updated));
   };
 
   const handleSubmit = async () => {
@@ -212,20 +205,13 @@ export default function SalesOrderModal({ isOpen, onClose, onSuccess, mode, orde
     if (customerName) payload.customerName = customerName;
     if (phone) payload.phone = phone;
 
-    const res = await createSalesOrder(payload);
+    const res = localDraftId 
+      ? await updateSalesOrder(localDraftId, payload)
+      : await createSalesOrder(payload);
+
     if (res?.success) {
       toast.success("Sales Order completed successfully");
-      const currentNumStr = soNumber.replace(/[^0-9]/g, '');
-      const currentNum = parseInt(currentNumStr, 10);
-      if (!isNaN(currentNum)) {
-        const lastSeq = parseInt(localStorage.getItem("lastSoNumber") || "10241", 10);
-        if (currentNum > lastSeq) {
-          localStorage.setItem("lastSoNumber", String(currentNum));
-        }
-      }
-      if (localDraftId) {
-        removeDraft(localDraftId);
-      }
+      // DB is now the source of truth, no need to update local storage
       onSuccess?.();
       onClose();
     }
@@ -486,7 +472,7 @@ export default function SalesOrderModal({ isOpen, onClose, onSuccess, mode, orde
         <div className={styles.footer}>
           {mode !== "view" ? (
             <>
-              <button className={styles.btnDraft} onClick={saveToLocalDraft}>
+              <button className={styles.btnDraft} onClick={saveDraft}>
                 <FiFileText /> Save draft
               </button>
               <div className={styles.footerRight}>

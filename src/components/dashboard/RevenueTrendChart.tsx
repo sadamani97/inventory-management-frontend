@@ -167,8 +167,8 @@ export default function RevenueTrendChart() {
         >
           <defs>
             <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#2563eb" stopOpacity="0.25" />
-              <stop offset="100%" stopColor="#2563eb" stopOpacity="0.0" />
+              <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.25" />
+              <stop offset="100%" stopColor="var(--primary)" stopOpacity="0.0" />
             </linearGradient>
           </defs>
 
@@ -195,7 +195,7 @@ export default function RevenueTrendChart() {
           <path
             d={pathD}
             fill="none"
-            stroke="#2563eb"
+            stroke="var(--primary)"
             strokeWidth="2.5"
             strokeLinecap="round"
           />
@@ -206,7 +206,7 @@ export default function RevenueTrendChart() {
               y1={activeY}
               x2={activeX}
               y2={chartHeight + 10}
-              stroke="#2563eb"
+              stroke="var(--primary)"
               strokeDasharray="3 3"
               strokeWidth="1.5"
             />
@@ -222,8 +222,8 @@ export default function RevenueTrendChart() {
                   cx={cx}
                   cy={cy}
                   r={isHovered ? "5" : "3.5"}
-                  fill={isHovered ? "#ffffff" : "#2563eb"}
-                  stroke="#2563eb"
+                  fill={isHovered ? "var(--surface)" : "var(--primary)"}
+                  stroke="var(--primary)"
                   strokeWidth={isHovered ? "3" : "1.5"}
                 />
                 <text

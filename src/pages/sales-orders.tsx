@@ -1,11 +1,12 @@
 import { useEffect, useState, useMemo } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { fetchSalesOrdersList, fetchSalesOrderStats, SalesOrderItem, SalesOrderStatsResponse } from "@/lib/dashboardApi";
+import { fetchSalesOrdersList, fetchSalesOrderStats, SalesOrderItem, SalesOrderStatsResponse, deleteSalesOrder } from "@/lib/dashboardApi";
 import styles from "@/styles/pages/salesOrders.module.css";
-import { FiDownload, FiPlus, FiSearch, FiEye, FiEdit2, FiShoppingCart, FiDollarSign, FiUsers, FiFileText } from "react-icons/fi";
+import { FiDownload, FiPlus, FiSearch, FiEye, FiEdit2, FiShoppingCart, FiDollarSign, FiUsers, FiFileText, FiTrash2 } from "react-icons/fi";
 import Pagination from "@/components/ui/Pagination";
 import ExportDialog from "@/components/ui/ExportDialog";
 import SalesOrderModal, { SalesOrderMode } from "@/components/dashboard/SalesOrderModal";
+import { toast } from "react-toastify";
 
 export default function SalesOrdersPage() {
   const [orders, setOrders] = useState<SalesOrderItem[]>([]);
@@ -22,13 +23,22 @@ export default function SalesOrdersPage() {
   const [modalMode, setModalMode] = useState<SalesOrderMode>("create");
   const [selectedOrder, setSelectedOrder] = useState<SalesOrderItem | null>(null);
 
+  const handleDeleteDraft = async (id: number | string) => {
+    if (window.confirm("Are you sure you want to delete this draft?")) {
+      const res = await deleteSalesOrder(id);
+      if (res?.success) {
+        toast.success("Draft deleted successfully");
+        loadData();
+      }
+    }
+  };
+
   const loadData = () => {
     Promise.all([
       fetchSalesOrdersList(),
       fetchSalesOrderStats()
     ]).then(([ordersData, statsData]) => {
-      const storedDrafts = JSON.parse(localStorage.getItem("draftSalesOrders") || "[]");
-      setOrders([...storedDrafts, ...(ordersData || [])]);
+      setOrders(ordersData || []);
       setStats(statsData);
       setLoading(false);
     });
@@ -123,7 +133,7 @@ export default function SalesOrdersPage() {
             <div className={styles?.statHeader}>
               <span className={styles?.statTitle}>Total Order Value</span>
               <div className={`${styles?.statIconWrapper} ${styles?.iconGreen}`}>
-                <FiFileText className={styles?.statIcon} />
+                <FiDollarSign className={styles?.statIcon} />
               </div>
             </div>
             <div className={styles?.statBody}>
@@ -226,13 +236,13 @@ export default function SalesOrdersPage() {
                   </tr>
                 ) : paginatedOrders?.length > 0 ? (
                   paginatedOrders?.map((so, idx) => {
-                    const itemsCount = so?.items?.reduce((acc, item) => acc + (item?.quantity || 0), 0) || (so as any)?.quantity || 1;
+                    const itemsCount = so?.items?.reduce((acc, item) => acc + (item?.quantity || 0), 0) || so?.quantity || 1;
                     return (
                       <tr key={String(so?.id || idx)}>
                         <td style={{ fontWeight: 600 }}>
                           {String(so?.orderNumber || so?.soNumber || `SO-100${idx + 1}`)}
                         </td>
-                        <td>{String((so as any)?.customerType || so?.customerName || "Walk In Customer")}</td>
+                        <td>{String(so?.customerType || so?.customerName || "Walk In Customer")}</td>
                         <td>{itemsCount} items</td>
                         <td style={{ fontWeight: 600 }}>
                           ₹{Number(so?.totalAmount || 0).toLocaleString()}
@@ -256,18 +266,27 @@ export default function SalesOrdersPage() {
                             >
                               <FiEye />
                             </button>
-                            {(so?.status?.toLowerCase() === "draft" || (so as any)?.isDraft) && (
-                              <button 
-                                className={styles?.actionMenuBtn} 
-                                title="Edit"
-                                onClick={() => {
-                                  setModalMode("edit");
-                                  setSelectedOrder(so);
-                                  setIsModalOpen(true);
-                                }}
-                              >
-                                <FiEdit2 />
-                              </button>
+                            {(so?.status?.toLowerCase() === "draft" || so?.isDraft) && (
+                              <>
+                                <button 
+                                  className={styles?.actionMenuBtn} 
+                                  title="Edit"
+                                  onClick={() => {
+                                    setModalMode("edit");
+                                    setSelectedOrder(so);
+                                    setIsModalOpen(true);
+                                  }}
+                                >
+                                  <FiEdit2 />
+                                </button>
+                                <button 
+                                  className={styles?.actionMenuBtn} 
+                                  title="Delete"
+                                  onClick={() => handleDeleteDraft(so?.id)}
+                                >
+                                  <FiTrash2 />
+                                </button>
+                              </>
                             )}
                           </div>
                         </td>
@@ -303,8 +322,8 @@ export default function SalesOrdersPage() {
         columns={["SO-ID", "Customer", "Items", "Total Amount", "Time", "Status"]}
         data={filteredOrders.map((o, idx) => [
           String(o?.orderNumber || o?.soNumber || `SO-100${idx + 1}`),
-          String((o as any)?.customerType || o?.customerName || "Walk In Customer"),
-          String(o?.items?.reduce((acc, item) => acc + (item?.quantity || 0), 0) || (o as any)?.quantity || 1),
+          String(o?.customerType || o?.customerName || "Walk In Customer"),
+          String(o?.items?.reduce((acc, item) => acc + (item?.quantity || 0), 0) || o?.quantity || 1),
           `₹${Number(o?.totalAmount || 0).toLocaleString()}`,
           formatTime(o?.createdAt || o?.orderDate),
           String(o?.status || "Pending")

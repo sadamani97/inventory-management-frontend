@@ -233,6 +233,8 @@ export interface SalesOrderItem {
   createdAt?: string;
   orderDate?: string;
   customerType?: string;
+  quantity?: number;
+  isDraft?: boolean;
   items?: { quantity?: number }[];
 }
 
@@ -329,14 +331,16 @@ export async function fetchRecentActivities(): Promise<ActivityItem[]> {
         let totalQty = 0;
         if (po.items && Array.isArray(po.items)) {
           totalQty = po.items.reduce((acc: number, it: { quantity?: number }) => acc + (Number(it.quantity) || 0), 0);
+        } else if (po.quantity) {
+          totalQty = Number(po.quantity);
         }
         
         items.push({
-          id: `po-${po.id || idx}`,
+          id: `po-${po.id ?? idx}`,
           activity: "Vendor Delivery",
-          product: po.vendorName || "Vendor Order",
-          sku: po.poNumber || `PO-${idx}`,
-          qty: `+${totalQty || 200}`,
+          product: po.vendorName ?? po.vendor?.vendorName ?? "Vendor Order",
+          sku: po.poNumber ?? `PO-${idx}`,
+          qty: `+${totalQty}`,
           status: isDelivered ? "Delivered" : "Added",
           time: formatRelativeTime(poDate),
           timestamp: poDate.getTime()
@@ -353,14 +357,16 @@ export async function fetchRecentActivities(): Promise<ActivityItem[]> {
           let totalQty = 0;
           if (so.items && Array.isArray(so.items)) {
             totalQty = so.items.reduce((acc: number, it: { quantity?: number }) => acc + (Number(it.quantity) || 0), 0);
+          } else if (so.quantity) {
+            totalQty = Number(so.quantity);
           }
 
           items.push({
-            id: `so-${so.id || idx}`,
+            id: `so-${so.id ?? idx}`,
             activity: "Stock Out",
-            product: so.customerName || so.customerType || "Customer Order",
-            sku: so.soNumber || so.orderNumber || `SO-${idx}`,
-            qty: `-${totalQty || 32}`,
+            product: so.customerName ?? so.customerType ?? "Customer Order",
+            sku: so.soNumber ?? so.orderNumber ?? `SO-${idx}`,
+            qty: `-${totalQty}`,
             status: "Completed",
             time: formatRelativeTime(soDate),
             timestamp: soDate.getTime()
@@ -746,6 +752,30 @@ export async function createSalesOrder(payload: CreateSalesOrderPayload): Promis
   } catch (err: unknown) {
     const axiosErr = err as { response?: { data?: { message?: string } }; message?: string };
     const msg = axiosErr?.response?.data?.message || axiosErr?.message || "Failed to create sales order";
+    toast.error(msg);
+    return { success: false, message: msg };
+  }
+}
+
+export async function updateSalesOrder(id: number | string, payload: Partial<CreateSalesOrderPayload>): Promise<{ success: boolean; message?: string; data?: SalesOrderItem }> {
+  try {
+    const response = await api.put(`/api/sales-orders/${id}`, payload);
+    return response?.data || { success: true };
+  } catch (err: unknown) {
+    const axiosErr = err as { response?: { data?: { message?: string } }; message?: string };
+    const msg = axiosErr?.response?.data?.message || axiosErr?.message || "Failed to update sales order";
+    toast.error(msg);
+    return { success: false, message: msg };
+  }
+}
+
+export async function deleteSalesOrder(id: number | string): Promise<{ success: boolean; message?: string }> {
+  try {
+    const response = await api.delete(`/api/sales-orders/${id}`);
+    return response?.data || { success: true };
+  } catch (err: unknown) {
+    const axiosErr = err as { response?: { data?: { message?: string } }; message?: string };
+    const msg = axiosErr?.response?.data?.message || axiosErr?.message || "Failed to delete sales order";
     toast.error(msg);
     return { success: false, message: msg };
   }
