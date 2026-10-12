@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { fetchInvoicesList } from "@/lib/dashboardApi";
+import { fetchInvoicesList, InvoiceItem } from "@/lib/dashboardApi";
 
 export default function InvoicesPage() {
-  const [invoices, setInvoices] = useState<Record<string, unknown>[]>([]);
+  const [invoices, setInvoices] = useState<InvoiceItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -50,8 +50,8 @@ export default function InvoicesPage() {
                 {invoices.map((inv) => (
                   <tr key={String(inv.id)} style={{ borderBottom: "1px solid #f1f5f9" }}>
                     <td style={{ padding: "12px", fontWeight: 700, color: "#0f172a" }}>{String(inv.invoiceNumber || `INV-#${inv.id}`)}</td>
-                    <td style={{ padding: "12px", fontWeight: 700, color: "#16a34a" }}>₹ {Number(inv.totalAmount || inv.amount || 0).toLocaleString()}</td>
-                    <td style={{ padding: "12px", color: "#475569" }}>{String(inv.dueDate || "N/A")}</td>
+                    <td style={{ padding: "12px", fontWeight: 700, color: "#16a34a" }}>₹ {Number(inv.totalAmount || 0).toLocaleString()}</td>
+                    <td style={{ padding: "12px", color: "#475569" }}>{inv.createdAt ? new Date(inv.createdAt).toLocaleDateString() : "N/A"}</td>
                     <td style={{ padding: "12px" }}>
                       <span style={{ background: "#dcfce7", color: "#16a34a", padding: "3px 10px", borderRadius: "999px", fontSize: "11px", fontWeight: 700 }}>
                         {String(inv.status || "Paid")}

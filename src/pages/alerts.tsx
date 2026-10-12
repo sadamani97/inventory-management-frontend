@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { fetchAlertsList, fetchAlertSummary } from "@/lib/dashboardApi";
+import { fetchAlertsList, fetchAlertSummary, AlertItem } from "@/lib/dashboardApi";
 
 export default function AlertsPage() {
-  const [alerts, setAlerts] = useState<Record<string, unknown>[]>([]);
+  const [alerts, setAlerts] = useState<AlertItem[]>([]);
   const [summary, setSummary] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -51,17 +51,20 @@ export default function AlertsPage() {
             <p style={{ color: "#64748b" }}>Loading alerts from backend...</p>
           ) : alerts.length > 0 ? (
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-              {alerts.map((a, idx) => (
-                <div key={String(a.id || idx)} style={{
-                  padding: "16px",
-                  borderRadius: "10px",
-                  backgroundColor: a.alertType === "Out of Stock" || a.type === "Critical" ? "#fef2f2" : "#fffbeb",
-                  border: `1px solid ${a.alertType === "Out of Stock" || a.type === "Critical" ? "#fee2e2" : "#fef3c7"}`,
-                  color: a.alertType === "Out of Stock" || a.type === "Critical" ? "#b91c1c" : "#b45309"
-                }}>
-                  <strong>{String(a.alertType || a.title || "Alert")}:</strong> {String(a.message || a.description || `Product ID ${a.productId} alert.`)}
-                </div>
-              ))}
+              {alerts.map((a, idx) => {
+                const isCritical = a.alertType === "Out of Stock" || a.severity === "Critical" || a.severity === "High";
+                return (
+                  <div key={String(a.id || idx)} style={{
+                    padding: "16px",
+                    borderRadius: "10px",
+                    backgroundColor: isCritical ? "#fef2f2" : "#fffbeb",
+                    border: `1px solid ${isCritical ? "#fee2e2" : "#fef3c7"}`,
+                    color: isCritical ? "#b91c1c" : "#b45309"
+                  }}>
+                    <strong>{String(a.alertType || "Alert")}:</strong> {String(a.message || (a.productId ? `Product ID ${a.productId} alert.` : "System alert."))}
+                  </div>
+                );
+              })}
             </div>
           ) : (
             <div style={{ padding: "20px", textAlign: "center", color: "#64748b" }}>
