@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { FiX, FiSearch, FiTrash2, FiFileText, FiCalendar, FiBox, FiCheck, FiMapPin } from "react-icons/fi";
-import { fetchVendorsList, VendorItem, fetchProductsList, ProductItem, createPurchaseOrder } from "@/lib/dashboardApi";
+import { fetchVendorsList, VendorItem, fetchProductsList, ProductItem, createPurchaseOrder, updateProduct } from "@/lib/dashboardApi";
 import CustomSelect from "@/components/ui/CustomSelect";
 import styles from "@/styles/components/createPOModal.module.css";
 import { toast } from "react-toastify";
@@ -135,6 +135,18 @@ export default function CreatePOModal({ isOpen, onClose, onSuccess }: CreatePOMo
 
     const res = await createPurchaseOrder(payload);
     if (res?.success) {
+      // Automatically update the product quantities in the database right after ordering
+      if (status === "Completed" || status === "Delivered" || status === "Received") {
+        for (const item of orderItems) {
+          if (item.id) {
+            await updateProduct(item.id, {
+              ...item,
+              quantity: (Number(item.quantity) || 0) + item.qty
+            });
+          }
+        }
+      }
+
       toast.success("Purchase Order Created Successfully");
       onSuccess?.();
       onClose();

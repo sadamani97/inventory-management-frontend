@@ -10,7 +10,7 @@ interface ExportDialogProps {
   onClose: () => void;
   title: string;
   columns: string[];
-  data: any[][];
+  data: (string | number)[][];
   filename: string;
 }
 
@@ -38,7 +38,7 @@ export default function ExportDialog({
       doc.save(`${filename}.pdf`);
       toast.success("PDF downloaded successfully!");
       onClose();
-    } catch (err) {
+    } catch {
       toast.error("Failed to generate PDF");
     }
   };

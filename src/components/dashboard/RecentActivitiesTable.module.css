@@ -145,7 +145,7 @@
 
 .statusCompleted {
   background-color: var(--success-badge-bg);
-  color: var(--success);
+  color: var(--success-dark);
 }
 
 .statusWarning {
@@ -154,13 +154,13 @@
 }
 
 .statusAdded {
-  background-color: var(--primary-light);
-  color: var(--primary);
+  background-color: var(--primary-subtle);
+  color: var(--primary-dark);
 }
 
 .statusDelivered {
-  background-color: var(--info-light);
-  color: var(--info);
+  background-color: var(--success-light);
+  color: var(--success);
 }
 
 .recentActivitiesTableElement1 {
