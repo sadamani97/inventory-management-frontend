@@ -6,6 +6,7 @@ import CustomSelect, { CustomSelectOption } from "@/components/ui/CustomSelect";
 import Pagination from "@/components/ui/Pagination";
 import CustomDatePicker from "@/components/dashboard/CustomDatePicker";
 import {
+  fetchProductsPaginated,
   fetchProductsList,
   fetchProductStats,
   ProductItem,
@@ -41,6 +42,7 @@ import ExportDialog from "@/components/ui/ExportDialog";
 export default function InventoryPage() {
   const router = useRouter();
   const [products, setProducts] = useState<ProductItem[]>([]);
+  const [totalProductsCount, setTotalProductsCount] = useState<number>(0);
   const [stats, setStats] = useState<ProductStatsResponse>({
     totalProducts: 0,
     addedThisMonth: 0,
@@ -111,22 +113,49 @@ export default function InventoryPage() {
     }
   };
 
+  // Fetch paginated products from backend whenever page, pageSize, search, or categoryFilter changes
   useEffect(() => {
     let isMounted = true;
+    setLoading(true);
 
+    const timer = setTimeout(() => {
+      fetchProductsPaginated({
+        page: currentPage,
+        limit: pageSize,
+        search: search.trim() || undefined,
+        categoryName: categoryFilter !== "All Category" ? categoryFilter : undefined,
+      })
+        .then((res) => {
+          if (!isMounted) return;
+          setProducts(res.data);
+          setTotalProductsCount(res.totalItems);
+          setLoading(false);
+        })
+        .catch((err) => {
+          console.error("Failed to fetch inventory products from backend:", err);
+          if (isMounted) setLoading(false);
+        });
+    }, 200);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
+  }, [currentPage, pageSize, search, categoryFilter]);
+
+  useEffect(() => {
+    let isMounted = true;
     const daysNum = getDaysCount(daysFilter);
 
     Promise.all([
-      fetchProductsList(),
       fetchProductStats(),
       fetchCategories(),
       fetchVendorsList(),
       fetchStockFlowChartData(daysNum),
       fetchPurchaseOrdersList(),
     ]).then(
-      ([prodsData, statsData, catsData, vendorsData, flowData, poData]) => {
+      ([statsData, catsData, vendorsData, flowData, poData]) => {
         if (!isMounted) return;
-        setProducts(prodsData || []);
         setStats(
           statsData || {
             totalProducts: 0,
@@ -141,7 +170,6 @@ export default function InventoryPage() {
         setVendors(vendorsData || []);
         setStockFlowData(flowData || []);
         setPurchaseOrders(poData || []);
-        setLoading(false);
       },
     );
 
@@ -149,6 +177,11 @@ export default function InventoryPage() {
       isMounted = false;
     };
   }, [daysFilter]);
+
+  const handlePageSizeChange = (newSize: number) => {
+    setPageSize(newSize);
+    setCurrentPage(1);
+  };
 
   const handleDaysFilterChange = (val: string) => {
     setDaysFilter(val);
@@ -305,26 +338,9 @@ export default function InventoryPage() {
     return `${dd} - ${mm} - ${yyyy}`;
   };
 
-  // Filter products by Search input & Category dropdown
-  const filteredProducts = products.filter((p: ProductItem) => {
-    const pName = (p.productName || "").toLowerCase();
-    const pSku = (p.sku || "").toLowerCase();
-    const matchesSearch =
-      pName.includes(search.toLowerCase()) ||
-      pSku.includes(search.toLowerCase());
-
-    const catName = p.category?.categoryName || "";
-    const matchesCategory =
-      categoryFilter === "All Category" ||
-      catName.toLowerCase() === categoryFilter.toLowerCase();
-
-    return matchesSearch && matchesCategory;
-  });
-
-  const paginatedProducts = filteredProducts.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+  // Products are paginated and filtered directly by the backend API
+  const paginatedProducts = products;
+  const filteredProducts = products;
 
   // Calculate dynamic Stock Info stats strictly from live Database products
   const activeProductsCount = stats.totalProducts || products.length;
@@ -675,13 +691,23 @@ export default function InventoryPage() {
               </thead>
               <tbody>
                 {loading ? (
-                  <tr>
-                    <td
-                      colSpan={5}
-                     className={styles.inventoryElement12}>
-                      Loading inventory items from backend database...
-                    </td>
-                  </tr>
+                  Array.from({ length: Math.min(pageSize, 6) }).map((_, idx) => (
+                    <tr key={`skeleton-${idx}`} className={styles.skeletonRow}>
+                      <td>
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                          <div className={styles.skeletonBone} style={{ width: 36, height: 36, borderRadius: 8, flexShrink: 0 }} />
+                          <div className={styles.skeletonBone} style={{ width: "60%" }} />
+                        </div>
+                      </td>
+                      <td><div className={styles.skeletonBone} style={{ width: "50%" }} /></td>
+                      <td><div className={styles.skeletonBone} style={{ width: "45%" }} /></td>
+                      <td>
+                        <div className={styles.skeletonBone} style={{ width: "70%", height: 14, marginBottom: 4 }} />
+                        <div className={styles.skeletonBone} style={{ width: "100%", height: 6, borderRadius: 4 }} />
+                      </td>
+                      <td><div className={styles.skeletonBone} style={{ width: "30%" }} /></td>
+                    </tr>
+                  ))
                 ) : paginatedProducts.length > 0 ? (
                   paginatedProducts.map((p: ProductItem, idx: number) => {
                     const name = p.productName || "-";
@@ -830,11 +856,11 @@ export default function InventoryPage() {
 
           <Pagination
             currentPage={currentPage}
-            totalItems={filteredProducts.length}
+            totalItems={totalProductsCount}
             pageSize={pageSize}
             onPageChange={setCurrentPage}
-            onPageSizeChange={setPageSize}
-            pageSizeOptions={[5, 10, 15]}
+            onPageSizeChange={handlePageSizeChange}
+            pageSizeOptions={[5, 10, 15, 20]}
           />
         </div>
       </div>
@@ -1151,7 +1177,7 @@ export default function InventoryPage() {
         onClose={() => setIsExportOpen(false)}
         title="Inventory"
         columns={["Product Name", "SKU", "Category", "Vendor", "Quantity"]}
-        data={filteredProducts.map(p => [
+        data={products.map(p => [
           p.productName || "Unnamed",
           p.sku || "N/A",
           p.category?.categoryName || "Uncategorized",

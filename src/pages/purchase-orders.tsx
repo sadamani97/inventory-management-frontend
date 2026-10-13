@@ -1,7 +1,8 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import {
   fetchPurchaseOrdersList,
+  fetchPurchaseOrdersPaginated,
   PurchaseOrderItem,
   fetchRecentActivities,
   ActivityItem,
@@ -22,10 +23,13 @@ import { APP_IMAGES } from "@/constants/images";
 
 export default function PurchaseOrdersPage() {
   const [orders, setOrders] = useState<PurchaseOrderItem[]>([]);
+  const [totalOrdersCount, setTotalOrdersCount] = useState(0);
+  const [allOrdersForStats, setAllOrdersForStats] = useState<PurchaseOrderItem[]>([]);
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [lowStockProducts, setLowStockProducts] = useState<ProductItem[]>([]);
 
   const [loading, setLoading] = useState(true);
+  const [tableLoading, setTableLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All Status");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -48,32 +52,70 @@ export default function PurchaseOrdersPage() {
     };
   }, [activeActionMenuId]);
 
-  useEffect(() => {
+  const loadInitialData = useCallback(() => {
     Promise.all([
       fetchPurchaseOrdersList(),
       fetchRecentActivities(),
       fetchProductsList(),
     ]).then(([poData, activityData, productsData]) => {
-      setOrders(poData || []);
+      setAllOrdersForStats(poData || []);
       setActivities((activityData || [])?.slice(0, 5));
 
-      const lowStock = (productsData || [])
-        ?.filter(
-          (p) => Number(p?.quantity || 0) <= 70
-        );
+      const lowStock = (productsData || [])?.filter(
+        (p) => Number(p?.quantity || 0) <= 70
+      );
 
       setLowStockProducts(lowStock);
       setLoading(false);
     });
   }, []);
 
+  useEffect(() => {
+    loadInitialData();
+  }, [loadInitialData]);
+
+  const loadPaginatedOrders = useCallback(() => {
+    let isMounted = true;
+    setTableLoading(true);
+
+    fetchPurchaseOrdersPaginated({
+      page: currentPage,
+      limit: pageSize,
+      search: searchQuery.trim() || undefined,
+      status: statusFilter !== "All Status" ? statusFilter : undefined,
+    })
+      .then((res) => {
+        if (!isMounted) return;
+        setOrders(res.data || []);
+        setTotalOrdersCount(res.totalItems || 0);
+      })
+      .catch((err) => {
+        console.error("Failed to load POs:", err);
+        if (isMounted) {
+          setOrders([]);
+          setTotalOrdersCount(0);
+        }
+      })
+      .finally(() => {
+        if (isMounted) setTableLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [currentPage, pageSize, searchQuery, statusFilter]);
+
+  useEffect(() => {
+    return loadPaginatedOrders();
+  }, [loadPaginatedOrders]);
+
   const stats = useMemo(() => {
-    const total = orders?.length || 0;
+    const total = allOrdersForStats?.length || 0;
     const pending =
-      orders?.filter((o) => o?.status?.toLowerCase() === "pending")?.length ||
+      allOrdersForStats?.filter((o) => o?.status?.toLowerCase() === "pending")?.length ||
       0;
     const completed =
-      orders?.filter((o) => {
+      allOrdersForStats?.filter((o) => {
         const s = o?.status?.toLowerCase();
         return (
           s === "completed" ||
@@ -83,44 +125,13 @@ export default function PurchaseOrdersPage() {
         );
       })?.length || 0;
     const canceled =
-      orders?.filter((o) => {
+      allOrdersForStats?.filter((o) => {
         const s = o?.status?.toLowerCase();
         return s === "canceled" || s === "cancelled";
       })?.length || 0;
 
     return { total, pending, completed, canceled };
-  }, [orders]);
-
-  const filteredOrders = useMemo(() => {
-    let filtered = [...(orders || [])];
-
-    if (statusFilter !== "All Status") {
-      filtered = filtered?.filter(
-        (o) =>
-          o?.status?.toLowerCase() === statusFilter?.toLowerCase() ||
-          (statusFilter === "Cancelled" &&
-            (o?.status?.toLowerCase() === "canceled" ||
-              o?.status?.toLowerCase() === "cancelled")),
-      );
-    }
-
-    if (searchQuery) {
-      const q = searchQuery?.toLowerCase();
-      filtered = filtered?.filter(
-        (o) =>
-          o?.poNumber?.toLowerCase()?.includes(q) ||
-          o?.vendorName?.toLowerCase()?.includes(q) ||
-          o?.productName?.toLowerCase()?.includes(q),
-      );
-    }
-
-    return filtered;
-  }, [orders, statusFilter, searchQuery]);
-
-  const paginatedOrders = useMemo(() => {
-    const startIndex = (currentPage - 1) * pageSize;
-    return filteredOrders?.slice(startIndex, startIndex + pageSize) || [];
-  }, [filteredOrders, currentPage, pageSize]);
+  }, [allOrdersForStats]);
 
   const getStatusBadgeClass = (status?: string) => {
     const st = status?.toLowerCase() || "pending";
@@ -346,7 +357,10 @@ export default function PurchaseOrdersPage() {
 
         {/* Purchase Order List */}
         <div className={styles?.listSection}>
-          <h2 className={styles?.cardTitle}>Purchase Order List</h2>
+          <h2 className={styles?.cardTitle}>
+            Purchase Order List
+            {tableLoading && <span className={styles.loadingSpinner} />}
+          </h2>
 
           <div className={styles?.listControls}>
             <div className={styles?.leftControls}>
@@ -356,7 +370,10 @@ export default function PurchaseOrdersPage() {
                   type="text"
                   placeholder="Search by PO ID / Vendor name"
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e?.target?.value)}
+                  onChange={(e) => {
+                    setSearchQuery(e?.target?.value);
+                    setCurrentPage(1);
+                  }}
                 />
               </div>
               <CustomDatePicker variant="blue" icon="chevron" />
@@ -368,7 +385,10 @@ export default function PurchaseOrdersPage() {
               <select
                 className={styles?.dropdownSelect}
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e?.target?.value)}
+                onChange={(e) => {
+                  setStatusFilter(e?.target?.value);
+                  setCurrentPage(1);
+                }}
               >
                 <option>All Status</option>
                 <option>Pending</option>
@@ -397,14 +417,21 @@ export default function PurchaseOrdersPage() {
                 </tr>
               </thead>
               <tbody>
-                {loading ? (
-                  <tr>
-                    <td colSpan={8} className={styles.purchaseOrdersElement8}>
-                      Loading data...
-                    </td>
-                  </tr>
-                ) : paginatedOrders?.length > 0 ? (
-                  paginatedOrders?.map((po, idx) => (
+                {tableLoading ? (
+                  Array.from({ length: pageSize > 10 ? 10 : pageSize }).map((_, idx) => (
+                    <tr key={`po-skel-${idx}`} className={styles.skeletonRow}>
+                      <td><div className={styles.skeletonBone} style={{ width: "90px" }} /></td>
+                      <td><div className={styles.skeletonBone} style={{ width: "130px" }} /></td>
+                      <td><div className={styles.skeletonBone} style={{ width: "40px" }} /></td>
+                      <td><div className={styles.skeletonBone} style={{ width: "80px" }} /></td>
+                      <td><div className={styles.skeletonBadge} /></td>
+                      <td><div className={styles.skeletonBone} style={{ width: "85px" }} /></td>
+                      <td><div className={styles.skeletonBone} style={{ width: "85px" }} /></td>
+                      <td><div className={styles.skeletonBone} style={{ width: "24px" }} /></td>
+                    </tr>
+                  ))
+                ) : orders?.length > 0 ? (
+                  orders.map((po, idx) => (
                     <tr key={String(po?.id)}>
                       <td className={styles.purchaseOrdersElement9}>
                         {String(po?.poNumber || `PO-100${idx + 1}`)}
@@ -506,10 +533,13 @@ export default function PurchaseOrdersPage() {
 
           <Pagination
             currentPage={currentPage}
-            totalItems={filteredOrders?.length || 0}
+            totalItems={totalOrdersCount}
             pageSize={pageSize}
             onPageChange={setCurrentPage}
-            onPageSizeChange={setPageSize}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setCurrentPage(1);
+            }}
             pageSizeOptions={[5, 10, 15, 20]}
           />
         </div>
@@ -518,9 +548,10 @@ export default function PurchaseOrdersPage() {
       <CreatePOModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSuccess={() =>
-          fetchPurchaseOrdersList().then((d) => setOrders(d || []))
-        }
+        onSuccess={() => {
+          loadPaginatedOrders();
+          loadInitialData();
+        }}
       />
       <ViewPOModal
         isOpen={!!viewOrder}
@@ -532,7 +563,7 @@ export default function PurchaseOrdersPage() {
         onClose={() => setIsExportOpen(false)}
         title="Purchase Orders"
         columns={["PO ID", "Vendor", "Items Count", "Total Amount", "Status", "Order Date", "Del Date"]}
-        data={filteredOrders.map((o, idx) => [
+        data={(allOrdersForStats.length > 0 ? allOrdersForStats : orders).map((o, idx) => [
           String(o?.poNumber || `PO-100${idx + 1}`),
           String(o?.vendor?.vendorName || o?.vendor?.companyName || o?.vendorName || o?.productName || "Unknown"),
           String(o?.quantity || o?.items?.reduce((acc: number, item: { quantity?: number }) => acc + (item.quantity || 0), 0) || (idx % 20) + 1),

@@ -115,6 +115,8 @@ interface VendorState {
   // Pagination
   currentPage: number;
   pageSize: number;
+  totalVendorsCount: number;
+  tableLoading: boolean;
 
   // UI
   activeActionMenuId: number | string | null;
@@ -144,6 +146,7 @@ const initialState: VendorState = {
   cities: [],
   categories: [],
   loading: true,
+  tableLoading: true,
   submitting: false,
 
   search: "",
@@ -154,6 +157,7 @@ const initialState: VendorState = {
 
   currentPage: 1,
   pageSize: 10,
+  totalVendorsCount: 0,
 
   activeActionMenuId: null,
   showVendorModal: false,
@@ -224,6 +228,12 @@ const vendorSlice = createSlice({
     setPageSize(state, action: PayloadAction<number>) {
       state.pageSize = action.payload;
     },
+    setTotalVendorsCount(state, action: PayloadAction<number>) {
+      state.totalVendorsCount = action.payload;
+    },
+    setTableLoading(state, action: PayloadAction<boolean>) {
+      state.tableLoading = action.payload;
+    },
 
     // UI Actions
     setActiveActionMenuId(state, action: PayloadAction<number | string | null>) {
@@ -276,6 +286,7 @@ export const {
   setCities,
   setCategories,
   setLoading,
+  setTableLoading,
   setSubmitting,
   setSearch,
   setStatusFilter,
@@ -284,6 +295,7 @@ export const {
   setStarredOnly,
   setCurrentPage,
   setPageSize,
+  setTotalVendorsCount,
   setActiveActionMenuId,
   setShowVendorModal,
   setEditingVendorId,

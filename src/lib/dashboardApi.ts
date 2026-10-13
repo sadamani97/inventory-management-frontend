@@ -313,128 +313,44 @@ export function formatRelativeTime(dateStr?: string | Date): string {
   return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-export async function fetchRecentActivities(): Promise<ActivityItem[]> {
+export interface PaginatedResult<T> {
+  data: T[];
+  totalItems: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export async function fetchRecentActivitiesPaginated(params: {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: string;
+}): Promise<PaginatedResult<ActivityItem>> {
   try {
-    const [products, pos, sos] = await Promise.all([
-      fetchProductsList().catch(() => []),
-      fetchPurchaseOrdersList().catch(() => []),
-      fetchSalesOrdersList().catch(() => []),
-    ]);
-
-    const items: (ActivityItem & { timestamp: number })[] = [];
-
-    if (pos && pos.length > 0) {
-      pos.forEach((po: PurchaseOrderItem, idx: number) => {
-        const isDelivered = po.status?.toLowerCase() === "completed" || po.status?.toLowerCase() === "delivered";
-        const poDate = new Date(po.createdAt || po.orderDate || new Date());
-        
-        let totalQty = 0;
-        if (po.items && Array.isArray(po.items)) {
-          totalQty = po.items.reduce((acc: number, it: { quantity?: number }) => acc + (Number(it.quantity) || 0), 0);
-        } else if (po.quantity) {
-          totalQty = Number(po.quantity);
-        }
-        
-        items.push({
-          id: `po-${po.id ?? idx}`,
-          activity: "Vendor Delivery",
-          product: po.vendorName ?? po.vendor?.vendorName ?? "Vendor Order",
-          sku: po.poNumber ?? `PO-${idx}`,
-          qty: `+${totalQty}`,
-          status: isDelivered ? "Delivered" : "Added",
-          time: formatRelativeTime(poDate),
-          timestamp: poDate.getTime()
-        });
-      });
+    const response = await api.get("/api/reports/recent-activities", { params });
+    if (response?.data?.success) {
+      const rows = Array.isArray(response.data.data) ? response.data.data : [];
+      return {
+        data: rows.map((it: any) => ({
+          ...it,
+          time: formatRelativeTime(it.time || it.createdAt),
+        })),
+        totalItems: response.data.totalItems ?? rows.length,
+        page: response.data.page ?? (params.page || 1),
+        limit: response.data.limit ?? (params.limit || 10),
+        totalPages: response.data.totalPages ?? 1,
+      };
     }
-
-    if (sos && sos.length > 0) {
-      sos.forEach((so: SalesOrderItem, idx: number) => {
-        const isDraft = so.status?.toLowerCase() === "draft";
-        if (!isDraft) {
-          const soDate = new Date(so.createdAt || so.orderDate || new Date());
-          
-          let totalQty = 0;
-          if (so.items && Array.isArray(so.items)) {
-            totalQty = so.items.reduce((acc: number, it: { quantity?: number }) => acc + (Number(it.quantity) || 0), 0);
-          } else if (so.quantity) {
-            totalQty = Number(so.quantity);
-          }
-
-          items.push({
-            id: `so-${so.id ?? idx}`,
-            activity: "Stock Out",
-            product: so.customerName ?? so.customerType ?? "Customer Order",
-            sku: so.soNumber ?? so.orderNumber ?? `SO-${idx}`,
-            qty: `-${totalQty}`,
-            status: "Completed",
-            time: formatRelativeTime(soDate),
-            timestamp: soDate.getTime()
-          });
-        }
-      });
-    }
-
-    if (products && products.length > 0) {
-      products.forEach((prod: ProductItem, idx: number) => {
-        const qty = Number(prod.quantity || 0);
-        const limit = Number(prod.lowStockLimit || 10);
-        
-        const prodDate = new Date(prod.updatedAt || prod.createdAt || new Date());
-        
-        if (qty <= 0) {
-          items.push({
-            id: `prod-out-${prod.id || idx}`,
-            activity: "Low Stock Alert",
-            product: prod.productName || "Product",
-            sku: prod.sku || `SKU-${idx}`,
-            qty: `0 Left`,
-            status: "Warning",
-            time: formatRelativeTime(prodDate),
-            timestamp: prodDate.getTime()
-          });
-        } else if (qty <= limit) {
-          items.push({
-            id: `prod-warn-${prod.id || idx}`,
-            activity: "Low Stock Alert",
-            product: prod.productName || "Product",
-            sku: prod.sku || `SKU-${idx}`,
-            qty: `${qty} Left`,
-            status: "Warning",
-            time: formatRelativeTime(prodDate),
-            timestamp: prodDate.getTime()
-          });
-        }
-        
-        const prodAddDate = new Date(prod.createdAt || new Date());
-        items.push({
-          id: `prod-add-${prod.id || idx}`,
-          activity: "New Product Added",
-          product: prod.productName || "Product",
-          sku: prod.sku || `SKU-${idx}`,
-          qty: `+${qty}`,
-          status: "Added",
-          time: formatRelativeTime(prodAddDate),
-          timestamp: prodAddDate.getTime()
-        });
-      });
-    }
-
-    items.sort((a, b) => b.timestamp - a.timestamp);
-    
-    return items.map(it => ({
-      id: it.id,
-      activity: it.activity,
-      product: it.product,
-      sku: it.sku,
-      qty: it.qty,
-      status: it.status,
-      time: it.time
-    })).slice(0, 50);
-  } catch {
-    toast.error("Failed to load recent activity data.");
+  } catch (err) {
+    console.error("Failed to load recent activity data from backend:", err);
   }
-  return [];
+  return { data: [], totalItems: 0, page: params.page || 1, limit: params.limit || 10, totalPages: 1 };
+}
+
+export async function fetchRecentActivities(): Promise<ActivityItem[]> {
+  const res = await fetchRecentActivitiesPaginated({ page: 1, limit: 10 });
+  return res.data;
 }
 
 export interface StockFlowItem {
@@ -525,6 +441,30 @@ export async function fetchStockFlowChartData(daysCount: number = 10): Promise<S
     toast.error("Failed to load stock flow chart data.");
   }
   return [];
+}
+
+export async function fetchProductsPaginated(params: {
+  page?: number;
+  limit?: number;
+  search?: string;
+  categoryName?: string;
+}): Promise<PaginatedResult<ProductItem>> {
+  try {
+    const response = await api.get("/api/products", { params });
+    if (response?.data?.success) {
+      const rows = Array.isArray(response.data.data) ? response.data.data : [];
+      return {
+        data: rows,
+        totalItems: response.data.totalItems ?? rows.length,
+        page: response.data.page ?? (params.page || 1),
+        limit: response.data.limit ?? (params.limit || 10),
+        totalPages: response.data.totalPages ?? 1,
+      };
+    }
+  } catch (err) {
+    console.error("Failed to fetch paginated products:", err);
+  }
+  return { data: [], totalItems: 0, page: params.page || 1, limit: params.limit || 10, totalPages: 1 };
 }
 
 export async function fetchProductsList(): Promise<ProductItem[]> {
@@ -636,6 +576,31 @@ export async function fetchUnits(): Promise<UnitItem[]> {
   return [];
 }
 
+export async function fetchAlertsPaginated(params: {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: string;
+  severity?: string;
+}): Promise<PaginatedResult<AlertItem>> {
+  try {
+    const response = await api.get("/api/alerts", { params });
+    if (response?.data?.success) {
+      const rows = Array.isArray(response.data.data) ? response.data.data : [];
+      return {
+        data: rows,
+        totalItems: response.data.totalItems ?? rows.length,
+        page: response.data.page ?? (params.page || 1),
+        limit: response.data.limit ?? (params.limit || 10),
+        totalPages: response.data.totalPages ?? 1,
+      };
+    }
+  } catch (err) {
+    console.error("Failed to fetch paginated alerts:", err);
+  }
+  return { data: [], totalItems: 0, page: params.page || 1, limit: params.limit || 10, totalPages: 1 };
+}
+
 export async function fetchAlertsList(): Promise<AlertItem[]> {
   try {
     const response = await api.get("/api/alerts");
@@ -663,6 +628,32 @@ export async function fetchAlertSummary(): Promise<Record<string, unknown> | nul
   return null;
 }
 
+export async function fetchVendorsPaginated(params: {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: string;
+  category?: string;
+  starredOnly?: boolean;
+}): Promise<PaginatedResult<VendorItem>> {
+  try {
+    const response = await api.get("/api/vendors", { params });
+    if (response?.data?.success) {
+      const rows = Array.isArray(response.data.data) ? response.data.data : [];
+      return {
+        data: rows,
+        totalItems: response.data.totalItems ?? rows.length,
+        page: response.data.page ?? (params.page || 1),
+        limit: response.data.limit ?? (params.limit || 10),
+        totalPages: response.data.totalPages ?? 1,
+      };
+    }
+  } catch (err) {
+    console.error("Failed to fetch paginated vendors:", err);
+  }
+  return { data: [], totalItems: 0, page: params.page || 1, limit: params.limit || 10, totalPages: 1 };
+}
+
 export async function fetchVendorsList(): Promise<VendorItem[]> {
   try {
     const response = await api.get("/api/vendors");
@@ -676,6 +667,30 @@ export async function fetchVendorsList(): Promise<VendorItem[]> {
     toast.error("Failed to fetch vendors list.");
   }
   return [];
+}
+
+export async function fetchPurchaseOrdersPaginated(params: {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: string;
+}): Promise<PaginatedResult<PurchaseOrderItem>> {
+  try {
+    const response = await api.get("/api/purchase-orders", { params });
+    if (response?.data?.success) {
+      const rows = Array.isArray(response.data.data) ? response.data.data : [];
+      return {
+        data: rows,
+        totalItems: response.data.totalItems ?? rows.length,
+        page: response.data.page ?? (params.page || 1),
+        limit: response.data.limit ?? (params.limit || 10),
+        totalPages: response.data.totalPages ?? 1,
+      };
+    }
+  } catch (err) {
+    console.error("Failed to fetch paginated purchase orders:", err);
+  }
+  return { data: [], totalItems: 0, page: params.page || 1, limit: params.limit || 10, totalPages: 1 };
 }
 
 export async function fetchPurchaseOrdersList(): Promise<PurchaseOrderItem[]> {
@@ -781,6 +796,30 @@ export async function deleteSalesOrder(id: number | string): Promise<{ success: 
   }
 }
 
+export async function fetchSalesOrdersPaginated(params: {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: string;
+}): Promise<PaginatedResult<SalesOrderItem>> {
+  try {
+    const response = await api.get("/api/sales-orders", { params });
+    if (response?.data?.success) {
+      const rows = Array.isArray(response.data.data) ? response.data.data : [];
+      return {
+        data: rows,
+        totalItems: response.data.totalItems ?? rows.length,
+        page: response.data.page ?? (params.page || 1),
+        limit: response.data.limit ?? (params.limit || 10),
+        totalPages: response.data.totalPages ?? 1,
+      };
+    }
+  } catch (err) {
+    console.error("Failed to fetch paginated sales orders:", err);
+  }
+  return { data: [], totalItems: 0, page: params.page || 1, limit: params.limit || 10, totalPages: 1 };
+}
+
 export async function fetchSalesOrdersList(): Promise<SalesOrderItem[]> {
   try {
     const response = await api.get("/api/sales-orders");
@@ -806,6 +845,30 @@ export async function fetchSalesOrderStats(): Promise<SalesOrderStatsResponse | 
     toast.error("Failed to fetch sales order stats.");
   }
   return null;
+}
+
+export async function fetchInvoicesPaginated(params: {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: string;
+}): Promise<PaginatedResult<InvoiceItem>> {
+  try {
+    const response = await api.get("/api/invoices", { params });
+    if (response?.data?.success) {
+      const rows = Array.isArray(response.data.data) ? response.data.data : [];
+      return {
+        data: rows,
+        totalItems: response.data.totalItems ?? rows.length,
+        page: response.data.page ?? (params.page || 1),
+        limit: response.data.limit ?? (params.limit || 10),
+        totalPages: response.data.totalPages ?? 1,
+      };
+    }
+  } catch (err) {
+    console.error("Failed to fetch paginated invoices:", err);
+  }
+  return { data: [], totalItems: 0, page: params.page || 1, limit: params.limit || 10, totalPages: 1 };
 }
 
 export async function fetchInvoicesList(): Promise<InvoiceItem[]> {
