@@ -50,12 +50,24 @@ export default function AddProductPage() {
   const [categories, setCategories] = useState<CategoryItem[]>([]);
   const [vendors, setVendors] = useState<VendorItem[]>([]);
   const [brands, setBrands] = useState<BrandItem[]>([]);
+  const [loadedBrandId, setLoadedBrandId] = useState<string>("");
   // setUnits is intentionally removed to avoid unused vars, but we keep the fetch pattern if needed
 
   // UI Feedback State
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
+
+  const getVendorLabel = (vendor?: Partial<VendorItem>) => {
+    if (!vendor) return "Vendor";
+    return String(vendor.vendorName || vendor.companyName || vendor.name || "Vendor");
+  };
+
+  const selectedVendorLabel = vendorId
+    ? vendors.find((v) => String(v.vendorId || v.id) === String(vendorId))
+      ? getVendorLabel(vendors.find((v) => String(v.vendorId || v.id) === String(vendorId)))
+      : `Vendor #${vendorId}`
+    : "Select Vendor";
 
   // Fetch dropdown data on mount
   useEffect(() => {
@@ -90,8 +102,20 @@ export default function AddProductPage() {
       if (prod.categoryId) setCategoryId(String(prod.categoryId));
       const foundVendorId = prod.vendorId || prod.vendor?.vendorId || prod.vendor?.id;
       if (foundVendorId) setVendorId(String(foundVendorId));
-      if (prod.brand?.brandName) setBrandName(prod.brand.brandName);
-      else if (prod.brandId) setBrandName(String(prod.brandId));
+      const backendBrandName =
+        (prod as any)?.brandName ||
+        prod.brand?.brandName ||
+        prod.brand?.name ||
+        (prod as any)?.brand_name ||
+        "";
+
+      if (backendBrandName) {
+        setBrandName(String(backendBrandName));
+      } else if (prod.brandId) {
+        setLoadedBrandId(String(prod.brandId));
+        const matchedBrand = brands.find((b) => String(b.brandId || b.id) === String(prod.brandId));
+        setBrandName(matchedBrand ? (matchedBrand.brandName || matchedBrand.name || "") : "");
+      }
       if (prod.unitId) setUnitId(String(prod.unitId));
       if (prod.quantity !== undefined) setQuantity(String(prod.quantity));
       if (prod.purchaseRate !== undefined) setPurchaseRate(String(prod.purchaseRate));
@@ -105,7 +129,16 @@ export default function AddProductPage() {
     return () => {
       isMounted = false;
     };
-  }, [router.isReady, editId]);
+  }, [router.isReady, editId, brands]);
+
+  useEffect(() => {
+    if (!loadedBrandId || !brands.length || brandName) return;
+
+    const matchedBrand = brands.find((b) => String(b.brandId || b.id) === String(loadedBrandId));
+    if (matchedBrand) {
+      setBrandName(matchedBrand.brandName || matchedBrand.name || "");
+    }
+  }, [loadedBrandId, brands, brandName]);
 
   // Handler for adding a new category from the dropdown
   const handleAddNewCategory = async (newCatName: string): Promise<string | void> => {
@@ -272,16 +305,21 @@ export default function AddProductPage() {
 
                 <div className={styles.fieldGroup}>
                   <label className={styles.label}>
-                    Vendor <span className={styles.required}>*</span>
+                    Vendor Name <span className={styles.required}>*</span>
                   </label>
                   <CustomSelect
-                    options={vendors.map((v) => ({
-                      label: String(v.vendorName || v.name || "Vendor"),
-                      value: String(v.vendorId || v.id || ""),
-                    }))}
+                    options={[
+                      ...vendors.map((v) => ({
+                        label: getVendorLabel(v),
+                        value: String(v.vendorId || v.id || ""),
+                      })),
+                      ...(vendorId && !vendors.some((v) => String(v.vendorId || v.id) === String(vendorId))
+                        ? [{ label: selectedVendorLabel, value: String(vendorId) }]
+                        : []),
+                    ]}
                     value={vendorId}
                     onChange={setVendorId}
-                    placeholder="Select Vendor"
+                    placeholder="Select Vendor Name"
                     width="100%"
                     height="42px"
                   />
@@ -309,20 +347,20 @@ export default function AddProductPage() {
 
                 <div className={styles.fieldGroup}>
                   <label className={styles.label}>
-                    Brand <span className={styles.required}>*</span>
+                    Brand Name <span className={styles.required}>*</span>
                   </label>
                   <input
                     type="text"
                     list="brandOptions"
                     value={brandName}
                     onChange={(e) => setBrandName(e.target.value)}
-                    placeholder="Enter or select brand"
+                    placeholder="Enter brand name"
                     required
                     className={styles.inputControl}
                   />
                   <datalist id="brandOptions">
                     {brands.map((b, idx) => (
-                      <option key={b.brandId || b.id || idx} value={b.brandName || b.name} />
+                      <option key={b.brandId || b.id || idx} value={b.brandName || b.name || ""} />
                     ))}
                   </datalist>
                 </div>
