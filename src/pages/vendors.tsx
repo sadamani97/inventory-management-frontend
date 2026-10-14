@@ -399,14 +399,17 @@ export default function VendorsPage() {
         const foundState = states.find(s => s.stateName.toLowerCase() === stateName.trim().toLowerCase());
         const foundCity = cities.find(ct => ct.cityName.toLowerCase() === cityName.trim().toLowerCase());
 
-        const addressPayload = {
-          addressLine: addressLine.trim(),
-          countryId: foundCountry ? (foundCountry.countryId || foundCountry.id || 1) : 1,
-          stateId: foundState ? (foundState.stateId || foundState.id || 1) : 1,
-          cityId: foundCity ? (foundCity.cityId || foundCity.id || 1) : 1,
+        const addressPayload: any = {
+          addressLine: addressLine.trim() || "Headquarters",
+          countryName: countryName.trim(),
+          stateName: stateName.trim(),
+          cityName: cityName.trim(),
           pincode: pincode.trim() || "000000",
           vendorId: vId,
         };
+        if (foundCountry) addressPayload.countryId = foundCountry.countryId || foundCountry.id;
+        if (foundState) addressPayload.stateId = foundState.stateId || foundState.id;
+        if (foundCity) addressPayload.cityId = foundCity.cityId || foundCity.id;
         if (addressId) {
           await updateAddress(addressId, addressPayload);
         } else {

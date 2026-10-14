@@ -37,7 +37,11 @@ export default function LoginPage() {
   const onSubmit = async (values: LoginForm) => {
     setStatusMessage(null);
     try {
-      const response = await api.post("/login", values);
+      const payload = {
+        email: values.email.trim().toLowerCase(),
+        password: values.password,
+      };
+      const response = await api.post("/login", payload);
       const result = response?.data;
       if (result?.success) {
         const tokenStr = result?.token || "authenticated_user_token";
