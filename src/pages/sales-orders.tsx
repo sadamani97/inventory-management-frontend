@@ -1,6 +1,13 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { fetchSalesOrdersList, fetchSalesOrderStats, SalesOrderItem, SalesOrderStatsResponse, deleteSalesOrder } from "@/lib/dashboardApi";
+import {
+  fetchSalesOrdersList,
+  fetchSalesOrdersPaginated,
+  fetchSalesOrderStats,
+  SalesOrderItem,
+  SalesOrderStatsResponse,
+  deleteSalesOrder,
+} from "@/lib/dashboardApi";
 import styles from "@/styles/pages/salesOrders.module.css";
 import { FiDownload, FiPlus, FiSearch, FiEye, FiEdit2, FiShoppingCart, FiDollarSign, FiUsers, FiFileText, FiTrash2 } from "react-icons/fi";
 import Pagination from "@/components/ui/Pagination";
@@ -10,8 +17,11 @@ import { toast } from "react-toastify";
 
 export default function SalesOrdersPage() {
   const [orders, setOrders] = useState<SalesOrderItem[]>([]);
+  const [totalOrdersCount, setTotalOrdersCount] = useState(0);
+  const [allOrdersForExport, setAllOrdersForExport] = useState<SalesOrderItem[]>([]);
   const [stats, setStats] = useState<SalesOrderStatsResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [tableLoading, setTableLoading] = useState(true);
   
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All Status");
@@ -23,57 +33,65 @@ export default function SalesOrdersPage() {
   const [modalMode, setModalMode] = useState<SalesOrderMode>("create");
   const [selectedOrder, setSelectedOrder] = useState<SalesOrderItem | null>(null);
 
+  const loadStats = useCallback(() => {
+    fetchSalesOrderStats().then((statsData) => {
+      setStats(statsData);
+      setLoading(false);
+    });
+    fetchSalesOrdersList().then((allData) => {
+      setAllOrdersForExport(allData || []);
+    });
+  }, []);
+
+  useEffect(() => {
+    loadStats();
+  }, [loadStats]);
+
+  const loadPaginatedOrders = useCallback(() => {
+    let isMounted = true;
+    setTableLoading(true);
+
+    fetchSalesOrdersPaginated({
+      page: currentPage,
+      limit: pageSize,
+      search: searchQuery.trim() || undefined,
+      status: statusFilter !== "All Status" ? statusFilter : undefined,
+    })
+      .then((res) => {
+        if (!isMounted) return;
+        setOrders(res.data || []);
+        setTotalOrdersCount(res.totalItems || 0);
+      })
+      .catch((err) => {
+        console.error("Failed to load sales orders:", err);
+        if (isMounted) {
+          setOrders([]);
+          setTotalOrdersCount(0);
+        }
+      })
+      .finally(() => {
+        if (isMounted) setTableLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [currentPage, pageSize, searchQuery, statusFilter]);
+
+  useEffect(() => {
+    return loadPaginatedOrders();
+  }, [loadPaginatedOrders]);
+
   const handleDeleteDraft = async (id: number | string) => {
     if (window.confirm("Are you sure you want to delete this draft?")) {
       const res = await deleteSalesOrder(id);
       if (res?.success) {
         toast.success("Draft deleted successfully");
-        loadData();
+        loadPaginatedOrders();
+        loadStats();
       }
     }
   };
-
-  const loadData = () => {
-    Promise.all([
-      fetchSalesOrdersList(),
-      fetchSalesOrderStats()
-    ]).then(([ordersData, statsData]) => {
-      setOrders(ordersData || []);
-      setStats(statsData);
-      setLoading(false);
-    });
-  };
-
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const filteredOrders = useMemo(() => {
-    let filtered = [...(orders || [])];
-
-    if (statusFilter !== "All Status") {
-      filtered = filtered?.filter(
-        (o) => o?.status?.toLowerCase() === statusFilter?.toLowerCase()
-      );
-    }
-
-    if (searchQuery) {
-      const q = searchQuery?.toLowerCase();
-      filtered = filtered?.filter(
-        (o) =>
-          o?.soNumber?.toLowerCase()?.includes(q) ||
-          o?.orderNumber?.toLowerCase()?.includes(q) ||
-          o?.customerName?.toLowerCase()?.includes(q)
-      );
-    }
-
-    return filtered;
-  }, [orders, statusFilter, searchQuery]);
-
-  const paginatedOrders = useMemo(() => {
-    const startIndex = (currentPage - 1) * pageSize;
-    return filteredOrders?.slice(startIndex, startIndex + pageSize) || [];
-  }, [filteredOrders, currentPage, pageSize]);
 
   const getStatusBadgeClass = (status?: string) => {
     const st = status?.toLowerCase() || "draft";
@@ -178,7 +196,10 @@ export default function SalesOrdersPage() {
         {/* Orders List */}
         <div className={styles?.listSection}>
           <div className={styles?.pageHeader} style={{ marginBottom: "16px" }}>
-            <h2 className={styles?.cardTitle}>Orders List</h2>
+            <h2 className={styles?.cardTitle}>
+              Orders List
+              {tableLoading && <span className={styles.loadingSpinner} />}
+            </h2>
             <button className={styles?.btnExport} onClick={() => setIsExportOpen(true)}>
               <FiDownload /> Export
             </button>
@@ -192,7 +213,10 @@ export default function SalesOrdersPage() {
                   type="text"
                   placeholder="Search by Orders ID/Customer..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e?.target?.value)}
+                  onChange={(e) => {
+                    setSearchQuery(e?.target?.value);
+                    setCurrentPage(1);
+                  }}
                 />
               </div>
             </div>
@@ -200,7 +224,10 @@ export default function SalesOrdersPage() {
               <select
                 className={styles?.btnExport}
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e?.target?.value)}
+                onChange={(e) => {
+                  setStatusFilter(e?.target?.value);
+                  setCurrentPage(1);
+                }}
                 style={{ padding: "8px 12px", border: "1px solid var(--border)", borderRadius: "8px", outline: "none", backgroundColor: "var(--surface)" }}
               >
                 <option value="All Status">Status: All</option>
@@ -210,7 +237,6 @@ export default function SalesOrdersPage() {
                 <option value="Completed">Completed</option>
                 <option value="Cancelled">Cancelled</option>
               </select>
-              <button className={styles?.btnExport}>See all</button>
             </div>
           </div>
 
@@ -228,14 +254,20 @@ export default function SalesOrdersPage() {
                 </tr>
               </thead>
               <tbody>
-                {loading ? (
-                  <tr>
-                    <td colSpan={7} className={styles?.loadingState}>
-                      Loading sales orders...
-                    </td>
-                  </tr>
-                ) : paginatedOrders?.length > 0 ? (
-                  paginatedOrders?.map((so, idx) => {
+                {tableLoading ? (
+                  Array.from({ length: pageSize > 10 ? 10 : pageSize }).map((_, idx) => (
+                    <tr key={`so-skel-${idx}`} className={styles.skeletonRow}>
+                      <td><div className={styles.skeletonBone} style={{ width: "90px" }} /></td>
+                      <td><div className={styles.skeletonBone} style={{ width: "130px" }} /></td>
+                      <td><div className={styles.skeletonBone} style={{ width: "60px" }} /></td>
+                      <td><div className={styles.skeletonBone} style={{ width: "80px" }} /></td>
+                      <td><div className={styles.skeletonBone} style={{ width: "70px" }} /></td>
+                      <td><div className={styles.skeletonBadge} /></td>
+                      <td><div className={styles.skeletonBone} style={{ width: "60px" }} /></td>
+                    </tr>
+                  ))
+                ) : orders?.length > 0 ? (
+                  orders.map((so, idx) => {
                     const itemsCount = so?.items?.reduce((acc, item) => acc + (item?.quantity || 0), 0) || so?.quantity || 1;
                     return (
                       <tr key={String(so?.id || idx)}>
@@ -306,11 +338,14 @@ export default function SalesOrdersPage() {
 
           <Pagination
             currentPage={currentPage}
-            totalItems={filteredOrders?.length || 0}
+            totalItems={totalOrdersCount}
             pageSize={pageSize}
             onPageChange={setCurrentPage}
-            onPageSizeChange={setPageSize}
-            pageSizeOptions={[10, 20, 50]}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setCurrentPage(1);
+            }}
+            pageSizeOptions={[5, 10, 20, 50]}
           />
         </div>
       </div>
@@ -320,7 +355,7 @@ export default function SalesOrdersPage() {
         onClose={() => setIsExportOpen(false)}
         title="Sales Orders"
         columns={["SO-ID", "Customer", "Items", "Total Amount", "Time", "Status"]}
-        data={filteredOrders.map((o, idx) => [
+        data={(allOrdersForExport.length > 0 ? allOrdersForExport : orders).map((o, idx) => [
           String(o?.orderNumber || o?.soNumber || `SO-100${idx + 1}`),
           String(o?.customerType || o?.customerName || "Walk In Customer"),
           String(o?.items?.reduce((acc, item) => acc + (item?.quantity || 0), 0) || o?.quantity || 1),
@@ -334,7 +369,10 @@ export default function SalesOrdersPage() {
       <SalesOrderModal 
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSuccess={loadData}
+        onSuccess={() => {
+          loadPaginatedOrders();
+          loadStats();
+        }}
         mode={modalMode}
         order={selectedOrder}
       />

@@ -36,55 +36,75 @@ export default function StatCards() {
   const cards = [
     {
       title: "Total Products",
-      value: loading ? "..." : `${totalProd}`,
+      value: loading ? <span className={styles.skeletonValue} /> : `${totalProd}`,
       icon: "/Frontend/Dashboard_product.png",
       fallbackIcon: FiBox,
       iconClass: styles.iconBlue,
       footer: (
         <div className={styles.cardFooter}>
-          <span className={styles.subtextGreen}>Added this month</span>
-          <span className={styles.badgeGreen}>+{addedMonth}</span>
+          {loading ? (
+            <span className={styles.skeletonSubtext} />
+          ) : (
+            <>
+              <span className={styles.subtextGreen}>Added this month</span>
+              <span className={styles.badgeGreen}>+{addedMonth}</span>
+            </>
+          )}
         </div>
       ),
     },
     {
       title: "Active Stock",
-      value: loading ? "..." : `${activeStk}`,
+      value: loading ? <span className={styles.skeletonValue} /> : `${activeStk}`,
       icon: "/Frontend/Active Stock logo.png",
       fallbackIcon: FiCheckCircle,
       iconClass: styles.iconGreen,
       footer: (
         <div className={styles.cardFooter}>
-          <span className={styles.subtextGreen}>Units Restocked</span>
-          <span className={styles.badgeGreen}>+{restocked.toLocaleString()}</span>
+          {loading ? (
+            <span className={styles.skeletonSubtext} />
+          ) : (
+            <>
+              <span className={styles.subtextGreen}>Units Restocked</span>
+              <span className={styles.badgeGreen}>+{restocked.toLocaleString()}</span>
+            </>
+          )}
         </div>
       ),
     },
     {
       title: "Low Stock",
-      value: loading ? "..." : `${lowStk}`,
+      value: loading ? <span className={styles.skeletonValue} /> : `${lowStk}`,
       icon: "/Frontend/Low Stock.png",
       fallbackIcon: FiAlertCircle,
       iconClass: styles.iconAmber,
       footer: (
         <div className={styles.cardFooter}>
-          <span className={styles.subtextAmber}>
-            {lowStk > 0 ? `${lowStk} Need Restocking soon` : "Stock levels optimal"}
-          </span>
+          {loading ? (
+            <span className={styles.skeletonSubtext} />
+          ) : (
+            <span className={styles.subtextAmber}>
+              {lowStk > 0 ? `${lowStk} Need Restocking soon` : "Stock levels optimal"}
+            </span>
+          )}
         </div>
       ),
     },
     {
       title: "Out of stock",
-      value: loading ? "..." : `${outStk}`,
+      value: loading ? <span className={styles.skeletonValue} /> : `${outStk}`,
       icon: "/Frontend/lowStock.png",
       fallbackIcon: FiXCircle,
       iconClass: styles.iconRed,
       footer: (
         <div className={styles.cardFooter}>
-          <span className={styles.subtextMuted}>
-            {outStk > 0 ? `${outStk} Currently unavailable` : "No items out of stock"}
-          </span>
+          {loading ? (
+            <span className={styles.skeletonSubtext} />
+          ) : (
+            <span className={styles.subtextMuted}>
+              {outStk > 0 ? `${outStk} Currently unavailable` : "No items out of stock"}
+            </span>
+          )}
         </div>
       ),
     },

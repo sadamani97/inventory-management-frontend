@@ -1,12 +1,12 @@
-import React, { useEffect, useCallback } from "react";
+import React, { useEffect, useCallback, useState } from "react";
 import { useRouter } from "next/router";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "@/store";
 import {
   setVendors, setStats, setVendorTypes, setCountries, setStates, setCities, setCategories,
-  setLoading, setSubmitting, setSearch, setStatusFilter, setCategoryFilter, setLastDeliveryFilter,
+  setLoading, setTableLoading, setSubmitting, setSearch, setStatusFilter, setCategoryFilter, setLastDeliveryFilter,
   setStarredOnly, setActiveActionMenuId, setShowVendorModal, setEditingVendorId,
-  setCurrentPage, setPageSize,
+  setCurrentPage, setPageSize, setTotalVendorsCount,
   openDeleteDialog, closeDeleteDialog,
   addStarLoadingId, removeStarLoadingId, updateFormField, resetForm, setForm
 } from "@/store/vendorSlice";
@@ -16,9 +16,9 @@ import CustomSelect from "@/components/ui/CustomSelect";
 import Pagination from "@/components/ui/Pagination";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import ExportDialog from "@/components/ui/ExportDialog";
-import { useState } from "react";
 import {
   fetchVendorsList,
+  fetchVendorsPaginated,
   fetchVendorStats,
   createVendor,
   updateVendor,
@@ -75,9 +75,9 @@ export default function VendorsPage() {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const {
-    vendors, stats, vendorTypes, countries, states, cities, categories, loading, submitting,
+    vendors, stats, vendorTypes, countries, states, cities, categories, loading, tableLoading, submitting,
     search, statusFilter, categoryFilter, lastDeliveryFilter, starredOnly,
-    currentPage, pageSize,
+    currentPage, pageSize, totalVendorsCount,
     activeActionMenuId, showVendorModal, editingVendorId, starLoadingIds: starLoadingIdsArr,
     deleteDialog,
     form
@@ -94,6 +94,7 @@ export default function VendorsPage() {
   } = form;
 
   const [isExportOpen, setIsExportOpen] = useState(false);
+  const [allVendorsForExport, setAllVendorsForExport] = useState<VendorItem[]>([]);
 
   // Initial Load Data function
   const loadPageData = useCallback(async () => {
@@ -106,7 +107,7 @@ export default function VendorsPage() {
       fetchCategories(),
     ]);
 
-    dispatch(setVendors(vList || []));
+    setAllVendorsForExport(vList || []);
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     const calculatedNewVendors = (vList || []).filter((v) => {
@@ -134,6 +135,44 @@ export default function VendorsPage() {
     }, 0);
     return () => clearTimeout(timer);
   }, [loadPageData]);
+
+  // Paginated load effect
+  const loadPaginatedVendors = useCallback(() => {
+    let isMounted = true;
+    dispatch(setTableLoading(true));
+
+    fetchVendorsPaginated({
+      page: currentPage,
+      limit: pageSize,
+      search: search.trim() || undefined,
+      status: statusFilter !== "All" ? statusFilter : undefined,
+      category: categoryFilter !== "All" ? categoryFilter : undefined,
+      starredOnly: starredOnly ? true : undefined,
+    })
+      .then((res) => {
+        if (!isMounted) return;
+        dispatch(setVendors(res.data || []));
+        dispatch(setTotalVendorsCount(res.totalItems || 0));
+      })
+      .catch((err) => {
+        console.error("Failed to load paginated vendors:", err);
+        if (isMounted) {
+          dispatch(setVendors([]));
+          dispatch(setTotalVendorsCount(0));
+        }
+      })
+      .finally(() => {
+        if (isMounted) dispatch(setTableLoading(false));
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [currentPage, pageSize, search, statusFilter, categoryFilter, starredOnly, dispatch]);
+
+  useEffect(() => {
+    return loadPaginatedVendors();
+  }, [loadPaginatedVendors]);
 
   // Fetch States when Country changes
   useEffect(() => {
@@ -285,6 +324,7 @@ export default function VendorsPage() {
     if (res.success) {
       toast.success("Vendor has been removed successfully.");
       loadPageData();
+      loadPaginatedVendors();
     } else {
       toast.error("Failed to delete vendor.");
     }
@@ -359,14 +399,17 @@ export default function VendorsPage() {
         const foundState = states.find(s => s.stateName.toLowerCase() === stateName.trim().toLowerCase());
         const foundCity = cities.find(ct => ct.cityName.toLowerCase() === cityName.trim().toLowerCase());
 
-        const addressPayload = {
-          addressLine: addressLine.trim(),
-          countryId: foundCountry ? (foundCountry.countryId || foundCountry.id || 1) : 1,
-          stateId: foundState ? (foundState.stateId || foundState.id || 1) : 1,
-          cityId: foundCity ? (foundCity.cityId || foundCity.id || 1) : 1,
+        const addressPayload: any = {
+          addressLine: addressLine.trim() || "Headquarters",
+          countryName: countryName.trim(),
+          stateName: stateName.trim(),
+          cityName: cityName.trim(),
           pincode: pincode.trim() || "000000",
           vendorId: vId,
         };
+        if (foundCountry) addressPayload.countryId = foundCountry.countryId || foundCountry.id;
+        if (foundState) addressPayload.stateId = foundState.stateId || foundState.id;
+        if (foundCity) addressPayload.cityId = foundCity.cityId || foundCity.id;
         if (addressId) {
           await updateAddress(addressId, addressPayload);
         } else {
@@ -410,41 +453,19 @@ export default function VendorsPage() {
     dispatch(setSubmitting(false));
     dispatch(setShowVendorModal(false));
     loadPageData();
+    loadPaginatedVendors();
   };
 
   // Dynamic Category options for dropdown
-  const categoriesList = ["All", ...Array.from(new Set(vendors.map((v) => {
-    const typeObj = v.vendorType;
-    if (typeof typeObj === "object" && typeObj !== null) {
-      return typeObj.typeName;
-    }
-    return typeof v.vendorType === "string" ? v.vendorType : "General";
-  }).filter(Boolean)))];
-
-  // Filter vendors
-  const filteredVendors = vendors.filter((v) => {
-    const vName = (v.vendorName || v.name || "").toLowerCase();
-    const cName = (v.companyName || "").toLowerCase();
-    const matchesSearch = vName.includes(search.toLowerCase()) || cName.includes(search.toLowerCase());
-
-    const matchesStatus =
-      statusFilter === "All" ||
-      (statusFilter === "Active" && (v.status === "active" || !v.status)) ||
-      (statusFilter === "Inactive" && v.status === "inactive");
-
-    const categoryName = typeof v.vendorType === "object" && v.vendorType !== null ? v.vendorType.typeName : (typeof v.vendorType === "string" ? v.vendorType : "General");
-    const matchesCategory = categoryFilter === "All" || categoryName === categoryFilter;
-
-    const matchesStarred = !starredOnly || Boolean(v.isStarred);
-
-    return matchesSearch && matchesStatus && matchesCategory && matchesStarred;
-  });
-
-  // Calculate pagination
-  const paginatedVendors = filteredVendors.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+  const categoriesList = ["All", ...Array.from(new Set(
+    (allVendorsForExport.length > 0 ? allVendorsForExport : vendors).map((v) => {
+      const typeObj = v.vendorType;
+      if (typeof typeObj === "object" && typeObj !== null) {
+        return typeObj.typeName;
+      }
+      return typeof v.vendorType === "string" ? v.vendorType : "General";
+    }).filter(Boolean)
+  ))];
 
   const toggleStarVendor = async (e: React.MouseEvent, vendor: VendorItem) => {
     e.stopPropagation();
@@ -477,7 +498,10 @@ export default function VendorsPage() {
       <div className={styles.pageContainer}>
         {/* Header */}
         <div className={styles.topRow}>
-          <h1 className={styles.title}>My Vendors</h1>
+          <h1 className={styles.title}>
+            My Vendors
+            {tableLoading && <span className={styles.loadingSpinner} />}
+          </h1>
           <div className={styles.actionsRight}>
             <button type="button" className={styles.exportBtn} onClick={() => setIsExportOpen(true)}>
               <FiUpload /> Export
@@ -606,14 +630,21 @@ export default function VendorsPage() {
                 </tr>
               </thead>
               <tbody>
-                {loading ? (
-                  <tr>
-                    <td colSpan={8} className={styles.vendorsElement6}>
-                      Loading vendor records from backend...
-                    </td>
-                  </tr>
-                ) : paginatedVendors.length > 0 ? (
-                  paginatedVendors.map((v, idx) => {
+                {tableLoading ? (
+                  Array.from({ length: pageSize > 10 ? 10 : pageSize }).map((_, idx) => (
+                    <tr key={`vendor-skel-${idx}`} className={styles.skeletonRow}>
+                      <td><div className={styles.skeletonBone} style={{ width: "20px" }} /></td>
+                      <td><div className={styles.skeletonBone} style={{ width: "130px" }} /></td>
+                      <td><div className={styles.skeletonBone} style={{ width: "70px" }} /></td>
+                      <td><div className={styles.skeletonBone} style={{ width: "100px" }} /></td>
+                      <td><div className={styles.skeletonBone} style={{ width: "50px" }} /></td>
+                      <td><div className={styles.skeletonBadge} /></td>
+                      <td><div className={styles.skeletonBone} style={{ width: "80px" }} /></td>
+                      <td><div className={styles.skeletonBone} style={{ width: "24px" }} /></td>
+                    </tr>
+                  ))
+                ) : vendors.length > 0 ? (
+                  vendors.map((v, idx) => {
                     const rowKey = v.vendorId || v.id || idx;
                     const vName = v.vendorName || v.name || "Unnamed Vendor";
                     const contact = v.contacts && v.contacts.length > 0 ? v.contacts[0] : null;
@@ -725,10 +756,13 @@ export default function VendorsPage() {
           
           <Pagination
             currentPage={currentPage}
-            totalItems={filteredVendors.length}
+            totalItems={totalVendorsCount}
             pageSize={pageSize}
             onPageChange={(page) => dispatch(setCurrentPage(page))}
-            onPageSizeChange={(size) => dispatch(setPageSize(size))}
+            onPageSizeChange={(size) => {
+              dispatch(setPageSize(size));
+              dispatch(setCurrentPage(1));
+            }}
             pageSizeOptions={[5, 10, 15, 20]}
           />
         </div>
@@ -1214,7 +1248,7 @@ export default function VendorsPage() {
           onClose={() => setIsExportOpen(false)}
           title="Vendors"
           columns={["Vendor Name", "Category", "Phone Number", "Active POs", "Status", "Last Delivery"]}
-          data={filteredVendors.map((v, idx) => {
+          data={(allVendorsForExport.length > 0 ? allVendorsForExport : vendors).map((v, idx) => {
             const contact = v.contacts && v.contacts.length > 0 ? v.contacts[0] : null;
             const contactPhone = contact?.mobile || (contact as { phone?: string })?.phone || v.phone || "+91 98765 21045";
             const categoryName = typeof v.vendorType === "object" && v.vendorType !== null ? v.vendorType.typeName : (typeof v.vendorType === "string" ? v.vendorType : "Dairy");

@@ -14,6 +14,7 @@ export default function RevenueTrendChart() {
   const [selectedMonth, setSelectedMonth] = useState("Month");
   const [hoverIndex, setHoverIndex] = useState<number>(0);
   const [analytics, setAnalytics] = useState<SalesAnalyticsResponse | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
@@ -69,10 +70,13 @@ export default function RevenueTrendChart() {
           percentageGrowth: growth,
           chartData: relevantChartData
         });
+        setLoading(false);
         
         if (relevantChartData.length > 0) {
           setHoverIndex(relevantChartData.length - 1);
         }
+      }).catch(() => {
+        if (isMounted) setLoading(false);
       });
     });
 
@@ -153,7 +157,9 @@ export default function RevenueTrendChart() {
       </div>
 
       <div className={styles.revenueRow}>
-        <h2 className={styles.revenueAmount}>{totalRevDisplay}</h2>
+        <h2 className={styles.revenueAmount}>
+          {loading ? <span className={styles.skeletonShimmer} /> : totalRevDisplay}
+        </h2>
         <span className={styles.growthBadge}>
           <FiTrendingUp /> + {growthDisplay} <span className={styles.revenueTrendChartElement1}>from last month</span>
         </span>

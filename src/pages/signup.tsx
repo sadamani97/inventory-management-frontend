@@ -47,7 +47,13 @@ export default function SignupPage() {
   const onSubmit = async (values: SignupForm) => {
     setStatusMessage(null);
     try {
-      const response = await api.post("/signup", values);
+      const payload = {
+        ...values,
+        email: values.email.trim().toLowerCase(),
+        firstname: values.firstname.trim(),
+        lastname: values.lastname.trim(),
+      };
+      const response = await api.post("/signup", payload);
       const result = response?.data;
       if (result?.success) {
         dispatch(

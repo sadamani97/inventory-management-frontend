@@ -5,7 +5,7 @@ import Image from "next/image";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import CustomDatePicker from "@/components/dashboard/CustomDatePicker";
 import CustomSelect, { CustomSelectOption } from "@/components/ui/CustomSelect";
-import { fetchProductsList, ProductItem } from "@/lib/dashboardApi";
+import { fetchProductsPaginated, fetchProductsList, ProductItem } from "@/lib/dashboardApi";
 import { APP_IMAGES } from "@/constants/images";
 import styles from "@/styles/pages/products.module.css";
 import { FiSearch, FiUpload, FiPlus } from "react-icons/fi";
@@ -25,6 +25,8 @@ const CATEGORY_OPTIONS: CustomSelectOption[] = [
 export default function ProductsPage() {
   const router = useRouter();
   const [products, setProducts] = useState<ProductItem[]>([]);
+  const [totalItems, setTotalItems] = useState(0);
+  const [allProductsForExport, setAllProductsForExport] = useState<ProductItem[]>([]);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All Category");
   const [loading, setLoading] = useState(true);
@@ -33,43 +35,62 @@ export default function ProductsPage() {
   const [isExportOpen, setIsExportOpen] = useState(false);
 
   useEffect(() => {
-    let isMounted = true;
-    fetchProductsList().then((data) => {
-      if (isMounted) {
-        setProducts(data);
-        setLoading(false);
-      }
-    });
-    return () => {
-      isMounted = false;
-    };
+    fetchProductsList().then((data) => setAllProductsForExport(data || []));
   }, []);
 
-  const filteredProducts = products.filter((p: ProductItem) => {
-    const pName = (p.productName || "").toLowerCase();
-    const pSku = (p.sku || "").toLowerCase();
-    const matchesSearch =
-      pName.includes(search.toLowerCase()) || pSku.includes(search.toLowerCase());
+  useEffect(() => {
+    let isMounted = true;
+    setLoading(true);
 
-    const catName = p.category?.categoryName || "";
-    const matchesCategory =
-      categoryFilter === "All Category" ||
-      catName.toLowerCase() === categoryFilter.toLowerCase();
+    const timer = setTimeout(() => {
+      fetchProductsPaginated({
+        page: currentPage,
+        limit: pageSize,
+        search: search.trim() || undefined,
+        categoryName: categoryFilter !== "All Category" ? categoryFilter : undefined,
+      })
+        .then((res) => {
+          if (!isMounted) return;
+          setProducts(res.data);
+          setTotalItems(res.totalItems);
+          setLoading(false);
+        })
+        .catch((err) => {
+          console.error("Failed to load products from backend:", err);
+          if (isMounted) setLoading(false);
+        });
+    }, 200);
 
-    return matchesSearch && matchesCategory;
-  });
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
+  }, [currentPage, pageSize, search, categoryFilter]);
 
-  const paginatedProducts = filteredProducts.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+  const handleSearchChange = (val: string) => {
+    setSearch(val);
+    setCurrentPage(1);
+  };
+
+  const handleCategoryFilterChange = (val: string) => {
+    setCategoryFilter(val);
+    setCurrentPage(1);
+  };
+
+  const handlePageSizeChange = (newSize: number) => {
+    setPageSize(newSize);
+    setCurrentPage(1);
+  };
 
   return (
     <DashboardLayout>
       <div className={styles.pageContainer}>
         {/* Top Header Row */}
         <div className={styles.topRow}>
-          <h1 className={styles.title}>Product Management</h1>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <h1 className={styles.title}>Product Management</h1>
+            {loading && <span className={styles.loadingSpinner} title="Loading products from backend..." />}
+          </div>
           <div className={styles.actionsRight}>
             <button className={styles.exportBtn} onClick={() => setIsExportOpen(true)}>
               <FiUpload /> Export
@@ -89,7 +110,7 @@ export default function ProductsPage() {
                   type="text"
                   placeholder="Search Products by Name / SKU"
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={(e) => handleSearchChange(e.target.value)}
                   className={styles.searchInput}
                 />
                 <FiSearch className={styles.searchIcon} />
@@ -101,7 +122,7 @@ export default function ProductsPage() {
             <CustomSelect
               options={CATEGORY_OPTIONS}
               value={categoryFilter}
-              onChange={setCategoryFilter}
+              onChange={handleCategoryFilterChange}
               width="140px"
             />
           </div>
@@ -119,13 +140,25 @@ export default function ProductsPage() {
               </thead>
               <tbody>
                 {loading ? (
-                  <tr>
-                    <td colSpan={5} className={styles.productsElement1}>
-                      Loading products from backend database...
-                    </td>
-                  </tr>
-                ) : paginatedProducts.length > 0 ? (
-                  paginatedProducts.map((p: ProductItem, idx: number) => {
+                  Array.from({ length: Math.min(pageSize, 8) }).map((_, idx) => (
+                    <tr key={`skeleton-${idx}`} className={styles.skeletonRow}>
+                      <td>
+                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                          <div className={styles.skeletonBone} style={{ width: 44, height: 44, borderRadius: 8, flexShrink: 0 }} />
+                          <div style={{ flex: 1 }}>
+                            <div className={styles.skeletonBone} style={{ width: "70%", height: 16, marginBottom: 6 }} />
+                            <div className={styles.skeletonBone} style={{ width: "40%", height: 12 }} />
+                          </div>
+                        </div>
+                      </td>
+                      <td><div className={styles.skeletonBone} style={{ width: "60%" }} /></td>
+                      <td><div className={styles.skeletonBone} style={{ width: "50%" }} /></td>
+                      <td><div className={styles.skeletonBone} style={{ width: "45%" }} /></td>
+                      <td><div className={styles.skeletonBone} style={{ width: "55%" }} /></td>
+                    </tr>
+                  ))
+                ) : products.length > 0 ? (
+                  products.map((p: ProductItem, idx: number) => {
                     const name = p.productName || "Product";
                     const vendor = p.vendor?.vendorName || p.vendor?.name || "No Vendor";
                     const sku = p.sku || `SKU-${idx + 1}`;
@@ -190,13 +223,12 @@ export default function ProductsPage() {
             </table>
           </div>
 
-
           <Pagination
             currentPage={currentPage}
-            totalItems={filteredProducts.length}
+            totalItems={totalItems}
             pageSize={pageSize}
             onPageChange={setCurrentPage}
-            onPageSizeChange={setPageSize}
+            onPageSizeChange={handlePageSizeChange}
             pageSizeOptions={[5, 10, 15, 20]}
           />
         </div>
@@ -206,7 +238,7 @@ export default function ProductsPage() {
         onClose={() => setIsExportOpen(false)}
         title="Products"
         columns={["Product Name", "SKU", "Buying Price", "Selling Price", "Quantity"]}
-        data={filteredProducts.map(p => [
+        data={(allProductsForExport.length > 0 ? allProductsForExport : products).map(p => [
           p.productName || "Unnamed",
           p.sku || "N/A",
           `INR ${p.purchaseRate || 0}`,
