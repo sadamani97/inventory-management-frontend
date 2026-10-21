@@ -1,79 +1,175 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { fetchReportKpis, fetchSalesAnalytics, ReportKpis, SalesAnalyticsResponse } from "@/lib/dashboardApi";
+import ReportStatCards from "@/components/reports/ReportStatCards";
+import TotalSalesChart from "@/components/reports/TotalSalesChart";
+import SalesPurchaseChart from "@/components/reports/SalesPurchaseChart";
+import PerformanceTable from "@/components/reports/PerformanceTable";
+import CustomDatePicker from "@/components/dashboard/CustomDatePicker";
+import ExportDialog from "@/components/ui/ExportDialog";
+import styles from "@/styles/pages/reports.module.css";
+import { FiUpload } from "react-icons/fi";
+import {
+  fetchReportKpiData,
+  fetchReportSalesAnalytics,
+  fetchSalesVsPurchases,
+  fetchProductPerformance,
+  ReportKpiData,
+  SalesAnalyticsData,
+  SalesVsPurchaseItem,
+  ProductPerformanceItem,
+} from "@/lib/reportApi";
 
 export default function ReportsPage() {
-  const [kpi, setKpi] = useState<ReportKpis | null>(null);
-  const [analytics, setAnalytics] = useState<SalesAnalyticsResponse | null>(null);
+  const [kpiData, setKpiData] = useState<ReportKpiData | null>(null);
+  const [salesData, setSalesData] = useState<SalesAnalyticsData | null>(null);
+  const [salesVsPurchase, setSalesVsPurchase] = useState<SalesVsPurchaseItem[]>([]);
+  const [performanceData, setPerformanceData] = useState<ProductPerformanceItem[]>([]);
+  const [performanceTotalItems, setPerformanceTotalItems] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [perfLoading, setPerfLoading] = useState(true);
+  const [isExportOpen, setIsExportOpen] = useState(false);
+
+  const [performancePage, setPerformancePage] = useState(1);
+  const [performancePageSize, setPerformancePageSize] = useState(5);
+  const [performanceStatus, setPerformanceStatus] = useState("");
+  const [performanceSearch, setPerformanceSearch] = useState("");
+
+  const [salesRange, setSalesRange] = useState<"Per Day" | "Weekly" | "10 Days">("Weekly");
+  const [salesLoading, setSalesLoading] = useState(false);
+
+  const exportRows = [
+    ["Inventory Value", kpiData ? `₹ ${Number(kpiData.inventoryValue).toLocaleString()}` : "₹ 0"],
+    ["Today's Revenue", kpiData ? `₹ ${Number(kpiData.todaysRevenue).toLocaleString()}` : "₹ 0"],
+    ["Today's Total Orders", kpiData ? `${kpiData.todaysTotalOrders} orders` : "0 orders"],
+    ["Today's Sales", kpiData ? `${kpiData.todaysSales} items` : "0 items"],
+  ];
 
   useEffect(() => {
-    Promise.all([fetchReportKpis(), fetchSalesAnalytics()]).then(([k, a]) => {
-      setKpi(k);
-      setAnalytics(a);
-      setLoading(false);
+    let isMounted = true;
+
+    Promise.all([
+      fetchReportKpiData(),
+      fetchReportSalesAnalytics({ days: 7, range: "Weekly" }),
+      fetchSalesVsPurchases(),
+    ]).then(([kpi, analytics, svp]) => {
+      if (isMounted) {
+        setKpiData(kpi);
+        setSalesData(analytics);
+        setSalesVsPurchase(svp);
+        setLoading(false);
+      }
+    }).catch(() => {
+      if (isMounted) {
+        setLoading(false);
+      }
     });
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  const chartDataList = analytics?.chartData || [];
+  useEffect(() => {
+    let isMounted = true;
+    setPerfLoading(true);
+
+    fetchProductPerformance({
+      search: performanceSearch || undefined,
+      status: performanceStatus || undefined,
+      page: performancePage,
+      limit: performancePageSize,
+    }).then((result) => {
+      if (!isMounted) return;
+      setPerformanceData(result.data);
+      setPerformanceTotalItems(result.totalItems);
+      setPerfLoading(false);
+    }).catch(() => {
+      if (isMounted) {
+        setPerfLoading(false);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [performancePage, performancePageSize, performanceSearch, performanceStatus]);
+
+  const handleSalesRangeChange = useCallback(async (newRange: "Per Day" | "Weekly" | "10 Days") => {
+    setSalesRange(newRange);
+    setSalesLoading(true);
+    const days = newRange === "Per Day" ? 1 : newRange === "10 Days" ? 10 : 7;
+    try {
+      const data = await fetchReportSalesAnalytics({ days, range: newRange });
+      setSalesData(data);
+    } finally {
+      setSalesLoading(false);
+    }
+  }, []);
+
+  const handleFilterChange = useCallback((status: string) => {
+    setPerformanceStatus(status);
+    setPerformancePage(1);
+  }, []);
+
+  const handleSearchChange = useCallback((search: string) => {
+    setPerformanceSearch(search);
+    setPerformancePage(1);
+  }, []);
+
+  const handlePerformancePageChange = useCallback((page: number) => {
+    setPerformancePage(page);
+  }, []);
+
+  const handlePerformancePageSizeChange = useCallback((size: number) => {
+    setPerformancePageSize(size);
+    setPerformancePage(1);
+  }, []);
 
   return (
     <DashboardLayout>
-      <div style={{ padding: "10px 0" }}>
-        <h1 style={{ fontSize: "24px", fontWeight: 800, color: "#0f172a", marginBottom: "8px" }}>Reports</h1>
-        <p style={{ color: "#64748b", fontSize: "14px" }}>Financial, inventory valuation, and sales analytics reports fetched from backend.</p>
-        
-        {loading ? (
-          <p style={{ color: "#64748b", margin: "20px 0" }}>Loading backend analytics reports...</p>
-        ) : (
-          <>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px", margin: "20px 0" }}>
-              <div style={{ background: "#ffffff", padding: "16px", borderRadius: "10px", border: "1px solid #eaecf0" }}>
-                <div style={{ color: "#64748b", fontSize: "12px" }}>Total Revenue</div>
-                <div style={{ fontSize: "20px", fontWeight: 800, color: "#16a34a" }}>₹ {Number(kpi?.totalRevenue || 0).toLocaleString()}</div>
-              </div>
-              <div style={{ background: "#ffffff", padding: "16px", borderRadius: "10px", border: "1px solid #eaecf0" }}>
-                <div style={{ color: "#64748b", fontSize: "12px" }}>Total Orders</div>
-                <div style={{ fontSize: "20px", fontWeight: 800, color: "#0f172a" }}>{String(kpi?.totalOrders || 0)}</div>
-              </div>
-              <div style={{ background: "#ffffff", padding: "16px", borderRadius: "10px", border: "1px solid #eaecf0" }}>
-                <div style={{ color: "#64748b", fontSize: "12px" }}>Average Order Value</div>
-                <div style={{ fontSize: "20px", fontWeight: 800, color: "#2563eb" }}>₹ {Number(kpi?.averageOrderValue || 0).toLocaleString()}</div>
-              </div>
-            </div>
-
-            <div style={{
-              backgroundColor: "#ffffff",
-              borderRadius: "14px",
-              padding: "24px",
-              border: "1px solid #eaecf0",
-              boxShadow: "0 1px 3px rgba(16, 24, 40, 0.05)"
-            }}>
-              <h2 style={{ fontSize: "16px", fontWeight: 700, color: "#1e293b", marginBottom: "16px" }}>Backend Sales Trend Summary</h2>
-              {chartDataList.length > 0 ? (
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
-                  <thead>
-                    <tr style={{ borderBottom: "1px solid #f1f5f9", background: "#fafafa" }}>
-                      <th style={{ padding: "10px", color: "#2563eb", textAlign: "left" }}>Date</th>
-                      <th style={{ padding: "10px", color: "#2563eb", textAlign: "right" }}>Daily Sales (₹)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {chartDataList.map((cd, idx) => (
-                      <tr key={idx} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                        <td style={{ padding: "10px", fontWeight: 600 }}>{String(cd.date)}</td>
-                        <td style={{ padding: "10px", textAlign: "right", fontWeight: 700, color: "#16a34a" }}>₹ {Number(cd.sales || 0).toLocaleString()}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              ) : (
-                <p style={{ color: "#64748b" }}>No sales transaction data recorded in database yet.</p>
-              )}
-            </div>
-          </>
-        )}
+      <div className={styles.pageHeader}>
+        <h1 className={styles.pageTitle}>Reports</h1>
+        <div className={styles.headerRight}>
+          <CustomDatePicker />
+          <button className={styles.downloadBtn} type="button" onClick={() => setIsExportOpen(true)}>
+            <FiUpload size={14} />
+            Export
+          </button>
+        </div>
       </div>
+
+      <ReportStatCards data={kpiData} loading={loading} />
+
+      <div className={styles.chartsGrid}>
+        <TotalSalesChart
+          data={salesData}
+          loading={loading || salesLoading}
+          range={salesRange}
+          onRangeChange={handleSalesRangeChange}
+        />
+        <SalesPurchaseChart data={salesVsPurchase} loading={loading} />
+      </div>
+
+      <PerformanceTable
+        data={performanceData}
+        loading={perfLoading}
+        totalItems={performanceTotalItems}
+        currentPage={performancePage}
+        pageSize={performancePageSize}
+        onFilterChange={handleFilterChange}
+        onSearchChange={handleSearchChange}
+        onPageChange={handlePerformancePageChange}
+        onPageSizeChange={handlePerformancePageSizeChange}
+      />
+
+      <ExportDialog
+        isOpen={isExportOpen}
+        onClose={() => setIsExportOpen(false)}
+        title="Reports"
+        columns={["Metric", "Value"]}
+        data={exportRows}
+        filename="reports_summary"
+      />
     </DashboardLayout>
   );
 }
