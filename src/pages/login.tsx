@@ -81,8 +81,8 @@ export default function LoginPage() {
     <AuthLayout
       title="Welcome Back"
       description="Login to simplify inventory tracking and take control instantly."
-      imageSrc="/images/loginimage.svg"
-      imageAlt="Login illustration"
+      imageSrc={APP_IMAGES.LOGIN_IMAGE.src}
+      imageAlt={APP_IMAGES.LOGIN_IMAGE.alt}
     >
       <form className={styles.authForm} onSubmit={handleSubmit(onSubmit)}>
         <Input

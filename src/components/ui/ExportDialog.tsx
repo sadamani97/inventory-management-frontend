@@ -1,5 +1,5 @@
 import React from "react";
-import { FiX, FiDownload } from "react-icons/fi";
+import { FiX, FiUpload } from "react-icons/fi";
 import styles from "./ExportDialog.module.css";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -69,7 +69,7 @@ export default function ExportDialog({
               className={styles.downloadBtn}
               onClick={handleDownloadPDF}
             >
-              <FiDownload size={16} /> Download PDF
+              <FiUpload size={16} /> Download PDF
             </button>
           </div>
         </div>

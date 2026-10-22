@@ -31,3 +31,40 @@
   color: #64748b;
   font-weight: 500;
 }
+
+@media (max-width: 767px) {
+  .layoutWrapper {
+    display: block;
+  }
+
+  .mainContent {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .pageBody {
+    padding: 16px 14px 24px;
+    max-width: 100%;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .mainContent {
+    margin-left: 200px;
+  }
+
+  .pageBody {
+    padding: 22px 20px 32px;
+  }
+}
+
+@media (min-width: 1024px) and (max-width: 1439px) {
+  .mainContent {
+    margin-left: 220px;
+  }
+
+  .pageBody {
+    padding: 24px 24px 32px;
+    max-width: 1200px;
+  }
+}

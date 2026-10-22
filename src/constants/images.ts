@@ -11,6 +11,9 @@ export const APP_IMAGES = {
   CANCEL_ORDER: { src: "https://res.cloudinary.com/t9mp1o4f/image/upload/v1791276816/frontend_assets/cancelorder.png", alt: "Cancelled", width: 30, height: 30 },
   DASHBOARD_LOGO: { src: "https://res.cloudinary.com/t9mp1o4f/image/upload/v1791276808/frontend_assets/DashboardLogo.png", alt: "Stockflow Logo", width: 28, height: 28 },
   DASHBOARD_PRODUCT: { src: "https://res.cloudinary.com/t9mp1o4f/image/upload/v1791276809/frontend_assets/Dashboard_product.png", alt: "Product", width: 48, height: 48 },
+  ACTIVE_STOCK_LOGO: { src: "https://res.cloudinary.com/t9mp1o4f/image/upload/v1791276807/frontend_assets/Active_Stock_logo.png", alt: "Active Stock", width: 24, height: 24 },
+  LOW_STOCK_LOGO: { src: "https://res.cloudinary.com/t9mp1o4f/image/upload/v1791276810/frontend_assets/Low_Stock.png", alt: "Low stock", width: 24, height: 24 },
+  LOW_STOCK_ALT: { src: "https://res.cloudinary.com/t9mp1o4f/image/upload/v1791276812/frontend_assets/lowStock.png", alt: "Low stock", width: 24, height: 24 },
   STARS: { src: "https://res.cloudinary.com/t9mp1o4f/image/upload/v1791276841/frontend_assets/Stars.png", alt: "Rating Stars", width: 90, height: 18 },
   DAILY_NEED: { src: "https://res.cloudinary.com/t9mp1o4f/image/upload/v1791276832/frontend_assets/Dailyneed.png", alt: "Daily Need", width: 44, height: 44 },
   ORDER_PAGE_LOGO: { src: "https://res.cloudinary.com/t9mp1o4f/image/upload/v1791276823/frontend_assets/order_page_logo.png", alt: "Order Page Logo", width: 40, height: 40 },
@@ -24,4 +27,6 @@ export const APP_IMAGES = {
   RECTANGLE_62: { src: "https://res.cloudinary.com/t9mp1o4f/image/upload/v1791276839/frontend_assets/Rectangle_62.png", alt: "Product", width: 40, height: 40 },
   RECTANGLE_91: { src: "https://res.cloudinary.com/t9mp1o4f/image/upload/v1791276840/frontend_assets/Rectangle_91.png", alt: "Product", width: 40, height: 40 },
   SALT: { src: "https://res.cloudinary.com/t9mp1o4f/image/upload/v1791276841/frontend_assets/SALT.png", alt: "Salt", width: 40, height: 40 },
+  LOGIN_IMAGE: { src: "/images/loginimage.svg", alt: "Login illustration", width: 640, height: 640 },
+  SIGNUP_IMAGE: { src: "/images/signupimage.svg", alt: "Signup illustration", width: 640, height: 640 },
 };

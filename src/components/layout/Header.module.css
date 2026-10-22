@@ -159,3 +159,54 @@
 .headerElement1 {
   margin-left: 8;
 }
+
+@media (max-width: 767px) {
+  .header {
+    height: auto;
+    padding: 12px 14px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .searchContainer {
+    width: 100%;
+  }
+
+  .rightSection {
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .profileInfo {
+    display: none;
+  }
+
+  .shortcutBadge {
+    display: none;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .header {
+    padding: 0 20px;
+  }
+
+  .searchContainer {
+    width: 220px;
+  }
+
+  .rightSection {
+    gap: 12px;
+  }
+}
+
+@media (min-width: 1024px) and (max-width: 1439px) {
+  .header {
+    padding: 0 24px;
+  }
+
+  .searchContainer {
+    width: 280px;
+  }
+}
