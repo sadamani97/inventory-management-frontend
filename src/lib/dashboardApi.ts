@@ -198,9 +198,17 @@ export interface AlertItem {
   alertType?: string;
   severity?: "Low" | "Medium" | "High" | "Critical";
   message?: string;
-  productId?: number;
+  description?: string;
+  productId?: number | string;
   productName?: string;
+  relatedItem?: string;
+  referenceId?: number | string;
+  refId?: number | string;
+  vendorName?: string;
+  amount?: number;
+  status?: string;
   createdAt?: string;
+  type?: string;
 }
 
 export interface PurchaseOrderItem {
@@ -250,10 +258,124 @@ export interface SalesOrderStatsResponse {
 export interface InvoiceItem {
   id: number | string;
   invoiceNumber?: string;
+  vendorName?: string;
   customerName?: string;
   totalAmount?: number;
   status?: string;
   createdAt?: string;
+  vendor?: {
+    vendorName?: string;
+    companyName?: string;
+  };
+}
+
+type ApiRecord = Record<string, unknown> | null | undefined;
+
+function getValue(record: ApiRecord, key: string): unknown {
+  if (!record || typeof record !== "object") return undefined;
+  return (record as Record<string, unknown>)[key];
+}
+
+function getFirstDefinedValue(...values: unknown[]): unknown {
+  return values.find((value) => value !== undefined && value !== null && value !== "");
+}
+
+function getTextValue(...values: unknown[]): string | undefined {
+  const value = getFirstDefinedValue(...values);
+  if (value === undefined) return undefined;
+  return String(value);
+}
+
+function getNumberValue(...values: unknown[]): number | undefined {
+  const value = getFirstDefinedValue(...values);
+  if (value === undefined) return undefined;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function getNestedValue(record: ApiRecord, ...keys: string[]): unknown {
+  for (const key of keys) {
+    const value = getValue(record, key);
+    if (value !== undefined && value !== null && value !== "") return value;
+  }
+  return undefined;
+}
+
+export function normalizeAlertItem(raw: ApiRecord): AlertItem {
+  const productRecord = raw && typeof raw === "object" ? (raw as Record<string, unknown>).product as ApiRecord : undefined;
+  const vendorRecord = raw && typeof raw === "object" ? (raw as Record<string, unknown>).vendor as ApiRecord : undefined;
+
+  const alertType = getTextValue(
+    getNestedValue(raw, "alertType", "type", "alert_type", "alertName", "category", "kind", "name", "title"),
+    getNestedValue(productRecord, "productName", "name")
+  ) || "Alert";
+
+  const productName = getTextValue(
+    getNestedValue(raw, "productName", "product_name", "relatedItem", "related_item", "itemName", "item_name"),
+    getNestedValue(productRecord, "productName", "name"),
+    getNestedValue(raw, "name")
+  );
+
+  const message = getTextValue(
+    getNestedValue(raw, "message", "description", "details", "summary", "note", "reason", "comments")
+  );
+
+  const referenceId = getTextValue(
+    getNestedValue(raw, "referenceId", "refId", "ref_id", "productId", "product_id", "id", "alertId", "invoiceNumber", "poNumber")
+  );
+
+  const status = getTextValue(
+    getNestedValue(raw, "status", "alertStatus", "state", "currentStatus", "actionStatus")
+  );
+
+  return {
+    id: getFirstDefinedValue(getNestedValue(raw, "id", "alertId", "_id"), referenceId, `alert-${Date.now()}`) as string | number,
+    alertType,
+    severity: (getTextValue(
+      getNestedValue(raw, "severity", "level", "priority", "alertLevel")
+    ) || "Medium") as AlertItem["severity"],
+    message,
+    description: message,
+    productId: (() => {
+      const value = getNumberValue(getNestedValue(raw, "productId", "product_id", "referenceId", "refId"));
+      if (value !== undefined) return value;
+      const fallback = Number(referenceId ?? 0);
+      return Number.isFinite(fallback) ? fallback : undefined;
+    })(),
+    productName,
+    relatedItem: productName,
+    referenceId: referenceId,
+    refId: referenceId,
+    vendorName: getTextValue(getNestedValue(raw, "vendorName", "supplierName"), getNestedValue(vendorRecord, "vendorName", "companyName"), getNestedValue(raw, "customerName")),
+    amount: getNumberValue(getNestedValue(raw, "amount", "totalAmount", "value", "invoiceAmount")),
+    status,
+    createdAt: getTextValue(getNestedValue(raw, "createdAt", "timestamp", "time", "date", "updatedAt")),
+    type: alertType,
+  };
+}
+
+export function normalizeInvoiceItem(raw: ApiRecord): InvoiceItem {
+  const vendorRecord = raw && typeof raw === "object" ? (raw as Record<string, unknown>).vendor as ApiRecord : undefined;
+  const invoiceNumber = getTextValue(
+    getNestedValue(raw, "invoiceNumber", "invoice_number", "invoiceId", "invoice_id", "id"),
+    "INV"
+  ) || "INV";
+  const vendorName = getTextValue(
+    getNestedValue(raw, "vendorName", "supplierName", "companyName"),
+    getNestedValue(vendorRecord, "vendorName", "companyName"),
+    getNestedValue(raw, "customerName")
+  ) || "Vendor";
+
+  return {
+    id: getFirstDefinedValue(getNestedValue(raw, "id", "invoiceId", "_id"), invoiceNumber) as string | number,
+    invoiceNumber,
+    vendorName,
+    customerName: vendorName,
+    totalAmount: getNumberValue(getNestedValue(raw, "totalAmount", "amount", "value", "invoiceAmount")) ?? 0,
+    status: getTextValue(getNestedValue(raw, "status", "paymentStatus", "invoiceStatus")) || "Pending",
+    createdAt: getTextValue(getNestedValue(raw, "createdAt", "invoiceDate", "date", "dueDate")),
+    vendor: (vendorRecord as { vendorName?: string; companyName?: string }) || { vendorName, companyName: vendorName },
+  };
 }
 
 export interface ReportKpis {
@@ -298,18 +420,29 @@ export async function fetchSalesAnalytics(): Promise<SalesAnalyticsResponse> {
 }
 
 export function formatRelativeTime(dateStr?: string | Date): string {
-  if (!dateStr) return "Recently";
-  const date = new Date(dateStr);
-  const now = new Date();
-  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  if (!dateStr) return "Just now";
 
-  if (diffInSeconds < 60) return `${diffInSeconds} min${diffInSeconds > 1 ? "s" : ""} ago`;
-  const diffInMinutes = Math.floor(diffInSeconds / 60);
-  if (diffInMinutes < 60) return `${diffInMinutes} min${diffInMinutes > 1 ? "s" : ""} ago`;
-  const diffInHours = Math.floor(diffInMinutes / 60);
-  if (diffInHours < 24) return `${diffInHours} hr${diffInHours > 1 ? "s" : ""} ago`;
-  const diffInDays = Math.floor(diffInHours / 24);
-  if (diffInDays < 30) return `${diffInDays} day${diffInDays > 1 ? "s" : ""} ago`;
+  const date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) return "Just now";
+
+  const now = new Date();
+  const diffInMs = now.getTime() - date.getTime();
+
+  if (diffInMs <= 0) return "Just now";
+
+  const diffInMinutes = Math.floor(diffInMs / 60000);
+  if (diffInMinutes < 1) return "Just now";
+  if (diffInMinutes < 60) return `${diffInMinutes} minute${diffInMinutes === 1 ? "" : "s"} ago`;
+
+  const diffInHours = Math.floor(diffInMs / 3600000);
+  if (diffInHours < 24) return "Today";
+
+  const diffInDays = Math.floor(diffInMs / 86400000);
+  if (diffInDays === 1) return "Yesterday";
+  if (diffInDays < 7) return `${diffInDays} day${diffInDays === 1 ? "" : "s"} ago`;
+  if (diffInDays < 14) return "Last week";
+  if (diffInDays < 30) return `${Math.floor(diffInDays / 7)} week${Math.floor(diffInDays / 7) === 1 ? "" : "s"} ago`;
+
   return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
@@ -332,9 +465,9 @@ export async function fetchRecentActivitiesPaginated(params: {
     if (response?.data?.success) {
       const rows = Array.isArray(response.data.data) ? response.data.data : [];
       return {
-        data: rows.map((it: any) => ({
-          ...it,
-          time: formatRelativeTime(it.time || it.createdAt),
+        data: rows.map((it: Record<string, unknown>) => ({
+          ...(it as Record<string, unknown>),
+          time: formatRelativeTime(getTextValue(it.time, it.createdAt) || getTextValue(it.createdAt)),
         })),
         totalItems: response.data.totalItems ?? rows.length,
         page: response.data.page ?? (params.page || 1),
@@ -585,14 +718,24 @@ export async function fetchAlertsPaginated(params: {
 }): Promise<PaginatedResult<AlertItem>> {
   try {
     const response = await api.get("/api/alerts", { params });
-    if (response?.data?.success) {
-      const rows = Array.isArray(response.data.data) ? response.data.data : [];
+    const payload = response?.data?.data ?? response?.data ?? {};
+    const rows = Array.isArray(payload)
+      ? payload
+      : Array.isArray(payload?.items)
+        ? payload.items
+        : Array.isArray(payload?.alerts)
+          ? payload.alerts
+          : Array.isArray(payload?.rows)
+            ? payload.rows
+            : [];
+
+    if (response?.data?.success || rows.length > 0 || payload && Object.keys(payload).length > 0) {
       return {
-        data: rows,
-        totalItems: response.data.totalItems ?? rows.length,
-        page: response.data.page ?? (params.page || 1),
-        limit: response.data.limit ?? (params.limit || 10),
-        totalPages: response.data.totalPages ?? 1,
+        data: rows.map((item: unknown) => normalizeAlertItem(item as ApiRecord)),
+        totalItems: response?.data?.totalItems ?? payload?.totalItems ?? rows.length,
+        page: response?.data?.page ?? payload?.page ?? (params.page || 1),
+        limit: response?.data?.limit ?? payload?.limit ?? (params.limit || 10),
+        totalPages: response?.data?.totalPages ?? payload?.totalPages ?? 1,
       };
     }
   } catch (err) {
@@ -619,8 +762,9 @@ export async function fetchAlertsList(): Promise<AlertItem[]> {
 export async function fetchAlertSummary(): Promise<Record<string, unknown> | null> {
   try {
     const response = await api.get("/api/alerts/summary");
-    if (response?.data?.success) {
-      return response.data.data;
+    const payload = response?.data?.data ?? response?.data ?? null;
+    if (response?.data?.success || payload) {
+      return payload && typeof payload === "object" ? payload : null;
     }
   } catch {
     toast.error("Failed to fetch alert summary.");
@@ -855,14 +999,24 @@ export async function fetchInvoicesPaginated(params: {
 }): Promise<PaginatedResult<InvoiceItem>> {
   try {
     const response = await api.get("/api/invoices", { params });
-    if (response?.data?.success) {
-      const rows = Array.isArray(response.data.data) ? response.data.data : [];
+    const payload = response?.data?.data ?? response?.data ?? {};
+    const rows = Array.isArray(payload)
+      ? payload
+      : Array.isArray(payload?.items)
+        ? payload.items
+        : Array.isArray(payload?.invoices)
+          ? payload.invoices
+          : Array.isArray(payload?.rows)
+            ? payload.rows
+            : [];
+
+    if (response?.data?.success || rows.length > 0 || payload && Object.keys(payload).length > 0) {
       return {
-        data: rows,
-        totalItems: response.data.totalItems ?? rows.length,
-        page: response.data.page ?? (params.page || 1),
-        limit: response.data.limit ?? (params.limit || 10),
-        totalPages: response.data.totalPages ?? 1,
+        data: rows.map((item: unknown) => normalizeInvoiceItem(item as ApiRecord)),
+        totalItems: response?.data?.totalItems ?? payload?.totalItems ?? rows.length,
+        page: response?.data?.page ?? payload?.page ?? (params.page || 1),
+        limit: response?.data?.limit ?? payload?.limit ?? (params.limit || 10),
+        totalPages: response?.data?.totalPages ?? payload?.totalPages ?? 1,
       };
     }
   } catch (err) {

@@ -123,3 +123,70 @@
   color: var(--text-light);
   font-weight: 500;
 }
+
+@media (max-width: 767px) {
+  .sidebar {
+    position: static;
+    width: 100%;
+    min-width: 100%;
+    max-width: 100%;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .brandHeader {
+    padding: 0 16px;
+  }
+
+  .brandText {
+    font-size: 17px;
+  }
+
+  .navigation {
+    padding: 12px 10px 16px;
+    gap: 12px;
+  }
+
+  .categoryGroup {
+    gap: 6px;
+  }
+
+  .navItem {
+    padding: 10px 12px;
+    font-size: 12.5px;
+  }
+
+  .sidebarFooter {
+    padding: 12px 16px 14px;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .sidebar {
+    width: 200px;
+    min-width: 200px;
+    max-width: 200px;
+  }
+
+  .navItem {
+    font-size: 12.5px;
+    padding: 10px 12px;
+  }
+
+  .brandText {
+    font-size: 17px;
+  }
+}
+
+@media (min-width: 1024px) and (max-width: 1439px) {
+  .sidebar {
+    width: 220px;
+    min-width: 220px;
+    max-width: 220px;
+  }
+
+  .navItem {
+    font-size: 13px;
+  }
+}

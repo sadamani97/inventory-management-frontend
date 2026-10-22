@@ -715,7 +715,7 @@ export default function InventoryPage() {
                     const category = p.category?.categoryName || "-";
                     const qty = p.quantity ?? 0;
                     const imageUrl =
-                      p.imageUrl || "/Frontend/Dashboard_product.png";
+                      p.imageUrl || APP_IMAGES.DASHBOARD_PRODUCT.src;
 
                     // Determine stock status & progress bar percentage
                     let statusLabel = "In Stock";
