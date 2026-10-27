@@ -89,8 +89,8 @@ export default function SignupPage() {
     <AuthLayout
       title="Create an account"
       description="Build your inventory dashboard and manage stock with confidence."
-      imageSrc="/images/signupimage.svg"
-      imageAlt="Signup illustration"
+      imageSrc={APP_IMAGES.SIGNUP_IMAGE.src}
+      imageAlt={APP_IMAGES.SIGNUP_IMAGE.alt}
     >
       <form className={styles.authForm} onSubmit={handleSubmit(onSubmit)}>
         <div className={styles.inputRow}>

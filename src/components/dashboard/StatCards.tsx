@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import styles from "./StatCards.module.css";
+import { APP_IMAGES } from "@/constants/images";
 import { fetchProductStats, ProductStatsResponse } from "@/lib/dashboardApi";
 import { FiBox, FiCheckCircle, FiAlertCircle, FiXCircle } from "react-icons/fi";
 
@@ -37,7 +38,7 @@ export default function StatCards() {
     {
       title: "Total Products",
       value: loading ? <span className={styles.skeletonValue} /> : `${totalProd}`,
-      icon: "/Frontend/Dashboard_product.png",
+      icon: APP_IMAGES.DASHBOARD_PRODUCT.src,
       fallbackIcon: FiBox,
       iconClass: styles.iconBlue,
       footer: (
@@ -56,7 +57,7 @@ export default function StatCards() {
     {
       title: "Active Stock",
       value: loading ? <span className={styles.skeletonValue} /> : `${activeStk}`,
-      icon: "/Frontend/Active Stock logo.png",
+      icon: APP_IMAGES.ACTIVE_STOCK_LOGO.src,
       fallbackIcon: FiCheckCircle,
       iconClass: styles.iconGreen,
       footer: (
@@ -75,7 +76,7 @@ export default function StatCards() {
     {
       title: "Low Stock",
       value: loading ? <span className={styles.skeletonValue} /> : `${lowStk}`,
-      icon: "/Frontend/Low Stock.png",
+      icon: APP_IMAGES.LOW_STOCK_LOGO.src,
       fallbackIcon: FiAlertCircle,
       iconClass: styles.iconAmber,
       footer: (
@@ -93,7 +94,7 @@ export default function StatCards() {
     {
       title: "Out of stock",
       value: loading ? <span className={styles.skeletonValue} /> : `${outStk}`,
-      icon: "/Frontend/lowStock.png",
+      icon: APP_IMAGES.LOW_STOCK_ALT.src,
       fallbackIcon: FiXCircle,
       iconClass: styles.iconRed,
       footer: (
