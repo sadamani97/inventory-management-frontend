@@ -6,7 +6,7 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import CustomDatePicker from "@/components/dashboard/CustomDatePicker";
 import CustomSelect, { CustomSelectOption } from "@/components/ui/CustomSelect";
 import { fetchProductsPaginated, fetchProductsList, ProductItem } from "@/lib/dashboardApi";
-import { APP_IMAGES } from "@/constants/images";
+import { ASSETS } from "@/constants/assets";
 import styles from "@/styles/pages/products.module.css";
 import { FiSearch, FiUpload, FiPlus } from "react-icons/fi";
 import Pagination from "@/components/ui/Pagination";
@@ -164,7 +164,7 @@ export default function ProductsPage() {
                     const sku = p.sku || `SKU-${idx + 1}`;
                     const category = p.category?.categoryName || "General";
                     const price = p.sellingPrice || 0;
-                    const imageUrl = p.imageUrl || APP_IMAGES.DASHBOARD_PRODUCT.src;
+                    const imageUrl = p.imageUrl || ASSETS.IMAGES.DASHBOARD_PRODUCT.src;
 
                     return (
                       <tr

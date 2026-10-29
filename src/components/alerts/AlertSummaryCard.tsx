@@ -1,5 +1,5 @@
 import React from "react";
-import Image from "next/image";
+import MetricCard from "@/components/common/MetricCard";
 import styles from "@/styles/pages/alerts.module.css";
 
 interface AlertSummaryCardProps {
@@ -25,18 +25,12 @@ export default function AlertSummaryCard({
   }[iconTone];
 
   return (
-    <div className={styles.summaryCard}>
-      <div className={styles.summaryCardHeader}>
-        <div className={styles.summaryTitle}>{title}</div>
-        <div className={`${styles.summaryIconWrap} ${iconClassName}`}>
-          <Image src={icon} alt={title} width={20} height={20} />
-        </div>
-      </div>
-
-      <div className={styles.summaryValueRow}>
-        <span className={styles.summaryValue}>{value}</span>
-        {subtitle ? <span className={styles.summarySubtitle}>{subtitle}</span> : null}
-      </div>
-    </div>
+    <MetricCard
+      title={title}
+      value={value}
+      subtitle={subtitle}
+      icon={icon}
+      tone={iconTone === "blue" ? "blue" : iconTone === "red" ? "red" : iconTone === "amber" ? "amber" : "indigo"}
+    />
   );
 }

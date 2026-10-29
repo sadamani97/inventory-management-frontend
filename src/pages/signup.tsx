@@ -12,7 +12,7 @@ import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Link from "next/link";
 import Image from "next/image";
-import { APP_IMAGES } from "@/constants/images";
+import { ASSETS } from "@/constants/assets";
 import styles from "@/styles/pages/signup.module.css";
 import { toast } from "react-toastify";
 
@@ -89,8 +89,8 @@ export default function SignupPage() {
     <AuthLayout
       title="Create an account"
       description="Build your inventory dashboard and manage stock with confidence."
-      imageSrc={APP_IMAGES.SIGNUP_IMAGE.src}
-      imageAlt={APP_IMAGES.SIGNUP_IMAGE.alt}
+      imageSrc={ASSETS.IMAGES.SIGNUP_BANNER.src}
+      imageAlt={ASSETS.IMAGES.SIGNUP_BANNER.alt}
     >
       <form className={styles.authForm} onSubmit={handleSubmit(onSubmit)}>
         <div className={styles.inputRow}>
@@ -149,11 +149,11 @@ export default function SignupPage() {
 
         <div className="social-btn-group">
           <button type="button" className="social-btn">
-            <Image {...APP_IMAGES.GOOGLE_LOGO} alt={APP_IMAGES.GOOGLE_LOGO.alt} />
+            <Image {...ASSETS.LOGOS.GOOGLE} alt={ASSETS.LOGOS.GOOGLE.alt} />
             Google
           </button>
           <button type="button" className="social-btn">
-            <Image {...APP_IMAGES.APPLE_LOGO} alt={APP_IMAGES.APPLE_LOGO.alt} />
+            <Image {...ASSETS.LOGOS.APPLE} alt={ASSETS.LOGOS.APPLE.alt} />
             Apple
           </button>
         </div>

@@ -5,7 +5,7 @@ import { fetchVendorsList, VendorItem, fetchProductsList, ProductItem, createPur
 import CustomSelect from "@/components/ui/CustomSelect";
 import styles from "@/styles/components/createPOModal.module.css";
 import { toast } from "react-toastify";
-import { APP_IMAGES } from "@/constants/images";
+import { ASSETS } from "@/constants/assets";
 
 interface CreatePOModalProps {
   isOpen: boolean;
@@ -283,11 +283,11 @@ export default function CreatePOModal({ isOpen, onClose, onSuccess }: CreatePOMo
               <h3 className={`${styles.sectionTitle} ${styles.shipmentTitle}`}>Shipment <span className={styles.required}>*</span></h3>
               <div className={styles.shipmentCards}>
                 <div className={`${styles.shipmentCard} ${shipment === "indiamart" ? styles.active : ""}`} onClick={() => setShipment("indiamart")}>
-                  <Image {...APP_IMAGES.INDIAMART} alt={APP_IMAGES.INDIAMART.alt} className={styles.indiamartLogo} />
+                  <Image {...ASSETS.IMAGES.INDIAMART} alt={ASSETS.IMAGES.INDIAMART.alt} className={styles.indiamartLogo} />
                   <span className={styles.indiamartLabel}>indiamart.com</span>
                 </div>
                 <div className={`${styles.shipmentCard} ${shipment === "tradeindia" ? styles.active : ""}`} onClick={() => setShipment("tradeindia")}>
-                  <Image {...APP_IMAGES.TRADEINDIA} alt={APP_IMAGES.TRADEINDIA.alt} className={styles.tradeindiaLogo} />
+                  <Image {...ASSETS.IMAGES.TRADEINDIA} alt={ASSETS.IMAGES.TRADEINDIA.alt} className={styles.tradeindiaLogo} />
                   <span className={styles.tradeindiaLabel}>tradeindia.com</span>
                 </div>
               </div>
@@ -301,7 +301,7 @@ export default function CreatePOModal({ isOpen, onClose, onSuccess }: CreatePOMo
               {orderItems.map((item) => (
                 <div key={item.id} className={styles.productItem}>
                   <div className={styles.productInfo}>
-                    <Image src={item.imageUrl || APP_IMAGES.LOGO.src} alt="Item" width={40} height={40} className={styles.productImg} />
+                    <Image src={item.imageUrl || ASSETS.LOGOS.PRIMARY.src} alt="Item" width={40} height={40} className={styles.productImg} />
                     <div className={styles.productText}>
                       <h4>{item.productName} <span>| {item.sku}</span></h4>
                       <div className={styles.productPrice}>₹{Number(item.purchaseRate || item.sellingPrice || 0).toFixed(2)}</div>
@@ -340,7 +340,7 @@ export default function CreatePOModal({ isOpen, onClose, onSuccess }: CreatePOMo
                         className={styles.productDropdownItem}
                         onClick={() => handleProductSelect(p)}
                       >
-                        <Image src={p.imageUrl || APP_IMAGES.LOGO.src} alt="Item" width={32} height={32}  className={styles.productDropdownImage} />
+                        <Image src={p.imageUrl || ASSETS.LOGOS.PRIMARY.src} alt="Item" width={32} height={32}  className={styles.productDropdownImage} />
                         <div>
                           <div className={styles.productDropdownName}>{p.productName} <span>| {p.sku}</span></div>
                           <div className={styles.productDropdownPrice}>₹{Number(p.purchaseRate || p.sellingPrice || 0).toFixed(2)}</div>
@@ -397,7 +397,7 @@ export default function CreatePOModal({ isOpen, onClose, onSuccess }: CreatePOMo
               {orderItems.map((item) => (
                 <div key={item.id} className={`${styles.productItem} ${styles.orderedItemRow}`}>
                   <div className={styles.productInfo}>
-                    <Image src={item.imageUrl || APP_IMAGES.LOGO.src} alt="Item" width={40} height={40} className={styles.productImg} />
+                    <Image src={item.imageUrl || ASSETS.LOGOS.PRIMARY.src} alt="Item" width={40} height={40} className={styles.productImg} />
                     <div className={styles.productText}>
                       <h4>{item.productName} <span>| {item.sku}</span></h4>
                       <span>{item.qty} Item{item.qty > 1 ? "s" : ""}</span>

@@ -1,9 +1,20 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import AlertSummaryCard from "@/components/alerts/AlertSummaryCard";
 import AlertsTable from "@/components/alerts/AlertsTable";
-import { APP_IMAGES } from "@/constants/images";
-import { fetchAlertsPaginated, fetchAlertSummary, fetchInvoicesPaginated, AlertItem, InvoiceItem } from "@/lib/dashboardApi";
+import CompactAlertTable from "@/components/alerts/CompactAlertTable";
+import StatusBadge from "@/components/alerts/StatusBadge";
+import { ASSETS } from "@/constants/assets";
+import {
+  fetchAlertsPaginated,
+  fetchAlertSummary,
+  fetchInvoicesPaginated,
+  fetchPurchaseOrdersList,
+  fetchSalesOrdersList,
+  normalizeInvoiceItem,
+  AlertItem,
+  InvoiceItem,
+} from "@/lib/dashboardApi";
 import styles from "@/styles/pages/alerts.module.css";
 
 const formatTimeLabel = (value?: string): string => {
@@ -30,9 +41,28 @@ const isSameDay = (value?: string, targetDate: Date = new Date()): boolean => {
   );
 };
 
+const formatInvoiceId = (item: InvoiceItem): string => {
+  const raw = String(item.invoiceNumber || item.id || "").trim();
+  if (!raw) return "—";
+  if (/^inv/i.test(raw) || /^so/i.test(raw) || /^po/i.test(raw)) return raw;
+  if (/^\d+$/.test(raw)) return `INV-${raw.padStart(4, "0")}`;
+  return raw;
+};
+
+const formatInvoiceAmount = (value?: number): string => {
+  const amount = Number(value || 0);
+  return `₹${amount.toLocaleString("en-IN")}`;
+};
+
+const getInvoiceVendor = (item: InvoiceItem): string =>
+  item.vendorName || item.vendor?.vendorName || item.vendor?.companyName || item.customerName || "—";
+
 export default function AlertsPage() {
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
   const [invoices, setInvoices] = useState<InvoiceItem[]>([]);
+  const [invoiceLoading, setInvoiceLoading] = useState(true);
+  const [criticalFilter, setCriticalFilter] = useState("All");
+  const [invoiceStatusFilter, setInvoiceStatusFilter] = useState("All");
   const [totalAlertsCount, setTotalAlertsCount] = useState(0);
   const [summary, setSummary] = useState<Record<string, unknown> | null>(null);
   const [initialLoading, setInitialLoading] = useState(true);
@@ -43,28 +73,75 @@ export default function AlertsPage() {
   const [statusFilter, setStatusFilter] = useState("");
   const [severityFilter, setSeverityFilter] = useState("");
 
+  const normalizeSearchValue = (value: string) => value.trim().replace(/\s+/g, " ");
+
   useEffect(() => {
     fetchAlertSummary()
       .then((sum) => setSummary(sum))
       .finally(() => setInitialLoading(false));
 
-    fetchInvoicesPaginated({ page: 1, limit: 5 })
-      .then((res) => setInvoices(res.data || []))
-      .catch((err) => {
+    const loadInvoiceAlerts = async () => {
+      setInvoiceLoading(true);
+      try {
+        const invoiceResult = await fetchInvoicesPaginated({ page: 1, limit: 50 });
+        let rows = invoiceResult.data || [];
+
+        if (!rows.length) {
+          const [salesOrders, purchaseOrders] = await Promise.all([
+            fetchSalesOrdersList(),
+            fetchPurchaseOrdersList(),
+          ]);
+
+          rows = [
+            ...salesOrders.map((order) =>
+              normalizeInvoiceItem({
+                id: order.id,
+                invoiceNumber: order.orderNumber || order.soNumber,
+                customerName: order.customerName || order.customerType,
+                totalAmount: order.totalAmount,
+                status: order.status,
+                createdAt: order.createdAt || order.orderDate,
+              })
+            ),
+            ...purchaseOrders.map((order) =>
+              normalizeInvoiceItem({
+                id: order.id,
+                invoiceNumber: order.poNumber,
+                vendorName: order.vendorName || order.vendor?.vendorName || order.vendor?.companyName,
+                vendor: order.vendor,
+                totalAmount: order.totalAmount,
+                status: order.status,
+                createdAt: order.createdAt || order.orderDate,
+              })
+            ),
+          ];
+        }
+
+        setInvoices(rows);
+      } catch (err) {
         console.error("Failed to load invoice alerts:", err);
         setInvoices([]);
-      });
+      } finally {
+        setInvoiceLoading(false);
+      }
+    };
+
+    loadInvoiceAlerts();
   }, []);
 
   const loadPaginatedAlerts = useCallback(() => {
     setTableLoading(true);
 
+    const safeSearch = normalizeSearchValue(searchTerm);
+    const safeStatus = statusFilter && statusFilter !== "All" ? statusFilter.trim() : undefined;
+    const safeSeverity = severityFilter && severityFilter !== "All" ? severityFilter.trim() : undefined;
+
     fetchAlertsPaginated({
-      page: 1,
-      limit: 1000,
-      search: searchTerm || undefined,
-      status: statusFilter || undefined,
-      severity: severityFilter || undefined,
+      page: currentPage,
+      limit: pageSize,
+      search: safeSearch || undefined,
+      status: safeStatus,
+      severity: safeSeverity,
     })
       .then((res) => {
         setAlerts(res.data || []);
@@ -78,7 +155,7 @@ export default function AlertsPage() {
       .finally(() => {
         setTableLoading(false);
       });
-  }, [searchTerm, statusFilter, severityFilter]);
+  }, [currentPage, pageSize, searchTerm, statusFilter, severityFilter]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -101,28 +178,28 @@ export default function AlertsPage() {
     {
       title: "Active Alerts",
       value: toNumericValue(summary?.totalAlerts, totalAlertsCount),
-      icon: APP_IMAGES.ACTIVE_STOCK_LOGO.src,
+      icon: ASSETS.IMAGES.ALERT_ACTIVE.src,
       iconTone: "blue" as const,
       subtitle: "Today",
     },
     {
       title: "Critical Alerts",
       value: toNumericValue(summary?.criticalAlerts, toNumericValue(summary?.outOfStockAlerts, 0)),
-      icon: APP_IMAGES.LOW_STOCK_LOGO.src,
+      icon: ASSETS.IMAGES.ALERT_CRITICAL.src,
       iconTone: "red" as const,
       subtitle: "Action needed",
     },
     {
       title: "Low Stock Alerts",
       value: toNumericValue(summary?.lowStockAlerts, 0),
-      icon: APP_IMAGES.LOW_STOCK_LOGO.src,
+      icon: ASSETS.IMAGES.ALERT_LOW_STOCK.src,
       iconTone: "amber" as const,
       subtitle: "Below safety stock",
     },
     {
       title: "Pending Deliveries",
       value: toNumericValue(summary?.pendingDeliveries, toNumericValue(summary?.pendingAlerts, 0)),
-      icon: APP_IMAGES.DASHBOARD_LOGO.src,
+      icon: ASSETS.IMAGES.ALERT_PENDING_DELIVERY.src,
       iconTone: "indigo" as const,
       subtitle: "Open",
     },
@@ -138,19 +215,61 @@ export default function AlertsPage() {
       item.message?.toLowerCase().includes("critical")
   );
 
-  const invoiceRows = todayAlerts.filter(
-    (item) =>
-      item.alertType?.toLowerCase().includes("invoice") ||
-      item.alertType?.toLowerCase().includes("payment") ||
-      item.alertType?.toLowerCase().includes("delivery") ||
-      item.alertType?.toLowerCase().includes("purchase order") ||
-      item.message?.toLowerCase().includes("invoice") ||
-      item.message?.toLowerCase().includes("purchase order")
-  );
-
   const compactRows = criticalRows.length > 0 ? criticalRows : alerts.slice(0, 5);
-  const invoiceList = invoiceRows.length > 0 ? invoiceRows : invoices.slice(0, 5);
-  const displayAlerts = alerts.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const visibleCriticalRows = useMemo(() => {
+    if (criticalFilter === "All") return compactRows;
+    return compactRows.filter((item) => (item.alertType || "Alert") === criticalFilter);
+  }, [compactRows, criticalFilter]);
+
+  const criticalFilterOptions = useMemo(() => {
+    const types = Array.from(new Set(compactRows.map((item) => item.alertType || "Alert")));
+    return [
+      { label: "All Alerts", value: "All" },
+      ...types.map((type) => ({ label: type, value: type })),
+    ];
+  }, [compactRows]);
+
+  const invoiceStatusOptions = useMemo(() => {
+    const statuses = Array.from(
+      new Set(invoices.map((item) => item.status).filter((status): status is string => Boolean(status)))
+    );
+    return [
+      { label: "All Status", value: "All" },
+      ...statuses.map((status) => ({ label: status, value: status })),
+    ];
+  }, [invoices]);
+
+  const visibleInvoices = useMemo(() => {
+    if (invoiceStatusFilter === "All") return invoices;
+    return invoices.filter(
+      (item) => (item.status || "").toLowerCase() === invoiceStatusFilter.toLowerCase()
+    );
+  }, [invoices, invoiceStatusFilter]);
+
+  const normalizedSearch = normalizeSearchValue(searchTerm).toLowerCase();
+  const filteredAlerts = alerts.filter((item) => {
+    if (!normalizedSearch) return true;
+
+    const haystack = [
+      item.alertType,
+      item.message,
+      item.description,
+      item.productName,
+      item.relatedItem,
+      item.referenceId,
+      item.status,
+      item.vendorName,
+      item.severity,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+
+    return haystack.includes(normalizedSearch);
+  });
+
+  const totalVisibleAlerts = filteredAlerts.length;
+  const displayAlerts = filteredAlerts.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   return (
     <DashboardLayout>
@@ -183,89 +302,69 @@ export default function AlertsPage() {
         )}
 
         <div className={styles.compactRow}>
-          <div className={styles.compactTablePanel}>
-            <div className={styles.compactTableHeader}>Critical Alert</div>
-            <table className={styles.compactTable}>
-              <thead>
-                <tr>
-                  <th>Alerts</th>
-                  <th>RefID</th>
-                  <th>Description</th>
-                  <th>Time</th>
-                </tr>
-              </thead>
-              <tbody>
-                {compactRows.length > 0 ? (
-                  compactRows.slice(0, 5).map((item, idx) => (
-                    <tr key={`${item.id ?? idx}-critical`}>
-                      <td>{item.alertType || "Alert"}</td>
-                      <td>{item.referenceId ?? item.productId ?? item.refId ?? item.id ?? "-"}</td>
-                      <td>{item.message || item.description || item.productName || "System notification"}</td>
-                      <td>{formatTimeLabel(item.createdAt)}</td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={4} className={styles.emptyStateRow}>No data for today</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+          <CompactAlertTable
+            title="Critical Alert"
+            loading={tableLoading && compactRows.length === 0}
+            emptyMessage="No data for today"
+            filter={{
+              value: criticalFilter,
+              options: criticalFilterOptions,
+              onChange: setCriticalFilter,
+            }}
+            columns={[
+              { key: "alerts", header: "Alerts", render: (item) => item.alertType || "Alert" },
+              {
+                key: "refId",
+                header: "Ref ID",
+                render: (item) => item.referenceId ?? item.productId ?? item.refId ?? item.id ?? "—",
+              },
+              {
+                key: "description",
+                header: "Description",
+                render: (item) => item.message || item.description || item.productName || "—",
+              },
+              {
+                key: "time",
+                header: "Time",
+                render: (item) => <span className={styles.compactTime}>{formatTimeLabel(item.createdAt)}</span>,
+              },
+            ]}
+            rows={visibleCriticalRows}
+            getRowKey={(item, index) => `${item.id ?? index}-critical`}
+          />
 
-          <div className={styles.compactTablePanel}>
-            <div className={styles.compactTableHeader}>Invoice Alert</div>
-            <table className={styles.compactTable}>
-              <thead>
-                <tr>
-                  <th>Invoice ID</th>
-                  <th>Vendor</th>
-                  <th>Amount</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {invoiceList.length > 0 ? (
-                  invoiceList.slice(0, 5).map((item, idx) => {
-                    const record = item as unknown as Record<string, unknown>;
-                    const invoiceId = record.invoiceNumber ?? record.invoiceId ?? item.id ?? "INV-000";
-                    const vendorName =
-                      record.vendorName ??
-                      ((record.vendor as Record<string, unknown> | undefined)?.vendorName) ??
-                      ((record.vendor as Record<string, unknown> | undefined)?.companyName) ??
-                      record.customerName ??
-                      "Vendor";
-                    const amount = Number(record.totalAmount ?? record.amount ?? 0);
-
-                    return (
-                      <tr key={`${item.id ?? idx}-invoice`}>
-                        <td>{String(invoiceId)}</td>
-                        <td>{String(vendorName)}</td>
-                        <td>₹{Number.isFinite(amount) ? amount.toLocaleString("en-IN") : "0"}</td>
-                        <td>
-                          <span className={styles.miniStatus}>{item.status || "Pending"}</span>
-                        </td>
-                      </tr>
-                    );
-                  })
-                ) : (
-                  <tr>
-                    <td colSpan={4} className={styles.emptyStateRow}>No invoice alerts for today</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+          <CompactAlertTable
+            title="Invoice Alert"
+            loading={invoiceLoading}
+            emptyMessage="No invoice records found"
+            filter={{
+              value: invoiceStatusFilter,
+              options: invoiceStatusOptions,
+              onChange: setInvoiceStatusFilter,
+            }}
+            columns={[
+              { key: "invoiceId", header: "Invoice ID", render: (item) => formatInvoiceId(item) },
+              { key: "vendor", header: "Vendor", render: (item) => getInvoiceVendor(item) },
+              { key: "amount", header: "Amount", render: (item) => formatInvoiceAmount(item.totalAmount) },
+              {
+                key: "status",
+                header: "Status",
+                render: (item) => <StatusBadge label={item.status || "Pending"} variant="outline" />,
+              },
+            ]}
+            rows={visibleInvoices}
+            getRowKey={(item, index) => `${item.id ?? index}-invoice`}
+          />
         </div>
 
         <AlertsTable
           data={displayAlerts}
           loading={tableLoading}
-          totalItems={totalAlertsCount}
+          totalItems={Math.max(totalVisibleAlerts, 0)}
           currentPage={currentPage}
           pageSize={pageSize}
           onSearchChange={(value) => {
-            setSearchTerm(value);
+            setSearchTerm(normalizeSearchValue(value));
             setCurrentPage(1);
           }}
           onStatusChange={(value) => {

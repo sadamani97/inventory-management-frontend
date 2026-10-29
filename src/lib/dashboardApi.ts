@@ -225,10 +225,18 @@ export interface PurchaseOrderItem {
   productName?: string;
   quantity?: number;
   unitCost?: number;
+  unitPrice?: number;
   createdAt?: string;
   expectedDeliveryDate?: string;
   orderDate?: string;
-  items?: { quantity?: number }[];
+  items?: Array<{
+    quantity?: number;
+    unitCost?: number;
+    unitPrice?: number;
+    productName?: string;
+    totalAmount?: number;
+    product?: { productName?: string };
+  }>;
 }
 
 export interface SalesOrderItem {
@@ -243,7 +251,12 @@ export interface SalesOrderItem {
   customerType?: string;
   quantity?: number;
   isDraft?: boolean;
-  items?: { quantity?: number }[];
+  items?: Array<{
+    quantity?: number;
+    unitPrice?: number;
+    productName?: string;
+    total?: number;
+  }>;
 }
 
 export interface SalesOrderStatsResponse {
@@ -357,14 +370,14 @@ export function normalizeAlertItem(raw: ApiRecord): AlertItem {
 export function normalizeInvoiceItem(raw: ApiRecord): InvoiceItem {
   const vendorRecord = raw && typeof raw === "object" ? (raw as Record<string, unknown>).vendor as ApiRecord : undefined;
   const invoiceNumber = getTextValue(
-    getNestedValue(raw, "invoiceNumber", "invoice_number", "invoiceId", "invoice_id", "id"),
-    "INV"
-  ) || "INV";
+    getNestedValue(raw, "invoiceNumber", "invoice_number", "invoiceId", "invoice_id", "orderNumber", "soNumber", "poNumber", "id")
+  );
   const vendorName = getTextValue(
     getNestedValue(raw, "vendorName", "supplierName", "companyName"),
     getNestedValue(vendorRecord, "vendorName", "companyName"),
     getNestedValue(raw, "customerName")
-  ) || "Vendor";
+  );
+  const status = getTextValue(getNestedValue(raw, "status", "paymentStatus", "invoiceStatus"));
 
   return {
     id: getFirstDefinedValue(getNestedValue(raw, "id", "invoiceId", "_id"), invoiceNumber) as string | number,
@@ -372,9 +385,9 @@ export function normalizeInvoiceItem(raw: ApiRecord): InvoiceItem {
     vendorName,
     customerName: vendorName,
     totalAmount: getNumberValue(getNestedValue(raw, "totalAmount", "amount", "value", "invoiceAmount")) ?? 0,
-    status: getTextValue(getNestedValue(raw, "status", "paymentStatus", "invoiceStatus")) || "Pending",
+    status,
     createdAt: getTextValue(getNestedValue(raw, "createdAt", "invoiceDate", "date", "dueDate")),
-    vendor: (vendorRecord as { vendorName?: string; companyName?: string }) || { vendorName, companyName: vendorName },
+    vendor: (vendorRecord as { vendorName?: string; companyName?: string }) || undefined,
   };
 }
 

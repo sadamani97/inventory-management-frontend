@@ -23,7 +23,7 @@ import {
   PurchaseOrderItem,
   CreatePurchaseOrderPayload,
 } from "@/lib/dashboardApi";
-import { APP_IMAGES } from "@/constants/images";
+import { ASSETS } from "@/constants/assets";
 import styles from "@/styles/pages/inventory.module.css";
 import {
   FiSearch,
@@ -715,7 +715,7 @@ export default function InventoryPage() {
                     const category = p.category?.categoryName || "-";
                     const qty = p.quantity ?? 0;
                     const imageUrl =
-                      p.imageUrl || APP_IMAGES.DASHBOARD_PRODUCT.src;
+                      p.imageUrl || ASSETS.IMAGES.DASHBOARD_PRODUCT.src;
 
                     // Determine stock status & progress bar percentage
                     let statusLabel = "In Stock";
@@ -750,7 +750,7 @@ export default function InventoryPage() {
                         <td>
                           <div className={styles.productCell}>
                             <Image
-                              src={imageUrl || APP_IMAGES.LOGO.src}
+                              src={imageUrl || ASSETS.LOGOS.PRIMARY.src}
                               alt={name}
                               width={36}
                               height={36}
@@ -904,7 +904,7 @@ export default function InventoryPage() {
                   <Image
                     src={
                       selectedProduct.imageUrl ||
-                      APP_IMAGES.DASHBOARD_PRODUCT.src
+                      ASSETS.IMAGES.DASHBOARD_PRODUCT.src
                     }
                     alt={selectedProduct.productName || "Product"}
                     width={48}

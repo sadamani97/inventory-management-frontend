@@ -15,6 +15,7 @@ interface CustomSelectProps {
   placeholder?: string;
   width?: string;
   height?: string;
+  size?: "sm" | "md";
   className?: string;
   onAddNew?: (newLabel: string) => Promise<string | void> | string | void;
   addNewButtonText?: string;
@@ -26,8 +27,9 @@ export default function CustomSelect({
   value,
   onChange,
   placeholder = "Select...",
-  width = "140px",
-  height = "38px",
+  width,
+  height,
+  size = "md",
   className = "",
   onAddNew,
   addNewButtonText = "+ Add new category",
@@ -79,12 +81,20 @@ export default function CustomSelect({
     }
   };
 
+  const containerClassName = [
+    styles.selectContainer,
+    size === "sm" ? styles.sizeSm : "",
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <div className={`${styles.selectContainer} ${className}`} ref={containerRef} style={{ width }}>
+    <div className={containerClassName} ref={containerRef} style={width ? { width } : undefined}>
       <button
         type="button"
         className={`${styles.triggerBtn} ${isOpen ? styles.triggerActive : ""}`}
-        style={{ height }}
+        style={height ? { height } : undefined}
         onClick={() => setIsOpen(!isOpen)}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
@@ -94,7 +104,7 @@ export default function CustomSelect({
       </button>
 
       {isOpen && (
-        <div className={styles.dropdownMenu} style={{ width }} role="listbox">
+        <div className={styles.dropdownMenu} style={width ? { width } : undefined} role="listbox">
           <div className={styles.optionsList}>
             {options.map((option, index) => {
               const isSelected = String(option.value) === String(value);

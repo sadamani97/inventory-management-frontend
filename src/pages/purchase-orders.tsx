@@ -10,7 +10,6 @@ import {
   ProductItem,
 } from "@/lib/dashboardApi";
 import styles from "@/styles/pages/purchaseOrders.module.css";
-import Image from "next/image";
 import { FiDownload, FiPlus, FiSearch, FiMoreHorizontal } from "react-icons/fi";
 
 import CreatePOModal from "@/components/dashboard/CreatePOModal";
@@ -19,7 +18,8 @@ import CustomDatePicker from "@/components/dashboard/CustomDatePicker";
 import CustomSelect from "@/components/ui/CustomSelect";
 import Pagination from "@/components/ui/Pagination";
 import ExportDialog from "@/components/ui/ExportDialog";
-import { APP_IMAGES } from "@/constants/images";
+import MetricCard from "@/components/common/MetricCard";
+import { ASSETS } from "@/constants/assets";
 
 export default function PurchaseOrdersPage() {
   const [orders, setOrders] = useState<PurchaseOrderItem[]>([]);
@@ -177,85 +177,34 @@ export default function PurchaseOrdersPage() {
 
         {/* Stats Grid */}
         <div className={styles?.statsGrid}>
-          <div className={styles?.statCard}>
-            <div className={styles?.statHeader}>
-              <span className={styles?.statTitle}>Total Purchase Orders</span>
-              <div
-                className={`${styles?.statIconWrapper} ${styles.purchaseOrdersElement1}`}
-              >
-                <Image
-                  {...APP_IMAGES.TPO_ICON}
-                  alt={APP_IMAGES.TPO_ICON.alt}
-                  className={styles?.statIcon}
-                />
-              </div>
-            </div>
-            <div className={styles?.statBody}>
-              <span className={styles?.statValue}>{stats?.total}</span>
-              <span className={styles?.statSubtitle}>Total created POs</span>
-            </div>
-          </div>
-
-          <div className={styles?.statCard}>
-            <div className={styles?.statHeader}>
-              <span className={styles?.statTitle}>Pending Orders</span>
-              <div
-                className={`${styles?.statIconWrapper} ${styles.purchaseOrdersElement2}`}
-              >
-                <Image
-                  {...APP_IMAGES.PENDING_ORDER}
-                  alt={APP_IMAGES.PENDING_ORDER.alt}
-                  className={styles?.statIcon}
-                />
-              </div>
-            </div>
-            <div className={styles?.statBody}>
-              <span className={styles?.statValue}>{stats?.pending}</span>
-              <span className={styles?.statSubtitle}>Still Processing</span>
-            </div>
-          </div>
-
-          <div className={styles?.statCard}>
-            <div className={styles?.statHeader}>
-              <span className={styles?.statTitle}>Completed Orders</span>
-              <div
-                className={`${styles?.statIconWrapper} ${styles.purchaseOrdersElement3}`}
-              >
-                <Image
-                  {...APP_IMAGES.COMPLETE_ORDER}
-                  alt={APP_IMAGES.COMPLETE_ORDER.alt}
-                  className={styles?.statIcon}
-                />
-              </div>
-            </div>
-            <div className={styles?.statBody}>
-              <span className={styles?.statValue}>{stats?.completed}</span>
-              <span className={styles?.statSubtitle}>
-                Successfully delivered
-              </span>
-            </div>
-          </div>
-
-          <div className={styles?.statCard}>
-            <div className={styles?.statHeader}>
-              <span className={styles?.statTitle}>Cancelled Orders</span>
-              <div
-                className={`${styles?.statIconWrapper} ${styles.purchaseOrdersElement4}`}
-              >
-                <Image
-                  {...APP_IMAGES.CANCEL_ORDER}
-                  alt={APP_IMAGES.CANCEL_ORDER.alt}
-                  className={styles?.statIcon}
-                />
-              </div>
-            </div>
-            <div className={styles?.statBody}>
-              <span className={styles?.statValue}>{stats?.canceled}</span>
-              <span className={styles?.statSubtitle}>
-                Cancelled before completion
-              </span>
-            </div>
-          </div>
+          <MetricCard
+            title="Total Purchase Orders"
+            value={stats?.total}
+            subtitle="Total created POs"
+            icon={ASSETS.ICONS.TPO.src}
+            tone="blue"
+          />
+          <MetricCard
+            title="Pending Orders"
+            value={stats?.pending}
+            subtitle="Still Processing"
+            icon={ASSETS.ICONS.PENDING_ORDER.src}
+            tone="amber"
+          />
+          <MetricCard
+            title="Completed Orders"
+            value={stats?.completed}
+            subtitle="Successfully delivered"
+            icon={ASSETS.ICONS.COMPLETE_ORDER.src}
+            tone="green"
+          />
+          <MetricCard
+            title="Cancelled Orders"
+            value={stats?.canceled}
+            subtitle="Cancelled before completion"
+            icon={ASSETS.ICONS.CANCEL_ORDER.src}
+            tone="red"
+          />
         </div>
 
         {/* Middle Section */}

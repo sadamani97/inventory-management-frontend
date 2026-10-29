@@ -13,6 +13,8 @@ import { FiDownload, FiPlus, FiSearch, FiEye, FiEdit2, FiShoppingCart, FiDollarS
 import Pagination from "@/components/ui/Pagination";
 import ExportDialog from "@/components/ui/ExportDialog";
 import SalesOrderModal, { SalesOrderMode } from "@/components/dashboard/SalesOrderModal";
+import MetricCard from "@/components/common/MetricCard";
+import { ASSETS } from "@/constants/assets";
 import { toast } from "react-toastify";
 
 export default function SalesOrdersPage() {
@@ -132,65 +134,34 @@ export default function SalesOrdersPage() {
 
         {/* Stats Grid */}
         <div className={styles?.statsGrid}>
-          <div className={styles?.statCard}>
-            <div className={styles?.statHeader}>
-              <span className={styles?.statTitle}>Total Sales Orders</span>
-              <div className={`${styles?.statIconWrapper} ${styles?.iconBlue}`}>
-                <FiShoppingCart className={styles?.statIcon} />
-              </div>
-            </div>
-            <div className={styles?.statBody}>
-              <span className={styles?.statValue}>
-                {stats?.totalSalesOrders?.toLocaleString() || "0"}
-              </span>
-              <span className={styles?.statSubtitle}>Orders Placed</span>
-            </div>
-          </div>
-
-          <div className={styles?.statCard}>
-            <div className={styles?.statHeader}>
-              <span className={styles?.statTitle}>Total Order Value</span>
-              <div className={`${styles?.statIconWrapper} ${styles?.iconGreen}`}>
-                <FiDollarSign className={styles?.statIcon} />
-              </div>
-            </div>
-            <div className={styles?.statBody}>
-              <span className={styles?.statValue}>
-                {stats?.totalOrderValueFormatted || "₹0"}
-              </span>
-              <span className={styles?.statSubtitle}>Revenue Generated</span>
-            </div>
-          </div>
-
-          <div className={styles?.statCard}>
-            <div className={styles?.statHeader}>
-              <span className={styles?.statTitle}>Average Order Value</span>
-              <div className={`${styles?.statIconWrapper} ${styles?.iconPurple}`}>
-                <FiFileText className={styles?.statIcon} />
-              </div>
-            </div>
-            <div className={styles?.statBody}>
-              <span className={styles?.statValue}>
-                {stats?.averageOrderValueFormatted || "₹0"}
-              </span>
-              <span className={styles?.statSubtitle}>Avg Spend/Customer</span>
-            </div>
-          </div>
-
-          <div className={styles?.statCard}>
-            <div className={styles?.statHeader}>
-              <span className={styles?.statTitle}>Active Buyers</span>
-              <div className={`${styles?.statIconWrapper} ${styles?.iconOrange}`}>
-                <FiUsers className={styles?.statIcon} />
-              </div>
-            </div>
-            <div className={styles?.statBody}>
-              <span className={styles?.statValue}>
-                {stats?.activeBuyers?.toLocaleString() || "0"}
-              </span>
-              <span className={styles?.statSubtitle}>Unique Customers</span>
-            </div>
-          </div>
+          <MetricCard
+            title="Total Sales Orders"
+            value={stats?.totalSalesOrders?.toLocaleString() || "0"}
+            subtitle="Orders Placed"
+            icon={ASSETS.ICONS.TPO.src}
+            tone="blue"
+          />
+          <MetricCard
+            title="Total Order Value"
+            value={stats?.totalOrderValueFormatted || "₹0"}
+            subtitle="Revenue Generated"
+            icon={ASSETS.IMAGES.REPORT_TODAYS_REVENUE.src}
+            tone="green"
+          />
+          <MetricCard
+            title="Average Order Value"
+            value={stats?.averageOrderValueFormatted || "₹0"}
+            subtitle="Avg Spend/Customer"
+            icon={ASSETS.IMAGES.REPORT_INVENTORY_VALUE.src}
+            tone="purple"
+          />
+          <MetricCard
+            title="Active Buyers"
+            value={stats?.activeBuyers?.toLocaleString() || "0"}
+            subtitle="Unique Customers"
+            icon={ASSETS.ICONS.ORDER_PAGE.src}
+            tone="amber"
+          />
         </div>
 
         {/* Orders List */}

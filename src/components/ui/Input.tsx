@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import Image from "next/image";
-import { APP_IMAGES } from "@/constants/images";
+import { ASSETS } from "@/constants/assets";
 
 type InputProps = React.InputHTMLAttributes<HTMLInputElement> & {
   label: string;
@@ -37,7 +37,7 @@ export default function Input({
             onClick={() => setShowPassword(!showPassword)}
             tabIndex={-1}
           >
-            <Image {...APP_IMAGES.EYE_LOGO} alt={APP_IMAGES.EYE_LOGO.alt} />
+            <Image {...ASSETS.LOGOS.EYE} alt={ASSETS.LOGOS.EYE.alt} />
           </button>
         )}
       </div>

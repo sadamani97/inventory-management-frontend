@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Image from "next/image";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { APP_IMAGES } from "@/constants/images";
+import { ASSETS } from "@/constants/assets";
 import styles from "@/styles/pages/vendorDetails.module.css";
 import {
   fetchVendorById,
@@ -295,7 +295,7 @@ export default function VendorDetailPage() {
               src={
                 vendorObj?.vendorLogo
                   ? `/${vendorObj.vendorLogo}`
-                  : APP_IMAGES.DAILY_NEED.src
+                  : ASSETS.IMAGES.DAILY_NEED.src
               }
               alt="Vendor Logo"
               width={44}
@@ -458,16 +458,16 @@ export default function VendorDetailPage() {
                   </div>
                   <div className={styles.carriersGroup}>
                     <Image
-                      {...APP_IMAGES.INDIAMART}
-                      alt={APP_IMAGES.INDIAMART.alt}
+                      {...ASSETS.IMAGES.INDIAMART}
+                      alt={ASSETS.IMAGES.INDIAMART.alt}
                       width={80}
                       height={24}
                       className={styles.carrierLogoImg}
                     />
 
                     <Image
-                      {...APP_IMAGES.TRADEINDIA}
-                      alt={APP_IMAGES.TRADEINDIA.alt}
+                      {...ASSETS.IMAGES.TRADEINDIA}
+                      alt={ASSETS.IMAGES.TRADEINDIA.alt}
                       width={80}
                       height={24}
                       className={styles.carrierLogoImg}
@@ -565,8 +565,8 @@ export default function VendorDetailPage() {
                 <span className={styles.bigScore}>4.3</span>
                 <div className={styles.starsGroup}>
                   <Image
-                    {...APP_IMAGES.STARS}
-                    alt={APP_IMAGES.STARS.alt}
+                    {...ASSETS.IMAGES.STARS}
+                    alt={ASSETS.IMAGES.STARS.alt}
                     className={styles.starsImg}
                   />
                   <span className={styles.totalReviewsText}>4807 reviews</span>
