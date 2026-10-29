@@ -369,14 +369,14 @@ export default function PurchaseOrdersPage() {
                 {tableLoading ? (
                   Array.from({ length: pageSize > 10 ? 10 : pageSize }).map((_, idx) => (
                     <tr key={`po-skel-${idx}`} className={styles.skeletonRow}>
-                      <td><div className={styles.skeletonBone} style={{ width: "90px" }} /></td>
-                      <td><div className={styles.skeletonBone} style={{ width: "130px" }} /></td>
-                      <td><div className={styles.skeletonBone} style={{ width: "40px" }} /></td>
-                      <td><div className={styles.skeletonBone} style={{ width: "80px" }} /></td>
+                      <td><div className={`${styles.skeletonBone} ${styles.purchaseOrdersElement10 || ""}`} /></td>
+                      <td><div className={styles.skeletonBone} /></td>
+                      <td><div className={styles.skeletonBone} /></td>
+                      <td><div className={styles.skeletonBone} /></td>
                       <td><div className={styles.skeletonBadge} /></td>
-                      <td><div className={styles.skeletonBone} style={{ width: "85px" }} /></td>
-                      <td><div className={styles.skeletonBone} style={{ width: "85px" }} /></td>
-                      <td><div className={styles.skeletonBone} style={{ width: "24px" }} /></td>
+                      <td><div className={styles.skeletonBone} /></td>
+                      <td><div className={styles.skeletonBone} /></td>
+                      <td><div className={styles.skeletonBone} /></td>
                     </tr>
                   ))
                 ) : orders?.length > 0 ? (
@@ -435,7 +435,7 @@ export default function PurchaseOrdersPage() {
                             )
                           : "Not Set"}
                       </td>
-                      <td style={{ position: "relative" }}>
+                      <td className={styles.relativeCell || ""}>
                         <button
                           className={styles.actionMenuBtn}
                           onClick={(e) => {

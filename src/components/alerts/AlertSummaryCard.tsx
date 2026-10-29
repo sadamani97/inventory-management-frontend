@@ -1,6 +1,5 @@
 import React from "react";
-import MetricCard from "@/components/common/MetricCard";
-import styles from "@/styles/pages/alerts.module.css";
+import MetricCard, { MetricCardTone } from "@/components/common/MetricCard";
 
 interface AlertSummaryCardProps {
   title: string;
@@ -8,6 +7,7 @@ interface AlertSummaryCardProps {
   icon: string;
   iconTone?: "blue" | "red" | "amber" | "indigo";
   subtitle?: string;
+  loading?: boolean;
 }
 
 export default function AlertSummaryCard({
@@ -16,21 +16,16 @@ export default function AlertSummaryCard({
   icon,
   iconTone = "blue",
   subtitle,
+  loading = false,
 }: AlertSummaryCardProps) {
-  const iconClassName = {
-    blue: styles.summaryIconBlue,
-    red: styles.summaryIconRed,
-    amber: styles.summaryIconAmber,
-    indigo: styles.summaryIconIndigo,
-  }[iconTone];
-
   return (
     <MetricCard
       title={title}
       value={value}
       subtitle={subtitle}
       icon={icon}
-      tone={iconTone === "blue" ? "blue" : iconTone === "red" ? "red" : iconTone === "amber" ? "amber" : "indigo"}
+      tone={iconTone as MetricCardTone}
+      loading={loading}
     />
   );
 }

@@ -166,7 +166,7 @@ export default function SalesOrdersPage() {
 
         {/* Orders List */}
         <div className={styles?.listSection}>
-          <div className={styles?.pageHeader} style={{ marginBottom: "16px" }}>
+          <div className={styles.listHeader}>
             <h2 className={styles?.cardTitle}>
               Orders List
               {tableLoading && <span className={styles.loadingSpinner} />}
@@ -193,13 +193,12 @@ export default function SalesOrdersPage() {
             </div>
             <div className={styles?.rightControls}>
               <select
-                className={styles?.btnExport}
+                className={styles.statusFilterSelect}
                 value={statusFilter}
                 onChange={(e) => {
                   setStatusFilter(e?.target?.value);
                   setCurrentPage(1);
                 }}
-                style={{ padding: "8px 12px", border: "1px solid var(--border)", borderRadius: "8px", outline: "none", backgroundColor: "var(--surface)" }}
               >
                 <option value="All Status">Status: All</option>
                 <option value="Paid">Paid</option>
@@ -228,13 +227,13 @@ export default function SalesOrdersPage() {
                 {tableLoading ? (
                   Array.from({ length: pageSize > 10 ? 10 : pageSize }).map((_, idx) => (
                     <tr key={`so-skel-${idx}`} className={styles.skeletonRow}>
-                      <td><div className={styles.skeletonBone} style={{ width: "90px" }} /></td>
-                      <td><div className={styles.skeletonBone} style={{ width: "130px" }} /></td>
-                      <td><div className={styles.skeletonBone} style={{ width: "60px" }} /></td>
-                      <td><div className={styles.skeletonBone} style={{ width: "80px" }} /></td>
-                      <td><div className={styles.skeletonBone} style={{ width: "70px" }} /></td>
+                      <td><div className={`${styles.skeletonBone} ${styles.skelWidth90}`} /></td>
+                      <td><div className={`${styles.skeletonBone} ${styles.skelWidth130}`} /></td>
+                      <td><div className={`${styles.skeletonBone} ${styles.skelWidth60}`} /></td>
+                      <td><div className={`${styles.skeletonBone} ${styles.skelWidth80}`} /></td>
+                      <td><div className={`${styles.skeletonBone} ${styles.skelWidth70}`} /></td>
                       <td><div className={styles.skeletonBadge} /></td>
-                      <td><div className={styles.skeletonBone} style={{ width: "60px" }} /></td>
+                      <td><div className={`${styles.skeletonBone} ${styles.skelWidth60}`} /></td>
                     </tr>
                   ))
                 ) : orders?.length > 0 ? (
@@ -242,12 +241,12 @@ export default function SalesOrdersPage() {
                     const itemsCount = so?.items?.reduce((acc, item) => acc + (item?.quantity || 0), 0) || so?.quantity || 1;
                     return (
                       <tr key={String(so?.id || idx)}>
-                        <td style={{ fontWeight: 600 }}>
+                        <td className={styles.semiboldCell}>
                           {String(so?.orderNumber || so?.soNumber || `SO-100${idx + 1}`)}
                         </td>
                         <td>{String(so?.customerType || so?.customerName || "Walk In Customer")}</td>
                         <td>{itemsCount} items</td>
-                        <td style={{ fontWeight: 600 }}>
+                        <td className={styles.semiboldCell}>
                           ₹{Number(so?.totalAmount || 0).toLocaleString()}
                         </td>
                         <td>{formatTime(so?.createdAt || so?.orderDate)}</td>

@@ -50,12 +50,12 @@
   opacity: 1;
 }
 
-.blue { background: #eaf0ff; }
-.green { background: #eafaf3; }
-.purple { background: #f3e8ff; }
-.red { background: #ffe5e5; }
-.amber { background: #fff1d6; }
-.indigo { background: #edf2ff; }
+.blue { background: var(--tone-blue-bg); }
+.green { background: var(--tone-green-bg); }
+.purple { background: var(--tone-purple-bg); }
+.red { background: var(--tone-red-bg); }
+.amber { background: var(--tone-amber-bg); }
+.indigo { background: var(--tone-indigo-bg); }
 
 .valueRow {
   display: flex;
@@ -76,6 +76,38 @@
   font-size: 12px;
   line-height: 1.4;
   color: var(--text-subtle);
+}
+
+.titleSkeleton {
+  width: 110px;
+  height: 14px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--hover-bg) 25%, var(--border) 50%, var(--hover-bg) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+.iconSkeleton {
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  background: linear-gradient(90deg, var(--hover-bg) 25%, var(--border) 50%, var(--hover-bg) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+.valueSkeleton {
+  width: 90px;
+  height: 28px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--hover-bg) 25%, var(--border) 50%, var(--hover-bg) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
 @media (max-width: 1200px) {

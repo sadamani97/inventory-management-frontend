@@ -1,13 +1,14 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
-import Image from "next/image";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { toast } from "react-toastify";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import Pagination from "@/components/ui/Pagination";
-import CustomSelect from "@/components/ui/CustomSelect";
+import CustomSelect, { CustomSelectOption } from "@/components/ui/CustomSelect";
 import ExportDialog from "@/components/ui/ExportDialog";
 import Table, { TableColumn } from "@/components/ui/Table";
+import MetricCard, { MetricCardTone } from "@/components/common/MetricCard";
+import InvoiceDetailsModal, { InvoiceRecord, InvoiceLineItem } from "@/components/invoices/InvoiceDetailsModal";
 import {
   fetchSalesOrdersList,
   fetchPurchaseOrdersList,
@@ -18,7 +19,7 @@ import {
 } from "@/lib/dashboardApi";
 import { ASSETS } from "@/constants/assets";
 import styles from "@/styles/pages/invoices.module.css";
-import { FiDownload, FiSearch, FiX } from "react-icons/fi";
+import { FiDownload, FiSearch } from "react-icons/fi";
 
 type InvoiceType = "sales" | "purchase";
 
@@ -30,26 +31,21 @@ type OrderLineItem = {
   product?: { productName?: string };
 };
 
-type InvoiceLineItem = {
-  productName: string;
-  quantity: number;
-  unitPrice: number;
-  total: number;
-};
+const INVOICE_TYPE_OPTIONS: CustomSelectOption[] = [
+  { label: "Sales", value: "sales" },
+  { label: "Purchase", value: "purchase" },
+];
 
-type InvoiceRecord = {
-  id: number | string;
-  type: InvoiceType;
-  invoiceNumber: string;
-  referenceNumber: string;
-  customerName: string;
-  contactName: string;
-  totalAmount: number;
-  status: string;
-  paymentMode: string;
-  createdAt: string;
-  items: InvoiceLineItem[];
-};
+const STATUS_FILTER_OPTIONS: CustomSelectOption[] = [
+  { label: "All Status", value: "All Status" },
+  { label: "Paid", value: "Paid" },
+  { label: "Pending", value: "Pending" },
+  { label: "Draft", value: "Draft" },
+  { label: "Completed", value: "Completed" },
+  { label: "Cancelled", value: "Cancelled" },
+];
+
+const PAGE_SIZE_OPTIONS = [5, 10, 15, 20];
 
 const formatCurrency = (value: number) => `₹${Number(value || 0).toLocaleString("en-IN")}`;
 
@@ -90,8 +86,8 @@ const normalizeSalesInvoices = (records: SalesOrderItem[]): InvoiceRecord[] =>
       type: "sales",
       invoiceNumber: toInvoiceNumber(safeId),
       referenceNumber: String(order.orderNumber || order.soNumber || `SO-${safeId}`),
-      customerName: String(order.customerName || order.customerType || "Walk in Customer"),
-      contactName: String(order.customerName || order.customerType || "Walk in Customer"),
+      customerName: String(order.customerName || order.customerType || "Customer"),
+      contactName: String(order.customerName || order.customerType || "Customer"),
       totalAmount: Number(order.totalAmount || 0),
       status: String(order.status || "Paid"),
       paymentMode: "UPI",
@@ -169,9 +165,10 @@ export default function InvoicesPage() {
           .toLowerCase();
 
         const matchesQuery = !normalizedQuery || searchableText.includes(normalizedQuery);
-        const matchesStatus = selectedStatus === "All Status"
-          || !invoice.status
-          || invoice.status.toLowerCase() === selectedStatus.toLowerCase();
+        const matchesStatus =
+          selectedStatus === "All Status" ||
+          !invoice.status ||
+          invoice.status.toLowerCase() === selectedStatus.toLowerCase();
 
         return matchesQuery && matchesStatus;
       });
@@ -186,9 +183,11 @@ export default function InvoicesPage() {
     const todaysInvoices = allInvoices.filter((invoice) => {
       const created = invoice.createdAt ? new Date(invoice.createdAt) : null;
       if (!created || Number.isNaN(created.getTime())) return false;
-      return created.getFullYear() === today.getFullYear()
-        && created.getMonth() === today.getMonth()
-        && created.getDate() === today.getDate();
+      return (
+        created.getFullYear() === today.getFullYear() &&
+        created.getMonth() === today.getMonth() &&
+        created.getDate() === today.getDate()
+      );
     }).length;
 
     const overallInvoiceValue = allInvoices.reduce((sum, invoice) => sum + Number(invoice.totalAmount || 0), 0);
@@ -200,28 +199,28 @@ export default function InvoicesPage() {
         value: totalInvoices.toLocaleString("en-IN"),
         subtitle: "",
         icon: ASSETS.IMAGES.INVOICE_TOTAL.src,
-        tone: "blue",
+        tone: "blue" as MetricCardTone,
       },
       {
         title: "Today's Invoices",
         value: todaysInvoices.toLocaleString("en-IN"),
         subtitle: "",
         icon: ASSETS.IMAGES.INVOICE_TODAY.src,
-        tone: "green",
+        tone: "green" as MetricCardTone,
       },
       {
         title: "Overall Invoice value",
         value: formatCompactCurrency(overallInvoiceValue),
         subtitle: "",
         icon: ASSETS.IMAGES.INVOICE_OVERALL_VALUE.src,
-        tone: "greenAlt",
+        tone: "indigo" as MetricCardTone,
       },
       {
         title: "Avg. Invoice Value",
         value: formatCompactCurrency(avgInvoiceValue),
         subtitle: "",
         icon: ASSETS.IMAGES.INVOICE_AVERAGE_VALUE.src,
-        tone: "orange",
+        tone: "amber" as MetricCardTone,
       },
     ];
   }, [salesInvoices, purchaseInvoices]);
@@ -249,32 +248,32 @@ export default function InvoicesPage() {
     const fallbackRecords = filterInvoicesByQuery(sourceRecords, safeSearch, statusFilter);
     const fallbackPageRecords = fallbackRecords.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
-    const request = activeType === "sales"
-      ? fetchSalesOrdersPaginated({
-          page: currentPage,
-          limit: pageSize,
-          search: safeSearch || undefined,
-          status: statusFilter !== "All Status" ? statusFilter : undefined,
-        })
-      : fetchPurchaseOrdersPaginated({
-          page: currentPage,
-          limit: pageSize,
-          search: safeSearch || undefined,
-          status: statusFilter !== "All Status" ? statusFilter : undefined,
-        });
+    const request =
+      activeType === "sales"
+        ? fetchSalesOrdersPaginated({
+            page: currentPage,
+            limit: pageSize,
+            search: safeSearch || undefined,
+            status: statusFilter !== "All Status" ? statusFilter : undefined,
+          })
+        : fetchPurchaseOrdersPaginated({
+            page: currentPage,
+            limit: pageSize,
+            search: safeSearch || undefined,
+            status: statusFilter !== "All Status" ? statusFilter : undefined,
+          });
 
     request
       .then((result) => {
         if (!isMounted) return;
 
-        const backendRecords = activeType === "sales"
-          ? normalizeSalesInvoices(result.data || [])
-          : normalizePurchaseInvoices(result.data || []);
+        const backendRecords =
+          activeType === "sales"
+            ? normalizeSalesInvoices(result.data || [])
+            : normalizePurchaseInvoices(result.data || []);
 
         const hasBackendResults = Array.isArray(result.data) && result.data.length > 0;
-        const pageRecords = hasBackendResults
-          ? backendRecords
-          : fallbackPageRecords;
+        const pageRecords = hasBackendResults ? backendRecords : fallbackPageRecords;
         const totalRecords = hasBackendResults ? (result.totalItems || backendRecords.length) : fallbackRecords.length;
 
         if (activeType === "sales") {
@@ -329,7 +328,6 @@ export default function InvoicesPage() {
   }, [activeType, salesPageInvoices, purchasePageInvoices, searchQuery, statusFilter, filterInvoicesByQuery]);
 
   const activeHeadline = "Invoice List";
-  const detailProductLabel = activeType === "sales" ? "Sold Product" : "Purchased Product";
 
   const handleExportButtonClick = useCallback(() => {
     if (!visibleInvoices.length) {
@@ -340,49 +338,44 @@ export default function InvoicesPage() {
     setIsExportOpen(true);
   }, [visibleInvoices]);
 
-  const handleExportInvoices = useCallback(() => {
-    if (!visibleInvoices.length) {
-      toast.error("No invoice records to export.");
-      return;
-    }
-
-    try {
-      const doc = new jsPDF();
-      const columnHeaders = ["Invoice No.", "Order No.", activeType === "sales" ? "Customer" : "Vendor", "Items", "Amount", "Status"];
-      const rows = visibleInvoices.map((invoice) => [
-        invoice.invoiceNumber,
-        invoice.referenceNumber,
-        invoice.customerName,
-        String(invoice.items.reduce((sum, item) => sum + item.quantity, 0)),
-        formatCurrency(invoice.totalAmount),
-        invoice.status,
-      ]);
-
-      doc.setFont("helvetica", "bold");
-      doc.text(activeHeadline, 14, 15);
-      autoTable(doc, {
-        head: [columnHeaders],
-        body: rows,
-        startY: 22,
-        styles: { fontSize: 8, cellPadding: 4 },
-        headStyles: { fillColor: [37, 99, 235], textColor: [255, 255, 255], fontStyle: "bold" },
-        alternateRowStyles: { fillColor: [248, 250, 252] },
-        margin: { left: 14, right: 14 },
-      });
-
-      doc.save(`${activeType}-invoices.pdf`);
-      toast.success("Invoice PDF downloaded successfully.");
-      setIsExportOpen(false);
-    } catch (error) {
-      console.error("Failed to export invoice PDF:", error);
-      toast.error("Failed to generate invoice PDF.");
-    }
-  }, [activeHeadline, activeType, visibleInvoices]);
-
   const selectedInvoice = useMemo(
     () => visibleInvoices.find((item) => item.invoiceNumber === selectedInvoiceNumber) || null,
     [selectedInvoiceNumber, visibleInvoices],
   );
+
+  const handleExportSingleInvoice = useCallback((invoice: InvoiceRecord) => {
+    try {
+      const doc = new jsPDF();
+      doc.setFont("helvetica", "bold");
+      doc.text(`Invoice - ${invoice.invoiceNumber}`, 14, 15);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Order: ${invoice.referenceNumber}`, 14, 22);
+      doc.text(`Party: ${invoice.customerName}`, 14, 28);
+      doc.text(`Total: ${formatCurrency(invoice.totalAmount)}`, 14, 34);
+
+      const itemsHeader = ["Product", "Price", "Qty", "Total"];
+      const itemRows = invoice.items.map((it) => [
+        it.productName,
+        formatCurrency(it.unitPrice),
+        String(it.quantity),
+        formatCurrency(it.total),
+      ]);
+
+      autoTable(doc, {
+        head: [itemsHeader],
+        body: itemRows,
+        startY: 42,
+        styles: { fontSize: 9, cellPadding: 4 },
+        headStyles: { fillColor: [37, 99, 235], textColor: [255, 255, 255], fontStyle: "bold" },
+      });
+
+      doc.save(`${invoice.invoiceNumber}.pdf`);
+      toast.success(`Invoice ${invoice.invoiceNumber} exported.`);
+    } catch (err) {
+      console.error("Export invoice failed:", err);
+      toast.error("Failed to export invoice PDF.");
+    }
+  }, []);
 
   useEffect(() => {
     if (!visibleInvoices.length) {
@@ -446,12 +439,16 @@ export default function InvoicesPage() {
     [activeType]
   );
 
-  const exportRows = visibleInvoices.map((invoice) => [
-    invoice.invoiceNumber,
-    invoice.customerName,
-    formatCurrency(invoice.totalAmount),
-    invoice.status,
-  ]);
+  const exportRows = useMemo(
+    () =>
+      visibleInvoices.map((invoice) => [
+        invoice.invoiceNumber,
+        invoice.customerName,
+        formatCurrency(invoice.totalAmount),
+        invoice.status,
+      ]),
+    [visibleInvoices]
+  );
 
   return (
     <DashboardLayout>
@@ -475,47 +472,30 @@ export default function InvoicesPage() {
               Export
             </button>
             <CustomSelect
-              options={[
-                { label: "Sales", value: "sales" },
-                { label: "Purchase", value: "purchase" },
-              ]}
+              options={INVOICE_TYPE_OPTIONS}
               value={activeType}
               onChange={(value) => {
                 setActiveType(value as InvoiceType);
                 setSelectedInvoiceNumber(null);
                 setCurrentPage(1);
               }}
-              width="160px"
-              height="40px"
+              className={styles.headerSelect}
             />
           </div>
         </div>
 
         <div className={styles.summaryGrid}>
-          {tableLoading
-            ? Array.from({ length: 4 }).map((_, index) => (
-                <div key={`invoice-summary-skeleton-${index}`} className={styles.summaryCard}>
-                  <div className={styles.summaryHeader}>
-                    <div className={styles.summaryTitleSkeleton} />
-                    <div className={styles.summaryIconSkeleton} />
-                  </div>
-                  <div className={styles.summaryValueSkeleton} />
-                </div>
-              ))
-            : summaryCards.map((card) => (
-                <div key={card.title} className={styles.summaryCard}>
-                  <div className={styles.summaryHeader}>
-                    <span className={styles.summaryTitle}>{card.title}</span>
-                    <span className={`${styles.summaryIconWrap} ${styles[card.tone]}`}>
-                      <Image src={card.icon} alt={card.title} width={30} height={30} className={styles.summaryIcon} />
-                    </span>
-                  </div>
-                  <div className={styles.summaryValueRow}>
-                    <span className={styles.summaryValue}>{card.value}</span>
-                    {card.subtitle ? <span className={styles.summaryLabel}>{card.subtitle}</span> : null}
-                  </div>
-                </div>
-              ))}
+          {summaryCards.map((card) => (
+            <MetricCard
+              key={card.title}
+              title={card.title}
+              value={card.value}
+              subtitle={card.subtitle}
+              icon={card.icon}
+              tone={card.tone}
+              loading={tableLoading}
+            />
+          ))}
         </div>
 
         <div className={styles.tableCard}>
@@ -534,21 +514,15 @@ export default function InvoicesPage() {
                   placeholder="Search invoice or order..."
                 />
               </label>
-              <select
-                className={styles.filterSelect}
+              <CustomSelect
+                options={STATUS_FILTER_OPTIONS}
                 value={statusFilter}
-                onChange={(event) => {
-                  setStatusFilter(event.target.value);
+                onChange={(value) => {
+                  setStatusFilter(value);
                   setCurrentPage(1);
                 }}
-              >
-                <option value="All Status">All Status</option>
-                <option value="Paid">Paid</option>
-                <option value="Pending">Pending</option>
-                <option value="Draft">Draft</option>
-                <option value="Completed">Completed</option>
-                <option value="Cancelled">Cancelled</option>
-              </select>
+                className={styles.filterCustomSelect}
+              />
             </div>
           </div>
 
@@ -578,143 +552,23 @@ export default function InvoicesPage() {
                 setPageSize(size);
                 setCurrentPage(1);
               }}
-              pageSizeOptions={[5, 10, 15, 20]}
+              pageSizeOptions={PAGE_SIZE_OPTIONS}
             />
           </div>
         </div>
 
-        {isInvoiceDetailOpen && selectedInvoice ? (
-          <div className={styles.detailsOverlay}>
-            <div className={styles.detailsPanel}>
-              <div className={styles.modalHeaderTop}>
-                <h2 className={styles.modalHeaderTitle}>Invoice Details</h2>
-                <button
-                  type="button"
-                  className={styles.closeButton}
-                  onClick={() => {
-                    setSelectedInvoiceNumber(null);
-                    setIsInvoiceDetailOpen(false);
-                  }}
-                  aria-label="Close invoice details"
-                >
-                  <FiX />
-                </button>
-              </div>
-
-              <div className={styles.orderInfoBlock}>
-                <div className={styles.orderInfoLeft}>
-                  <div className={styles.orderIconWrap}>
-                    <Image {...ASSETS.IMAGES.INVOICE_COLLACATION_LOGO} alt="Invoice logo" />
-                  </div>
-                  <div className={styles.orderInfoDetails}>
-                    <div className={styles.orderInfoTitleRow}>
-                      <h3 className={styles.orderInfoTitle}>{selectedInvoice.referenceNumber}</h3>
-                      <span className={styles.badgeStatus}>{selectedInvoice.status}</span>
-                    </div>
-                    <span className={styles.paymentText}>Payment: <strong>{selectedInvoice.paymentMode || "NIL"}</strong></span>
-                  </div>
-                </div>
-
-                <div className={styles.orderTimeBox}>
-                  <span className={styles.orderTimeLabel}>Order time</span>
-                  <strong className={styles.orderTimeValue}>
-                    {new Date(selectedInvoice.createdAt).toLocaleString("en-US", {
-                      month: "long",
-                      day: "numeric",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </strong>
-                </div>
-              </div>
-
-              <div className={styles.viewModeGrid}>
-                <div className={styles.viewCard}>
-                  <div className={styles.viewRow}>
-                    <span>{activeType === "sales" ? "Invoice" : "Invoice"}</span>
-                    <span>{selectedInvoice.invoiceNumber}</span>
-                  </div>
-                  <div className={styles.viewRow}>
-                    <span>{activeType === "sales" ? "Customer" : "Vendor"}</span>
-                    <span>{selectedInvoice.customerName}</span>
-                  </div>
-                  <div className={styles.viewRow}>
-                    <span>{activeType === "sales" ? "Name" : "Name"}</span>
-                    <span>{selectedInvoice.contactName || selectedInvoice.customerName}</span>
-                  </div>
-                  <div className={styles.viewRow}>
-                    <span>Phone</span>
-                    <span>{activeType === "sales" ? "9876543232" : "N/A"}</span>
-                  </div>
-                </div>
-
-                <div className={styles.viewCard}>
-                  <div className={styles.viewRow}>
-                    <span>Items</span>
-                    <span>{selectedInvoice.items.reduce((sum, item) => sum + item.quantity, 0)} items</span>
-                  </div>
-                  <div className={styles.viewRow}>
-                    <span>Total Amount</span>
-                    <span>{formatCurrency(selectedInvoice.totalAmount)}</span>
-                  </div>
-                  <div className={styles.viewRow}>
-                    <span>Paid</span>
-                    <span className={styles.paidDateValue}>
-                      {selectedInvoice.status.toLowerCase() === "paid" || selectedInvoice.status.toLowerCase() === "completed"
-                        ? new Date(selectedInvoice.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
-                        : "Not yet"}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <h3 className={styles.sectionTitle}>{detailProductLabel}</h3>
-
-              <div className={`${styles.tableHeader} ${styles.tableHeaderFourCols}`}>
-                <span>Product</span>
-                <span>Price</span>
-                <span>Quantity</span>
-                <span>Total</span>
-              </div>
-
-              {selectedInvoice.items.map((item, idx) => (
-                <div key={`${selectedInvoice.invoiceNumber}-${item.productName}-${idx}`} className={`${styles.productItem} ${styles.productItemFourCols}`}>
-                  <div className={styles.productInfo}>
-                    <h4>{item.productName}</h4>
-                  </div>
-                  <div className={styles.priceCol}>{formatCurrency(item.unitPrice)}</div>
-                  <div className={styles.priceCol}>{item.quantity}</div>
-                  <div className={styles.totalCol}>{formatCurrency(item.total)}</div>
-                </div>
-              ))}
-
-              <div className={styles.billSummary}>
-                <h4 className={`${styles.sectionTitleSmall}`}>Bill Summary</h4>
-                <div className={styles.summaryRow}>
-                  <span>Subtotal:</span>
-                  <span>{formatCurrency(selectedInvoice.totalAmount)}</span>
-                </div>
-                <div className={styles.summaryRow}>
-                  <span>Discount:</span>
-                  <span>{formatCurrency(0)}</span>
-                </div>
-                <div className={`${styles.summaryRow} ${styles.total}`}>
-                  <span>Total:</span>
-                  <span className={styles.value}>{formatCurrency(selectedInvoice.totalAmount)}</span>
-                </div>
-              </div>
-
-              <div className={styles.detailsFooter}>
-                <button type="button" className={styles.primaryButton}>
-                  Export
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : null}
+        <InvoiceDetailsModal
+          isOpen={isInvoiceDetailOpen}
+          onClose={() => {
+            setSelectedInvoiceNumber(null);
+            setIsInvoiceDetailOpen(false);
+          }}
+          invoice={selectedInvoice}
+          invoiceType={activeType}
+          onExport={handleExportSingleInvoice}
+          formatCurrency={formatCurrency}
+        />
       </div>
-
     </DashboardLayout>
   );
 }
