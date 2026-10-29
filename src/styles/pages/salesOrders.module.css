@@ -338,3 +338,31 @@
   vertical-align: middle;
 }
 
+
+.listHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.statusFilterSelect {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  outline: none;
+  background-color: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.semiboldCell {
+  font-weight: 600;
+}
+
+.skelWidth90 { width: 90px; }
+.skelWidth130 { width: 130px; }
+.skelWidth60 { width: 60px; }
+.skelWidth80 { width: 80px; }
+.skelWidth70 { width: 70px; }

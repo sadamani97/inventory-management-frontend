@@ -51,6 +51,8 @@ import {
   FiStar,
   FiPaperclip,
 } from "react-icons/fi";
+import MetricCard from "@/components/common/MetricCard";
+import { ASSETS } from "@/constants/assets";
 import { toast } from "react-toastify";
 
 const formatTimeAgo = (dateStr?: string) => {
@@ -514,35 +516,34 @@ export default function VendorsPage() {
 
         {/* Summary KPI Cards Grid */}
         <div className={styles.statsGrid}>
-          <div className={styles.statCard}>
-            <p className={styles.statLabel}>Total Vendors</p>
-            <p className={styles.statValue}>{stats.totalVendors || vendors.length}</p>
-            <span className={styles.statMeta}>All vendor accounts</span>
-          </div>
-
-          <div className={styles.statCard}>
-            <p className={styles.statLabel}>Active Vendors</p>
-            <p className={`${styles.statValue} ${styles.vendorsElement1}`}>
-              {stats.activeVendors || vendors.filter((v) => v.status === "active" || !v.status).length}
-            </p>
-            <span className={styles.statMeta}>Currently active</span>
-          </div>
-
-          <div className={styles.statCard}>
-            <p className={styles.statLabel}>New Vendors (This Month)</p>
-            <p className={`${styles.statValue} ${styles.vendorsElement2}`}>
-              {stats.newVendors || 0}
-            </p>
-            <span className={styles.statMeta}>Added this month</span>
-          </div>
-
-          <div className={styles.statCard}>
-            <p className={styles.statLabel}>Active Purchase Orders</p>
-            <p className={`${styles.statValue} ${styles.vendorsElement3}`}>
-              {stats.activePurchaseOrders || 0}
-            </p>
-            <span className={styles.statMeta}>In-progress orders</span>
-          </div>
+          <MetricCard
+            title="Total Vendors"
+            value={stats.totalVendors || vendors.length}
+            subtitle="All vendor accounts"
+            icon={ASSETS.LOGOS.PRIMARY.src}
+            tone="blue"
+          />
+          <MetricCard
+            title="Active Vendors"
+            value={stats.activeVendors || vendors.filter((v) => v.status === "active" || !v.status).length}
+            subtitle="Currently active"
+            icon={ASSETS.ICONS.ACTIVE_STOCK.src}
+            tone="green"
+          />
+          <MetricCard
+            title="New Vendors (This Month)"
+            value={stats.newVendors || 0}
+            subtitle="Added this month"
+            icon={ASSETS.ICONS.COMPLETE_ORDER.src}
+            tone="purple"
+          />
+          <MetricCard
+            title="Active Purchase Orders"
+            value={stats.activePurchaseOrders || 0}
+            subtitle="In-progress orders"
+            icon={ASSETS.ICONS.ORDER_PAGE.src}
+            tone="amber"
+          />
         </div>
 
         {/* Vendors Table Card */}

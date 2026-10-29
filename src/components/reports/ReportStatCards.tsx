@@ -1,6 +1,7 @@
 import React from "react";
-import Image from "next/image";
 import styles from "@/styles/pages/reports.module.css";
+import MetricCard from "@/components/common/MetricCard";
+import { ASSETS } from "@/constants/assets";
 import { ReportKpiData } from "@/lib/reportApi";
 
 interface ReportStatCardsProps {
@@ -19,79 +20,44 @@ export default function ReportStatCards({ data, loading }: ReportStatCardsProps)
     {
       title: "Inventory Value",
       value: data ? formatCompactCurrency(data.inventoryValue) : "₹0",
-      icon: "/Inventory value.png",
-      footerText: "Worth",
-      footerType: "muted" as const,
-      iconClass: styles.statCardIconBlue,
+      icon: ASSETS.IMAGES.REPORT_INVENTORY_VALUE.src,
+      subtitle: "Worth",
+      tone: "blue" as const,
     },
     {
       title: "Today's Revenue",
       value: data ? formatCompactCurrency(data.todaysRevenue) : "₹0",
-      icon: "/todays revenue.png",
-      footerText: "Earned",
-      footerType: "green" as const,
-      iconClass: styles.statCardIconGreen,
+      icon: ASSETS.IMAGES.REPORT_TODAYS_REVENUE.src,
+      subtitle: "Earned",
+      tone: "green" as const,
     },
     {
       title: "Today's total orders",
       value: data ? `${data.todaysTotalOrders}` : "0",
-      icon: "/total salse order.png",
-      footerText: "Orders",
-      footerType: "green" as const,
-      iconClass: styles.statCardIconPurple,
+      icon: ASSETS.IMAGES.REPORT_TOTAL_ORDERS.src,
+      subtitle: "Orders",
+      tone: "purple" as const,
     },
     {
       title: "Today's Sales",
       value: data ? `${data.todaysSales}` : "0",
-      icon: "/salselogo.png",
-      footerText: "items sold",
-      footerType: "green" as const,
-      iconClass: styles.statCardIconGreen,
+      icon: ASSETS.IMAGES.REPORT_TODAYS_SALES.src,
+      subtitle: "items sold",
+      tone: "amber" as const,
     },
   ];
 
   return (
     <div className={styles.statsGrid}>
       {cards.map((card, idx) => (
-        <div key={idx} className={styles.statCard}>
-          <div className={styles.statCardHeader}>
-            <h3 className={styles.statCardTitle}>{card.title}</h3>
-            <div className={`${styles.statCardIconBox} ${card.iconClass}`}>
-              <Image
-                src={card.icon}
-                alt={card.title}
-                width={40}
-                height={40}
-                style={{ objectFit: "cover", borderRadius: 12 }}
-                onError={(e) => {
-                  (e.target as HTMLElement).style.display = "none";
-                }}
-              />
-            </div>
-          </div>
-          <p className={styles.statCardValue}>
-            {loading ? (
-              <span className={`${styles.skeleton} ${styles.skeletonValue}`} />
-            ) : (
-              card.value
-            )}
-          </p>
-          <div className={styles.statCardFooter}>
-            {loading ? (
-              <span className={`${styles.skeleton}`} style={{ width: 120, height: 14 }} />
-            ) : (
-              <span
-                className={
-                  card.footerType === "green"
-                    ? styles.statCardFooterGreen
-                    : styles.statCardFooterMuted
-                }
-              >
-                {card.footerText}
-              </span>
-            )}
-          </div>
-        </div>
+        <MetricCard
+          key={idx}
+          title={card.title}
+          value={loading ? "" : card.value}
+          subtitle={loading ? "" : card.subtitle}
+          icon={card.icon}
+          tone={card.tone}
+        />
       ))}
     </div>
   );

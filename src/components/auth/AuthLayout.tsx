@@ -2,7 +2,7 @@ import Image from "next/image";
   import Link from "next/link";
   import type { ReactNode } from "react";
   import styles from "./AuthLayout.module.css";
-  import { APP_IMAGES } from "@/constants/images";
+  import { ASSETS } from "@/constants/assets";
 
   type AuthLayoutProps = {
     title: string;
@@ -24,7 +24,7 @@ import Image from "next/image";
         <div className={styles.pageContainer}>
           <div className={styles.authPanel}>
             <div className={styles.brandPill}>
-              <Image {...APP_IMAGES.LOGO} alt={APP_IMAGES.LOGO.alt} priority />
+              <Image {...ASSETS.LOGOS.PRIMARY} alt={ASSETS.LOGOS.PRIMARY.alt} priority />
               <span className={styles.brandLogoText}>Stockflow</span>
             </div>
 

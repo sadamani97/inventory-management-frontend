@@ -56,6 +56,16 @@
 
   --selected-option-bg: #e8f0fe;
 
+  --warning-border: #fde68a;
+
+  /* Card Tone Accents */
+  --tone-blue-bg: #eff6ff;
+  --tone-green-bg: #f0fdf4;
+  --tone-purple-bg: #f5f3ff;
+  --tone-red-bg: #fef2f2;
+  --tone-amber-bg: #fffbeb;
+  --tone-indigo-bg: #eef2ff;
+
   /* Shadows & Overlays */
   --shadow: 0 24px 80px rgba(15, 23, 42, 0.08);
   --shadow-sm: 0 1px 3px rgba(16, 24, 40, 0.05);

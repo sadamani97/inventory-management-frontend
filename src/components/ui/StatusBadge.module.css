@@ -1,0 +1,91 @@
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  padding: 4px 10px;
+  font-size: 11px;
+  line-height: 1;
+  font-weight: 700;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.statusOutlineBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 11px;
+  line-height: 1;
+  font-weight: 600;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+/* Solid Variants */
+.statusActive {
+  background: var(--success-badge-bg);
+  color: var(--success-dark);
+  border-color: var(--success-border);
+}
+
+.statusInTransit {
+  background: var(--primary-subtle);
+  color: var(--primary-dark);
+  border-color: var(--primary-border);
+}
+
+.statusPending {
+  background: var(--warning-badge-bg);
+  color: var(--warning);
+  border-color: var(--warning-border);
+}
+
+.statusDelivered {
+  background: var(--success-badge-bg);
+  color: var(--success-dark);
+  border-color: var(--success-border);
+}
+
+.statusDelayed {
+  background: var(--danger-light);
+  color: var(--danger-dark);
+  border-color: var(--danger-border);
+}
+
+.statusCancelled {
+  background: var(--hover-bg);
+  color: var(--text-body);
+  border-color: var(--border);
+}
+
+.statusDefault {
+  background: var(--hover-bg);
+  color: var(--text-body);
+  border-color: var(--border);
+}
+
+/* Outline Variants */
+.statusOutlinePending {
+  color: var(--warning);
+  border-color: var(--warning-border);
+}
+
+.statusOutlineOverdue {
+  color: var(--danger);
+  border-color: var(--danger-border);
+}
+
+.statusOutlineReview {
+  color: var(--primary);
+  border-color: var(--primary-border);
+}
+
+.statusOutlinePaid {
+  color: var(--success);
+  border-color: var(--success-border);
+}

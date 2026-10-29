@@ -1,6 +1,5 @@
 import React from "react";
-import Image from "next/image";
-import styles from "@/styles/pages/alerts.module.css";
+import MetricCard, { MetricCardTone } from "@/components/common/MetricCard";
 
 interface AlertSummaryCardProps {
   title: string;
@@ -8,6 +7,7 @@ interface AlertSummaryCardProps {
   icon: string;
   iconTone?: "blue" | "red" | "amber" | "indigo";
   subtitle?: string;
+  loading?: boolean;
 }
 
 export default function AlertSummaryCard({
@@ -16,27 +16,16 @@ export default function AlertSummaryCard({
   icon,
   iconTone = "blue",
   subtitle,
+  loading = false,
 }: AlertSummaryCardProps) {
-  const iconClassName = {
-    blue: styles.summaryIconBlue,
-    red: styles.summaryIconRed,
-    amber: styles.summaryIconAmber,
-    indigo: styles.summaryIconIndigo,
-  }[iconTone];
-
   return (
-    <div className={styles.summaryCard}>
-      <div className={styles.summaryCardHeader}>
-        <div className={styles.summaryTitle}>{title}</div>
-        <div className={`${styles.summaryIconWrap} ${iconClassName}`}>
-          <Image src={icon} alt={title} width={20} height={20} />
-        </div>
-      </div>
-
-      <div className={styles.summaryValueRow}>
-        <span className={styles.summaryValue}>{value}</span>
-        {subtitle ? <span className={styles.summarySubtitle}>{subtitle}</span> : null}
-      </div>
-    </div>
+    <MetricCard
+      title={title}
+      value={value}
+      subtitle={subtitle}
+      icon={icon}
+      tone={iconTone as MetricCardTone}
+      loading={loading}
+    />
   );
 }

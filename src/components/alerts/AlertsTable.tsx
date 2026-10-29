@@ -4,6 +4,7 @@ import styles from "@/styles/pages/alerts.module.css";
 import CustomSelect, { CustomSelectOption } from "@/components/ui/CustomSelect";
 import Pagination from "@/components/ui/Pagination";
 import { AlertItem, formatRelativeTime } from "@/lib/dashboardApi";
+import StatusBadge from "@/components/alerts/StatusBadge";
 import { FiSearch, FiMoreVertical } from "react-icons/fi";
 
 interface AlertsTableProps {
@@ -50,17 +51,6 @@ function normalizeAlertStatusText(alertType?: string, fallbackStatus?: string): 
   if (combined.includes("purchase order")) return "Pending";
   if (fallbackStatus) return fallbackStatus;
   return "Active";
-}
-
-function getStatusClass(status?: string): string {
-  const clean = (status || "").toLowerCase();
-  if (clean.includes("out of stock") || clean.includes("low stock") || clean === "active") return styles.statusActive;
-  if (clean.includes("in transit")) return styles.statusInTransit;
-  if (clean.includes("pending")) return styles.statusPending;
-  if (clean === "delivered" || clean.includes("completed")) return styles.statusDelivered;
-  if (clean.includes("delayed")) return styles.statusDelayed;
-  if (clean.includes("cancelled") || clean.includes("canceled")) return styles.statusCancelled;
-  return styles.statusDefault;
 }
 
 function getSeverityClass(severity?: string): string {
@@ -181,9 +171,7 @@ export default function AlertsTable({
                         </td>
                         <td>{formatRelativeTime(item.createdAt)}</td>
                         <td>
-                          <span className={`${styles.statusBadge} ${getStatusClass(statusText)}`}>
-                            {statusText}
-                          </span>
+                          <StatusBadge label={statusText} variant="solid" />
                         </td>
                         <td className={styles.actionCell}>
                           <div className={styles.actionCellWrap}>

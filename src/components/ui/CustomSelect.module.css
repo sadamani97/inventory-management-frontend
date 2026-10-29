@@ -2,6 +2,11 @@
   position: relative;
   display: inline-block;
   user-select: none;
+  width: 140px;
+}
+
+.sizeSm {
+  width: 128px;
 }
 
 .triggerBtn {

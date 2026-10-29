@@ -2,7 +2,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import Image from "next/image";
 import styles from "./Sidebar.module.css";
-import { APP_IMAGES } from "@/constants/images";
+import { ASSETS } from "@/constants/assets";
 import {
   FiGrid,
   FiAlertTriangle,
@@ -55,8 +55,8 @@ export default function Sidebar() {
       <div className={styles.brandHeader}>
         <Link href="/dashboard" className={styles.brandLogo}>
           <Image
-            {...APP_IMAGES.DASHBOARD_LOGO}
-            alt={APP_IMAGES.DASHBOARD_LOGO.alt}
+            {...ASSETS.ICONS.DASHBOARD_LOGO}
+            alt={ASSETS.ICONS.DASHBOARD_LOGO.alt}
             className={styles.brandLogoImg}
             priority
           />

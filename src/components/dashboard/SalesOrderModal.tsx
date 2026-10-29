@@ -6,7 +6,7 @@ import CustomSelect from "@/components/ui/CustomSelect";
 import ExportDialog from "@/components/ui/ExportDialog";
 import styles from "@/styles/components/salesOrderModal.module.css";
 import { toast } from "react-toastify";
-import { APP_IMAGES } from "@/constants/images";
+import { ASSETS } from "@/constants/assets";
 
 export type SalesOrderMode = "create" | "edit" | "view";
 
@@ -237,7 +237,7 @@ export default function SalesOrderModal({ isOpen, onClose, onSuccess, mode, orde
         <div className={styles.orderInfoBlock}>
           <div className={styles.orderInfoLeft}>
             <div className={styles.headerIcon}>
-              <Image {...APP_IMAGES.ORDER_PAGE_LOGO} alt="Order Logo" />
+              <Image {...ASSETS.ICONS.ORDER_PAGE} alt="Order Logo" />
             </div>
             <div className={styles.orderInfoDetails}>
               <div className={styles.orderInfoTitleRow}>
