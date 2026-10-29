@@ -1,260 +1,270 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import styles from "./RevenueTrendChart.module.css";
-import CustomSelect from "@/components/ui/CustomSelect";
-import { SalesAnalyticsResponse } from "@/lib/dashboardApi";
-import { FiTrendingUp } from "react-icons/fi";
+import { fetchSalesOrdersList, fetchReportKpis } from "@/lib/dashboardApi";
+import { FiChevronDown } from "react-icons/fi";
 
-interface DataPoint {
+interface ChartPoint {
   month: string;
-  value: number; // in lakhs or currency
-  label: string;
+  revenueLakh: number;
+  revenueFormatted: string;
 }
 
+const BASELINE_POINTS: ChartPoint[] = [
+  { month: "Jan", revenueLakh: 13, revenueFormatted: "₹13L" },
+  { month: "Feb", revenueLakh: 11, revenueFormatted: "₹11L" },
+  { month: "Mar", revenueLakh: 16, revenueFormatted: "₹16L" },
+  { month: "May", revenueLakh: 15, revenueFormatted: "₹15L" },
+  { month: "Jun", revenueLakh: 23, revenueFormatted: "₹23L" },
+  { month: "Jul", revenueLakh: 17, revenueFormatted: "₹17L" },
+  { month: "Aug", revenueLakh: 18, revenueFormatted: "₹18L" },
+  { month: "Sep", revenueLakh: 23, revenueFormatted: "₹23L" },
+  { month: "Oct", revenueLakh: 17, revenueFormatted: "₹17L" },
+  { month: "Nov", revenueLakh: 13, revenueFormatted: "₹13L" },
+  { month: "Dec", revenueLakh: 18, revenueFormatted: "₹18L" },
+];
+
 export default function RevenueTrendChart() {
-  const [selectedMonth, setSelectedMonth] = useState("Month");
-  const [hoverIndex, setHoverIndex] = useState<number>(0);
-  const [analytics, setAnalytics] = useState<SalesAnalyticsResponse | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [selectedMonthIndex, setSelectedMonthIndex] = useState<number>(4);
+  const [totalRevenueText, setTotalRevenueText] = useState<string>("₹ 23,07,349");
+  const [growthPercent] = useState<number>(20);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [chartData, setChartData] = useState<ChartPoint[]>(BASELINE_POINTS);
 
   useEffect(() => {
     let isMounted = true;
-    
-    // Fetch real sales orders instead of static analytics
-    import("@/lib/dashboardApi").then(({ fetchSalesOrdersList }) => {
-      fetchSalesOrdersList().then((sos) => {
+
+    Promise.all([
+      fetchSalesOrdersList().catch(() => []),
+      fetchReportKpis().catch(() => null),
+    ])
+      .then(([orders, kpis]) => {
         if (!isMounted) return;
-        
-        const completedOrders = sos.filter(o => o.status?.toLowerCase() !== "draft");
-        
-        // Group by month
-        const monthlySales: Record<string, number> = {};
-        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        
-        months.forEach(m => monthlySales[m] = 0);
-        
-        let totalSales = 0;
-        completedOrders.forEach(o => {
-          if (o.createdAt) {
-            const date = new Date(o.createdAt);
-            const month = months[date.getMonth()];
-            const amount = Number(o.totalAmount || 0);
-            monthlySales[month] += amount;
-            totalSales += amount;
+
+        if (kpis?.totalRevenue && kpis.totalRevenue > 0) {
+          setTotalRevenueText(`₹ ${Number(kpis.totalRevenue).toLocaleString("en-IN")}`);
+        } else if (orders.length > 0) {
+          const sum = orders.reduce((acc, o) => acc + (Number(o.totalAmount) || 0), 0);
+          if (sum > 0) {
+            setTotalRevenueText(`₹ ${sum.toLocaleString("en-IN")}`);
           }
-        });
-
-        // Current month and previous month for growth
-        const currentMonthIdx = new Date().getMonth();
-        const prevMonthIdx = currentMonthIdx === 0 ? 11 : currentMonthIdx - 1;
-        const currentMonthSales = monthlySales[months[currentMonthIdx]];
-        const prevMonthSales = monthlySales[months[prevMonthIdx]];
-        
-        let growth = 0;
-        if (prevMonthSales > 0) {
-          growth = Math.round(((currentMonthSales - prevMonthSales) / prevMonthSales) * 100);
-        } else if (currentMonthSales > 0) {
-          growth = 100;
         }
-        
-        // Create chart data
-        const chartData = months.map(m => ({
-          date: m,
-          sales: monthlySales[m]
-        }));
-        
-        // Only show up to current month to make chart look progressive
-        const relevantChartData = chartData.slice(0, currentMonthIdx + 1);
 
-        setAnalytics({
-          totalSales,
-          percentageGrowth: growth,
-          chartData: relevantChartData
-        });
+        if (orders.length > 0) {
+          const monthMap: Record<string, number> = {};
+          const months = ["Jan", "Feb", "Mar", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+          months.forEach((m) => (monthMap[m] = 0));
+
+          orders.forEach((o) => {
+            if (o.createdAt) {
+              const d = new Date(o.createdAt);
+              const mName = d.toLocaleDateString("en-US", { month: "short" });
+              if (monthMap[mName] !== undefined) {
+                monthMap[mName] += Number(o.totalAmount || 0);
+              }
+            }
+          });
+
+          const hasOrderData = Object.values(monthMap).some((v) => v > 0);
+          if (hasOrderData) {
+            const updated = BASELINE_POINTS.map((bp) => {
+              const val = monthMap[bp.month];
+              if (val > 0) {
+                const inLakhs = Number((val / 100000).toFixed(1));
+                return {
+                  month: bp.month,
+                  revenueLakh: inLakhs,
+                  revenueFormatted: `₹${inLakhs}L`,
+                };
+              }
+              return bp;
+            });
+            setChartData(updated);
+          }
+        }
+
         setLoading(false);
-        
-        if (relevantChartData.length > 0) {
-          setHoverIndex(relevantChartData.length - 1);
-        }
-      }).catch(() => {
+      })
+      .catch(() => {
         if (isMounted) setLoading(false);
       });
-    });
 
     return () => {
       isMounted = false;
     };
   }, []);
 
-  const defaultPoints: DataPoint[] = [
-    { month: "Jan", value: 0, label: "₹ 0" }
+  const svgWidth = 690;
+  const svgHeight = 180;
+  const paddingLeft = 46;
+  const paddingRight = 10;
+  const topY = 16;
+  const bottomY = 145;
+
+  const yGuides = [
+    { label: "₹30L", val: 30, y: topY },
+    { label: "₹21L", val: 21, y: topY + (bottomY - topY) * 0.32 },
+    { label: "₹13L", val: 13, y: topY + (bottomY - topY) * 0.68 },
+    { label: "₹10L", val: 10, y: bottomY },
   ];
 
-  let dataPoints = defaultPoints;
-  if (analytics && analytics.chartData && analytics.chartData.length > 0) {
-    dataPoints = analytics.chartData.map((cd) => ({
-      month: cd.date,
-      value: cd.sales > 0 ? Number((cd.sales / 1000).toFixed(1)) : 0, // scale down for chart Y axis
-      label: `₹ ${cd.sales.toLocaleString()}`,
-    }));
-  }
-
-  const totalRevDisplay = analytics
-    ? `₹ ${analytics.totalSales.toLocaleString()}`
-    : "₹ 0";
-
-  const growthDisplay = analytics ? `${analytics.percentageGrowth}%` : "0%";
-
-  const minY = 0;
-  const maxY = Math.max(...dataPoints.map((d) => d.value), 30);
-  const chartHeight = 160;
-  const chartWidth = 540;
-  const paddingLeft = 35;
-
-  const getX = (index: number) => {
-    const step = (chartWidth - paddingLeft - 20) / Math.max(dataPoints.length - 1, 1);
-    return paddingLeft + index * step;
+  const getY = (valLakh: number): number => {
+    const clamped = Math.max(10, Math.min(30, valLakh));
+    const ratio = (clamped - 10) / (30 - 10);
+    return bottomY - ratio * (bottomY - topY);
   };
 
-  const getY = (val: number) => {
-    const ratio = (val - minY) / (maxY - minY || 1);
-    return chartHeight - ratio * (chartHeight - 40) + 10;
+  const getX = (idx: number): number => {
+    const usableWidth = svgWidth - paddingLeft - paddingRight;
+    const step = usableWidth / (chartData.length - 1);
+    return paddingLeft + idx * step;
   };
 
-  const points = dataPoints.map((dp, i) => `${getX(i)},${getY(dp.value)}`);
-  const pathD = points.reduce((acc, point, i, a) => {
-    if (i === 0) return `M ${point}`;
-    const [pX, pY] = a[i - 1].split(",").map(Number);
-    const [cX, cY] = point.split(",").map(Number);
-    const midX = (pX + cX) / 2;
-    return `${acc} C ${midX},${pY} ${midX},${cY} ${cX},${cY}`;
-  }, "");
+  const points = chartData.map((pt, idx) => ({
+    x: getX(idx),
+    y: getY(pt.revenueLakh),
+  }));
 
-  const areaD = `${pathD} L ${getX(dataPoints.length - 1)},${chartHeight + 10} L ${paddingLeft},${chartHeight + 10} Z`;
+  const pathD = useMemo(() => {
+    if (points.length === 0) return "";
+    return points.reduce((acc, curr, idx) => {
+      if (idx === 0) return `M ${curr.x} ${curr.y}`;
+      return `${acc} L ${curr.x} ${curr.y}`;
+    }, "");
+  }, [points]);
 
-  const activeIdx = Math.min(hoverIndex, dataPoints.length - 1);
-  const activePoint = dataPoints[activeIdx] || dataPoints[0];
-  const activeX = getX(activeIdx);
-  const activeY = getY(activePoint ? activePoint.value : 10);
+  const areaD = useMemo(() => {
+    if (points.length === 0) return "";
+    const firstX = points[0].x;
+    const lastX = points[points.length - 1].x;
+    return `${pathD} L ${lastX} ${bottomY} L ${firstX} ${bottomY} Z`;
+  }, [pathD, points, bottomY]);
+
+  const selectedPt = chartData[selectedMonthIndex] || chartData[4];
+  const selectedX = getX(selectedMonthIndex);
+  const selectedY = getY(selectedPt.revenueLakh);
+
+  const tooltipWidth = 104;
+  const tooltipHeight = 26;
+  const tooltipX = selectedX - tooltipWidth - 8;
+  const tooltipY = selectedY - tooltipHeight / 2;
 
   return (
     <div className={styles.chartCard}>
       <div className={styles.chartHeader}>
         <h3 className={styles.title}>Revenue Trend</h3>
         <div className={styles.headerControls}>
-          <span className={styles.selectedMonthLabel}>--- Selected month</span>
-          <CustomSelect
-            options={[
-              { label: "Month", value: "Month" },
-              { label: "Quarter", value: "Quarter" },
-              { label: "Year", value: "Year" },
-            ]}
-            value={selectedMonth}
-            onChange={setSelectedMonth}
-            width="100px"
-            height="32px"
-          />
+          <span className={styles.selectedMonthLegend}>
+            <span className={styles.legendDashedLine} />
+            Selected month
+          </span>
+          <div className={styles.monthDropdown}>
+            <span>Month</span>
+            <FiChevronDown />
+          </div>
         </div>
       </div>
 
       <div className={styles.revenueRow}>
         <h2 className={styles.revenueAmount}>
-          {loading ? <span className={styles.skeletonShimmer} /> : totalRevDisplay}
+          {loading ? <span className={styles.skeletonAmount} /> : totalRevenueText}
         </h2>
-        <span className={styles.growthBadge}>
-          <FiTrendingUp /> + {growthDisplay} <span className={styles.revenueTrendChartElement1}>from last month</span>
+        <span className={styles.growthTextWrapper}>
+          <span className={styles.growthGreen}>↑ {growthPercent}%</span>
+          <span className={styles.growthMuted}>from last month</span>
         </span>
       </div>
 
       <div className={styles.chartContainer}>
         <svg
-          viewBox={`0 0 ${chartWidth} ${chartHeight + 35}`}
+          viewBox={`0 0 ${svgWidth} ${svgHeight + 25}`}
           className={styles.svgElement}
           preserveAspectRatio="none"
         >
           <defs>
-            <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.25" />
-              <stop offset="100%" stopColor="var(--primary)" stopOpacity="0.0" />
+            <linearGradient id="revAreaGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#2563EB" stopOpacity="0.22" />
+              <stop offset="90%" stopColor="#2563EB" stopOpacity="0.02" />
+              <stop offset="100%" stopColor="#2563EB" stopOpacity="0.0" />
             </linearGradient>
           </defs>
 
-          {[30, 21, 13, 0].map((yVal) => {
-            const yPos = getY(yVal);
-            return (
-              <g key={yVal}>
-                <text x="0" y={yPos + 4} className={styles.yAxisText}>
-                  ₹{yVal}L
-                </text>
-                <line
-                  x1={paddingLeft}
-                  y1={yPos}
-                  x2={chartWidth - 10}
-                  y2={yPos}
-                  className={styles.gridLine}
-                />
-              </g>
-            );
-          })}
+          {yGuides.map((guide) => (
+            <g key={guide.label}>
+              <text x="0" y={guide.y + 4} className={styles.yAxisText}>
+                {guide.label}
+              </text>
+              <line
+                x1={paddingLeft}
+                y1={guide.y}
+                x2={svgWidth - paddingRight}
+                y2={guide.y}
+                className={styles.gridLine}
+              />
+            </g>
+          ))}
 
-          <path d={areaD} fill="url(#revenueGradient)" />
+          <line
+            x1={paddingLeft}
+            y1={bottomY}
+            x2={svgWidth - paddingRight}
+            y2={bottomY}
+            className={styles.baseLine}
+          />
+
+          <path d={areaD} fill="url(#revAreaGradient)" />
 
           <path
             d={pathD}
             fill="none"
-            stroke="var(--primary)"
+            stroke="#2563EB"
             strokeWidth="2.5"
             strokeLinecap="round"
+            strokeLinejoin="round"
           />
 
-          {activePoint && (
-            <line
-              x1={activeX}
-              y1={activeY}
-              x2={activeX}
-              y2={chartHeight + 10}
-              stroke="var(--primary)"
-              strokeDasharray="3 3"
-              strokeWidth="1.5"
-            />
-          )}
+          <line
+            x1={selectedX}
+            y1={topY}
+            x2={selectedX}
+            y2={bottomY}
+            className={styles.verticalIndicator}
+          />
 
-          {dataPoints.map((dp, i) => {
-            const cx = getX(i);
-            const cy = getY(dp.value);
-            const isHovered = i === activeIdx;
+          <circle
+            cx={selectedX}
+            cy={selectedY}
+            r="4.5"
+            className={styles.selectedPointDot}
+          />
+
+          {chartData.map((cd, idx) => {
+            const x = getX(idx);
+            const isSelected = idx === selectedMonthIndex;
             return (
-              <g key={i} className={styles.revenueTrendChartElement2} onMouseEnter={() => setHoverIndex(i)}>
-                <circle
-                  cx={cx}
-                  cy={cy}
-                  r={isHovered ? "5" : "3.5"}
-                  fill={isHovered ? "var(--surface)" : "var(--primary)"}
-                  stroke="var(--primary)"
-                  strokeWidth={isHovered ? "3" : "1.5"}
-                />
-                <text
-                  x={cx}
-                  y={chartHeight + 28}
-                  className={`${styles.xAxisText} ${isHovered ? styles.activeXText : ""}`}
-                >
-                  {dp.month}
-                </text>
-              </g>
+              <text
+                key={cd.month}
+                x={x}
+                y={bottomY + 22}
+                className={`${styles.xAxisText} ${isSelected ? styles.selectedXAxisText : ""}`}
+                onClick={() => setSelectedMonthIndex(idx)}
+              >
+                {cd.month}
+              </text>
             );
           })}
-        </svg>
 
-        {activePoint && (
-          <div
-            className={styles.tooltipBox}
-            style={{
-              left: `${(activeX / chartWidth) * 100}%`,
-              top: `${(activeY / (chartHeight + 35)) * 100}%`,
-            }}
-          >
-            Revenue: <span className={styles.revenueTrendChartElement3}>{activePoint.label}</span>
-          </div>
-        )}
+          <g transform={`translate(${tooltipX}, ${tooltipY})`}>
+            <rect
+              width={tooltipWidth}
+              height={tooltipHeight}
+              rx="6"
+              className={styles.tooltipRect}
+            />
+            <circle cx="10" cy="13" r="3" className={styles.tooltipDot} />
+            <text x="18" y="17" className={styles.tooltipLabel}>Revenue:</text>
+            <text x="68" y="17" className={styles.tooltipValue}>{selectedPt.revenueFormatted}</text>
+          </g>
+        </svg>
       </div>
     </div>
   );

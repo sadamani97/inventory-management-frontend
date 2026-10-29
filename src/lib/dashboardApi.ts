@@ -432,6 +432,46 @@ export async function fetchSalesAnalytics(): Promise<SalesAnalyticsResponse> {
   };
 }
 
+export interface CategoryQuantityItem {
+  name: string;
+  count: number;
+  quantity?: number;
+}
+
+export async function fetchCategoryQuantities(): Promise<CategoryQuantityItem[]> {
+  try {
+    const response = await api.get("/api/reports/category-quantities");
+    if (response?.data?.success && Array.isArray(response?.data?.data) && response.data.data.length > 0) {
+      return response.data.data.map((item: { name?: string; count?: number; quantity?: number }) => ({
+        name: item.name || "General",
+        count: Number(item.count ?? item.quantity ?? 0),
+        quantity: Number(item.count ?? item.quantity ?? 0),
+      }));
+    }
+  } catch {
+    // Attempt fallback from products endpoint
+  }
+
+  try {
+    const prods = await fetchProductsList();
+    if (Array.isArray(prods) && prods.length > 0) {
+      const map: Record<string, number> = {};
+      prods.forEach((p) => {
+        const cat = p.category?.categoryName || "General";
+        const qty = Number(p.quantity || 0);
+        map[cat] = (map[cat] || 0) + qty;
+      });
+      return Object.entries(map)
+        .map(([name, count]) => ({ name, count, quantity: count }))
+        .sort((a, b) => b.count - a.count);
+    }
+  } catch (err) {
+    console.error("Failed to load category quantities:", err);
+  }
+
+  return [];
+}
+
 export function formatRelativeTime(dateStr?: string | Date): string {
   if (!dateStr) return "Just now";
 

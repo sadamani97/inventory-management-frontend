@@ -1,9 +1,18 @@
 import React, { useEffect, useState, useMemo } from "react";
 import styles from "./RecentActivitiesTable.module.css";
+import Table, { TableColumn } from "@/components/ui/Table";
 import CustomSelect from "@/components/ui/CustomSelect";
 import Pagination from "@/components/ui/Pagination";
-import { fetchRecentActivities, fetchRecentActivitiesPaginated, fetchProductsList, ActivityItem, ProductItem, formatRelativeTime } from "@/lib/dashboardApi";
+import { fetchRecentActivitiesPaginated, ActivityItem } from "@/lib/dashboardApi";
 import { FiSearch } from "react-icons/fi";
+
+const STATUS_OPTIONS = [
+  { label: "All Status", value: "All Status" },
+  { label: "Completed", value: "Completed" },
+  { label: "Warning", value: "Warning" },
+  { label: "Added", value: "Added" },
+  { label: "Delivered", value: "Delivered" },
+];
 
 export default function RecentActivitiesTable() {
   const [search, setSearch] = useState("");
@@ -14,7 +23,6 @@ export default function RecentActivitiesTable() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  // Fetch paginated activities directly from backend API
   useEffect(() => {
     let isMounted = true;
     setLoading(true);
@@ -36,7 +44,7 @@ export default function RecentActivitiesTable() {
           console.error("Error fetching activities from backend:", err);
           if (isMounted) setLoading(false);
         });
-    }, 200); // 200ms debounce for search input
+    }, 200);
 
     return () => {
       isMounted = false;
@@ -46,17 +54,17 @@ export default function RecentActivitiesTable() {
 
   const handleSearchChange = (val: string) => {
     setSearch(val);
-    setCurrentPage(1); // Reset to page 1 on new search
+    setCurrentPage(1);
   };
 
   const handleStatusFilterChange = (val: string) => {
     setStatusFilter(val);
-    setCurrentPage(1); // Reset to page 1 on new filter
+    setCurrentPage(1);
   };
 
   const handlePageSizeChange = (newSize: number) => {
     setPageSize(newSize);
-    setCurrentPage(1); // Reset to page 1 on limit change
+    setCurrentPage(1);
   };
 
   const getStatusClass = (status: ActivityItem["status"]) => {
@@ -74,12 +82,58 @@ export default function RecentActivitiesTable() {
     }
   };
 
+  const columns: TableColumn<ActivityItem>[] = useMemo(
+    () => [
+      {
+        key: "activity",
+        header: "Activity",
+        minWidth: 180,
+        render: (row) => <span className={styles.activityName}>{row.activity}</span>,
+      },
+      {
+        key: "product",
+        header: "Product",
+        minWidth: 160,
+        render: (row) => <span className={styles.productName}>{row.product}</span>,
+      },
+      {
+        key: "sku",
+        header: "SKU",
+        minWidth: 120,
+        render: (row) => <span className={styles.skuCode}>{row.sku}</span>,
+      },
+      {
+        key: "qty",
+        header: "Qty",
+        minWidth: 90,
+        render: (row) => <span className={styles.qtyVal}>{row.qty}</span>,
+      },
+      {
+        key: "status",
+        header: "Status",
+        minWidth: 120,
+        render: (row) => (
+          <span className={`${styles.statusBadge} ${getStatusClass(row.status)}`}>
+            {row.status}
+          </span>
+        ),
+      },
+      {
+        key: "time",
+        header: "Time",
+        minWidth: 120,
+        render: (row) => <span className={styles.timeText}>{row.time}</span>,
+      },
+    ],
+    []
+  );
+
   return (
     <div className={styles.tableCard}>
       <div className={styles.tableHeader}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        <div className={styles.titleWrapper}>
           <h3 className={styles.title}>Recent Activities</h3>
-          {loading && <span className={styles.loadingSpinner} title="Fetching from backend API..." />}
+          {loading && <span className={styles.loadingSpinner} title="Fetching activities..." />}
         </div>
         <div className={styles.headerActions}>
           <div className={styles.searchWrapper}>
@@ -94,13 +148,7 @@ export default function RecentActivitiesTable() {
           </div>
 
           <CustomSelect
-            options={[
-              { label: "All Status", value: "All Status" },
-              { label: "Completed", value: "Completed" },
-              { label: "Warning", value: "Warning" },
-              { label: "Added", value: "Added" },
-              { label: "Delivered", value: "Delivered" },
-            ]}
+            options={STATUS_OPTIONS}
             value={statusFilter}
             onChange={handleStatusFilterChange}
             width="130px"
@@ -109,56 +157,19 @@ export default function RecentActivitiesTable() {
         </div>
       </div>
 
-      <div className={styles.tableContainer}>
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th>Activity</th>
-              <th>Product</th>
-              <th>SKU</th>
-              <th>Qty</th>
-              <th>Status</th>
-              <th>Time</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              // Modern skeleton loading animation rows
-              Array.from({ length: Math.min(pageSize, 8) }).map((_, idx) => (
-                <tr key={`skeleton-${idx}`} className={styles.skeletonRow}>
-                  <td><div className={styles.skeletonBone} style={{ width: "85%" }} /></td>
-                  <td><div className={styles.skeletonBone} style={{ width: "70%" }} /></td>
-                  <td><div className={styles.skeletonBone} style={{ width: "55%" }} /></td>
-                  <td><div className={styles.skeletonBone} style={{ width: "40%" }} /></td>
-                  <td><div className={styles.skeletonBadge} /></td>
-                  <td><div className={styles.skeletonBone} style={{ width: "65%" }} /></td>
-                </tr>
-              ))
-            ) : activities.length > 0 ? (
-              activities.map((act) => (
-                <tr key={act.id}>
-                  <td className={styles.activityName}>{act.activity}</td>
-                  <td className={styles.productName}>{act.product}</td>
-                  <td className={styles.skuCode}>{act.sku}</td>
-                  <td className={styles.qtyVal}>{act.qty}</td>
-                  <td>
-                    <span className={`${styles.statusBadge} ${getStatusClass(act.status)}`}>
-                      {act.status}
-                    </span>
-                  </td>
-                  <td className={styles.timeText}>{act.time}</td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={6} className={styles.recentActivitiesTableElement2}>
-                  No backend products or activities found.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+      <div className={styles.activityTableContainer}>
+        <Table<ActivityItem>
+          columns={columns}
+          data={activities}
+          loading={loading}
+          skeletonRows={Math.min(pageSize, 8)}
+          height="460px"
+          minWidth="800px"
+          emptyMessage="No backend activities found."
+          rowKey={(row) => row.id}
+        />
       </div>
+
       <Pagination
         currentPage={currentPage}
         totalItems={totalItems}
