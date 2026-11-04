@@ -21,6 +21,7 @@ interface CustomDatePickerProps {
   variant?: "default" | "blue";
   icon?: "calendar" | "chevron";
   formatLabel?: (date: Date) => string;
+  className?: string;
 }
 
 export default function CustomDatePicker({
@@ -29,6 +30,7 @@ export default function CustomDatePicker({
   variant = "default",
   icon = "calendar",
   formatLabel,
+  className,
 }: CustomDatePickerProps) {
   const [selectedDate, setSelectedDate] = useState<Date>(value || new Date());
 
@@ -138,7 +140,7 @@ export default function CustomDatePicker({
   }
 
   return (
-    <div className={styles.container} ref={containerRef}>
+    <div className={`${styles.container} ${className ?? ""}`.trim()} ref={containerRef}>
       <button
         type="button"
         className={`${styles.datePill} ${variant === "blue" ? styles.datePillBlue : ""} ${

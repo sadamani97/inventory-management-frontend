@@ -16,8 +16,9 @@ export interface ActivityItem {
   product: string;
   sku: string;
   qty: string;
-  status: "Completed" | "Warning" | "Added" | "Delivered";
+  status: "Completed" | "Complete" | "Warning" | "Alert" | "Added" | "Delivered";
   time: string;
+  createdAt?: string;
 }
 
 export interface SalesAnalyticsResponse {
@@ -499,12 +500,134 @@ export function formatRelativeTime(dateStr?: string | Date): string {
   return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
+export function formatEventTime(dateStr?: string | Date): string {
+  if (!dateStr) return "--:--";
+
+  const date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) return String(dateStr);
+
+  return date.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
+
+export function formatActivityTimeLabel(dateStr?: string | Date): string {
+  if (!dateStr) return "--:--";
+
+  const date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) return String(dateStr);
+
+  const now = new Date();
+  const isToday =
+    date.getFullYear() === now.getFullYear() &&
+    date.getMonth() === now.getMonth() &&
+    date.getDate() === now.getDate();
+
+  if (isToday) {
+    const diffInMinutes = Math.max(0, Math.round((now.getTime() - date.getTime()) / 60000));
+    if (diffInMinutes < 1) return "just now";
+    if (diffInMinutes < 60) return `${diffInMinutes} minute${diffInMinutes === 1 ? "" : "s"} ago`;
+
+    const diffInHours = Math.round(diffInMinutes / 60);
+    if (diffInHours < 24) return `${diffInHours} hour${diffInHours === 1 ? "" : "s"} ago`;
+  }
+
+  return date.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
+
 export interface PaginatedResult<T> {
   data: T[];
   totalItems: number;
   page: number;
   limit: number;
   totalPages: number;
+}
+
+function getActivityValue(record: ApiRecord, keys: string[]): unknown {
+  if (!record || typeof record !== "object") return undefined;
+
+  for (const key of keys) {
+    const value = getNestedValue(record, key);
+    if (value !== undefined && value !== null && value !== "") return value;
+  }
+
+  const nestedCandidates = [
+    getValue(record, "product"),
+    getValue(record, "item"),
+    getValue(record, "inventoryItem"),
+    getValue(record, "stockItem"),
+  ];
+
+  for (const candidate of nestedCandidates) {
+    if (candidate && typeof candidate === "object") {
+      const nestedValue = getActivityValue(candidate as ApiRecord, keys);
+      if (nestedValue !== undefined && nestedValue !== null && nestedValue !== "") return nestedValue;
+    }
+  }
+
+  return undefined;
+}
+
+function normalizeActivityType(value: unknown): string {
+  const raw = String(value || "").trim();
+  if (!raw) return "Activity";
+
+  const normalized = raw.toLowerCase();
+  if (normalized.includes("stock in")) return "Stock In";
+  if (normalized.includes("stock out") || normalized.includes("sales") || normalized.includes("sold")) return "Stock Out";
+  if (normalized.includes("new product") || normalized.includes("product added")) return "New Product Added";
+  if (normalized.includes("ordered") || normalized.includes("purchase order") || normalized.includes("po")) return "Ordered Products";
+  if (normalized.includes("low stock") || normalized.includes("low-stock")) return "Low Stock";
+  if (normalized.includes("out of stock") || normalized.includes("outofstock")) return "Out of Stock";
+  if (normalized.includes("vendor delivery") || normalized.includes("delivery")) return "Vendor Delivery";
+  return raw;
+}
+
+function normalizeActivityQty(activityType: string, rawValue: unknown): string {
+  const rawText = String(rawValue ?? "").trim();
+  const normalized = Number(rawText.replace(/[^0-9.-]/g, ""));
+  const amount = Number.isFinite(normalized) ? normalized : 0;
+
+  const type = activityType.toLowerCase();
+  if (type.includes("out of stock")) return "0";
+  if (type.includes("low stock")) return `${Math.max(0, Math.abs(amount))} left`;
+  if (type.includes("stock in") || type.includes("vendor delivery") || type.includes("new product") || type.includes("ordered") || type.includes("purchase order")) {
+    return `+${Math.abs(amount)}`;
+  }
+  if (type.includes("stock out") || type.includes("sales") || type.includes("sold")) {
+    return `${-Math.abs(amount)}`;
+  }
+
+  if (rawText === "") return "0";
+  return `${amount}`;
+}
+
+function normalizeActivityProduct(raw: Record<string, unknown>): string {
+  const productObject = getValue(raw, "product") as ApiRecord;
+  const itemObject = getValue(raw, "item") as ApiRecord;
+  const inventoryObject = getValue(raw, "inventoryItem") as ApiRecord;
+
+  const candidates = [
+    getTextValue(
+      getActivityValue(raw, ["productName", "product_name", "itemName", "item_name", "name"]),
+      getActivityValue(productObject, ["productName", "product_name", "name", "itemName"]),
+      getActivityValue(itemObject, ["productName", "product_name", "name", "itemName"]),
+      getActivityValue(inventoryObject, ["productName", "product_name", "name", "itemName"]),
+    ),
+    getTextValue(getValue(raw, "product"), getValue(raw, "item"), getValue(raw, "inventoryItem")),
+  ];
+
+  const chosen = candidates.find((value) => value && value !== "[object Object]" && !/^[A-Za-z]+\s+[A-Za-z]+$/.test(value) && !value.toLowerCase().includes("user"));
+  return chosen || "Unknown Product";
 }
 
 export async function fetchRecentActivitiesPaginated(params: {
@@ -518,10 +641,64 @@ export async function fetchRecentActivitiesPaginated(params: {
     if (response?.data?.success) {
       const rows = Array.isArray(response.data.data) ? response.data.data : [];
       return {
-        data: rows.map((it: Record<string, unknown>) => ({
-          ...(it as Record<string, unknown>),
-          time: formatRelativeTime(getTextValue(it.time, it.createdAt) || getTextValue(it.createdAt)),
-        })),
+        data: rows.map((it: Record<string, unknown>) => {
+          const raw = it as Record<string, unknown>;
+          const productRecord = getValue(raw, "product") as ApiRecord;
+          const itemRecord = getValue(raw, "item") as ApiRecord;
+          const inventoryRecord = getValue(raw, "inventoryItem") as ApiRecord;
+
+          const rawTimestamp = getTextValue(
+            getActivityValue(raw, ["createdAt", "timestamp", "time", "date", "updatedAt"]),
+            getActivityValue(productRecord, ["createdAt", "timestamp", "time", "date"]),
+            getActivityValue(itemRecord, ["createdAt", "timestamp", "time", "date"]),
+            getActivityValue(inventoryRecord, ["createdAt", "timestamp", "time", "date"]),
+          );
+
+          const activityType = normalizeActivityType(
+            getFirstDefinedValue(
+              getActivityValue(raw, ["activity", "activityType", "eventType", "event", "action", "type", "title", "label"]),
+              getActivityValue(productRecord, ["activity", "type", "title", "label"]),
+              getActivityValue(itemRecord, ["activity", "type", "title", "label"]),
+              getActivityValue(inventoryRecord, ["activity", "type", "title", "label"]),
+              getTextValue(getValue(raw, "activity")),
+            ),
+          );
+
+          const qtySource = getFirstDefinedValue(
+            getActivityValue(raw, ["quantity", "qty", "stock", "remainingQty", "remainingQuantity", "availableQty", "actualQty", "delta", "change", "count", "soldQty", "addedQty", "orderedQty", "units"]),
+            getActivityValue(productRecord, ["quantity", "qty", "stock", "remainingQty", "remainingQuantity", "availableQty", "actualQty", "delta", "change"]),
+            getActivityValue(itemRecord, ["quantity", "qty", "stock", "remainingQty", "remainingQuantity", "availableQty", "actualQty", "delta", "change"]),
+            getActivityValue(inventoryRecord, ["quantity", "qty", "stock", "remainingQty", "remainingQuantity", "availableQty", "actualQty", "delta", "change"]),
+          );
+
+          const productName = normalizeActivityProduct(raw);
+          const normalizedQty = normalizeActivityQty(activityType, qtySource);
+
+          return {
+            id: String(
+              getFirstDefinedValue(
+                getActivityValue(raw, ["id", "activityId", "eventId", "_id"]),
+                productName,
+                `${activityType}-${rawTimestamp || Date.now()}`,
+              ) ?? `${activityType}-${Date.now()}`,
+            ),
+            activity: activityType,
+            product: productName,
+            sku: getTextValue(
+              getActivityValue(raw, ["sku", "productSku", "stockKeepingUnit", "itemSku", "SKU"]),
+              getActivityValue(productRecord, ["sku", "productSku", "stockKeepingUnit", "itemSku"]),
+              getActivityValue(itemRecord, ["sku", "productSku", "stockKeepingUnit", "itemSku"]),
+              getActivityValue(inventoryRecord, ["sku", "productSku", "stockKeepingUnit", "itemSku"]),
+            ) || "N/A",
+            qty: normalizedQty,
+            status: (getTextValue(
+              getActivityValue(raw, ["status", "state", "alertStatus"]),
+              getActivityValue(productRecord, ["status", "state"]),
+            ) || (activityType === "Low Stock" || activityType === "Out of Stock" ? "Warning" : "Completed")) as ActivityItem["status"],
+            createdAt: rawTimestamp || undefined,
+            time: rawTimestamp ? formatEventTime(rawTimestamp) : getTextValue(it.time) || "--:--",
+          } as ActivityItem;
+        }),
         totalItems: response.data.totalItems ?? rows.length,
         page: response.data.page ?? (params.page || 1),
         limit: response.data.limit ?? (params.limit || 10),

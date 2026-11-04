@@ -11,13 +11,14 @@ import { FiPlus } from "react-icons/fi";
 
 export default function DashboardPage() {
   const [isPOModalOpen, setIsPOModalOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
   return (
     <DashboardLayout>
       <div className={styles.pageHeader}>
         <h1 className={styles.pageTitle}>Dashboard</h1>
         <div className={styles.headerRight}>
-          <CustomDatePicker />
+          <CustomDatePicker value={selectedDate} onChange={setSelectedDate} />
           <button className={styles.createPoBtn} onClick={() => setIsPOModalOpen(true)}>
             <FiPlus /> Create Purchase Order
           </button>
@@ -31,7 +32,7 @@ export default function DashboardPage() {
         <TopSellingChart />
       </div>
 
-      <RecentActivitiesTable />
+      <RecentActivitiesTable selectedDate={selectedDate} />
 
       <CreatePOModal
         isOpen={isPOModalOpen}

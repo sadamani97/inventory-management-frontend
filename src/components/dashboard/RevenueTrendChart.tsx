@@ -1,127 +1,178 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import styles from "./RevenueTrendChart.module.css";
-import { fetchSalesOrdersList, fetchReportKpis } from "@/lib/dashboardApi";
+import { fetchSalesOrdersList } from "@/lib/dashboardApi";
 import { FiChevronDown } from "react-icons/fi";
 
 interface ChartPoint {
-  month: string;
-  revenueLakh: number;
-  revenueFormatted: string;
+  label: string;
+  value: number;
+  formatted: string;
 }
 
-const BASELINE_POINTS: ChartPoint[] = [
-  { month: "Jan", revenueLakh: 13, revenueFormatted: "₹13L" },
-  { month: "Feb", revenueLakh: 11, revenueFormatted: "₹11L" },
-  { month: "Mar", revenueLakh: 16, revenueFormatted: "₹16L" },
-  { month: "May", revenueLakh: 15, revenueFormatted: "₹15L" },
-  { month: "Jun", revenueLakh: 23, revenueFormatted: "₹23L" },
-  { month: "Jul", revenueLakh: 17, revenueFormatted: "₹17L" },
-  { month: "Aug", revenueLakh: 18, revenueFormatted: "₹18L" },
-  { month: "Sep", revenueLakh: 23, revenueFormatted: "₹23L" },
-  { month: "Oct", revenueLakh: 17, revenueFormatted: "₹17L" },
-  { month: "Nov", revenueLakh: 13, revenueFormatted: "₹13L" },
-  { month: "Dec", revenueLakh: 18, revenueFormatted: "₹18L" },
-];
+type ViewMode = "month" | "year";
+
+const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+const formatCompactCurrency = (value: number): string => {
+  if (value >= 10000000) return `₹${(value / 10000000).toFixed(1)}Cr`;
+  if (value >= 100000) return `₹${(value / 100000).toFixed(1)}L`;
+  if (value >= 1000) return `₹${(value / 1000).toFixed(1)}K`;
+  return `₹${value.toLocaleString("en-IN")}`;
+};
+
+const getNearestNiceMax = (maxValue: number): number => {
+  if (!Number.isFinite(maxValue) || maxValue <= 0) {
+    return 10000;
+  }
+
+  const magnitude = 10 ** Math.floor(Math.log10(maxValue));
+  const normalized = maxValue / magnitude;
+  const steps = [1, 1.5, 2, 2.5, 3, 4, 5, 7.5, 10];
+  const nearestStep = steps.find((step) => normalized <= step) ?? steps[steps.length - 1];
+
+  return nearestStep * magnitude;
+};
 
 export default function RevenueTrendChart() {
-  const [selectedMonthIndex, setSelectedMonthIndex] = useState<number>(4);
-  const [totalRevenueText, setTotalRevenueText] = useState<string>("₹ 23,07,349");
-  const [growthPercent] = useState<number>(20);
+  const currentYear = new Date().getFullYear();
+  const yearOptions = useMemo(
+    () => Array.from({ length: 10 }, (_, idx) => currentYear - (9 - idx)),
+    [currentYear]
+  );
+
+  const [viewMode, setViewMode] = useState<ViewMode>("month");
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [selectedYear, setSelectedYear] = useState<number>(currentYear);
+  const [selectedMonthIndex, setSelectedMonthIndex] = useState<number>(new Date().getMonth());
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [selectedFocusIndex, setSelectedFocusIndex] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [chartData, setChartData] = useState<ChartPoint[]>(BASELINE_POINTS);
+  const [yearlyRevenueMap, setYearlyRevenueMap] = useState<Record<number, number>>({});
+  const [monthlyRevenueMap, setMonthlyRevenueMap] = useState<Record<number, Record<number, number>>>({});
 
   useEffect(() => {
     let isMounted = true;
 
-    Promise.all([
-      fetchSalesOrdersList().catch(() => []),
-      fetchReportKpis().catch(() => null),
-    ])
-      .then(([orders, kpis]) => {
+    fetchSalesOrdersList()
+      .then((orders) => {
         if (!isMounted) return;
 
-        if (kpis?.totalRevenue && kpis.totalRevenue > 0) {
-          setTotalRevenueText(`₹ ${Number(kpis.totalRevenue).toLocaleString("en-IN")}`);
-        } else if (orders.length > 0) {
-          const sum = orders.reduce((acc, o) => acc + (Number(o.totalAmount) || 0), 0);
-          if (sum > 0) {
-            setTotalRevenueText(`₹ ${sum.toLocaleString("en-IN")}`);
+        const yearTotals: Record<number, number> = {};
+        const monthTotals: Record<number, Record<number, number>> = {};
+
+        yearOptions.forEach((year) => {
+          yearTotals[year] = 0;
+          monthTotals[year] = Array.from({ length: 12 }, () => 0);
+        });
+
+        orders.forEach((order) => {
+          const createdAt = order.createdAt || order.orderDate;
+          if (!createdAt) return;
+
+          const date = new Date(createdAt);
+          if (!Number.isFinite(date.getTime())) return;
+
+          const year = date.getFullYear();
+          if (!(year in yearTotals)) {
+            yearTotals[year] = 0;
+            monthTotals[year] = Array.from({ length: 12 }, () => 0);
           }
-        }
 
-        if (orders.length > 0) {
-          const monthMap: Record<string, number> = {};
-          const months = ["Jan", "Feb", "Mar", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-          months.forEach((m) => (monthMap[m] = 0));
-
-          orders.forEach((o) => {
-            if (o.createdAt) {
-              const d = new Date(o.createdAt);
-              const mName = d.toLocaleDateString("en-US", { month: "short" });
-              if (monthMap[mName] !== undefined) {
-                monthMap[mName] += Number(o.totalAmount || 0);
-              }
-            }
-          });
-
-          const hasOrderData = Object.values(monthMap).some((v) => v > 0);
-          if (hasOrderData) {
-            const updated = BASELINE_POINTS.map((bp) => {
-              const val = monthMap[bp.month];
-              if (val > 0) {
-                const inLakhs = Number((val / 100000).toFixed(1));
-                return {
-                  month: bp.month,
-                  revenueLakh: inLakhs,
-                  revenueFormatted: `₹${inLakhs}L`,
-                };
-              }
-              return bp;
-            });
-            setChartData(updated);
+          const monthIndex = date.getMonth();
+          const revenue = Number(order.totalAmount || 0);
+          if (revenue > 0) {
+            yearTotals[year] += revenue;
+            monthTotals[year][monthIndex] += revenue;
           }
-        }
+        });
 
+        setYearlyRevenueMap(yearTotals);
+        setMonthlyRevenueMap(monthTotals);
         setLoading(false);
       })
       .catch(() => {
-        if (isMounted) setLoading(false);
+        if (isMounted) {
+          setYearlyRevenueMap({});
+          setMonthlyRevenueMap({});
+          setLoading(false);
+        }
       });
 
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [yearOptions]);
 
-  const svgWidth = 690;
+  const monthlyChartData = useMemo<ChartPoint[]>(
+    () =>
+      MONTH_NAMES.map((month, index) => {
+        const value = monthlyRevenueMap[selectedYear]?.[index] ?? 0;
+        return {
+          label: month,
+          value,
+          formatted: formatCompactCurrency(value),
+        };
+      }),
+    [monthlyRevenueMap, selectedYear]
+  );
+
+  const yearlyChartData = useMemo<ChartPoint[]>(
+    () =>
+      yearOptions.map((year) => ({
+        label: String(year),
+        value: yearlyRevenueMap[year] ?? 0,
+        formatted: formatCompactCurrency(yearlyRevenueMap[year] ?? 0),
+      })),
+    [yearOptions, yearlyRevenueMap]
+  );
+
+  const chartData = viewMode === "month" ? monthlyChartData : yearlyChartData;
+  const selectedIndex = viewMode === "month" ? selectedMonthIndex : Math.max(0, yearOptions.indexOf(selectedYear));
+  const focusIndex = hoveredIndex ?? selectedFocusIndex;
+  const activePoint = chartData[selectedIndex] ?? chartData[0] ?? { label: "", value: 0, formatted: "₹0" };
+  const focusPoint = focusIndex !== null ? chartData[focusIndex] ?? activePoint : activePoint;
+  const hasRevenue = chartData.some((item) => item.value > 0);
+  const displayRevenueText = loading ? "" : `₹ ${Number(activePoint.value).toLocaleString("en-IN")}`;
+  const previousPointValue = chartData[Math.max(0, selectedIndex - 1)]?.value ?? 0;
+  const growthPercent = hasRevenue && chartData.length > 1 ? Math.max(0, Math.round(((activePoint.value - previousPointValue) / Math.max(1, previousPointValue)) * 100)) : 0;
+
+  const svgWidth = 668;
   const svgHeight = 180;
-  const paddingLeft = 46;
+  const paddingLeft = 42;
   const paddingRight = 10;
   const topY = 16;
   const bottomY = 145;
 
-  const yGuides = [
-    { label: "₹30L", val: 30, y: topY },
-    { label: "₹21L", val: 21, y: topY + (bottomY - topY) * 0.32 },
-    { label: "₹13L", val: 13, y: topY + (bottomY - topY) * 0.68 },
-    { label: "₹10L", val: 10, y: bottomY },
-  ];
+  const maxChartValue = getNearestNiceMax(Math.max(...chartData.map((point) => point.value), 10000));
+  const yAxisTicks = Array.from({ length: 5 }, (_, index) => {
+    const tickValue = maxChartValue * (1 - index / 4);
+    return {
+      value: tickValue,
+      y: topY + ((bottomY - topY) * index) / 4,
+    };
+  });
 
-  const getY = (valLakh: number): number => {
-    const clamped = Math.max(10, Math.min(30, valLakh));
-    const ratio = (clamped - 10) / (30 - 10);
+  const yGuides = yAxisTicks.map((tick) => ({
+    label: tick.value === 0 ? "₹0" : formatCompactCurrency(tick.value),
+    y: tick.y,
+  }));
+
+  const getY = (value: number): number => {
+    const safeValue = Math.max(0, value);
+    const ratio = maxChartValue > 0 ? safeValue / maxChartValue : 0;
     return bottomY - ratio * (bottomY - topY);
   };
 
   const getX = (idx: number): number => {
+    if (chartData.length <= 1) return paddingLeft;
     const usableWidth = svgWidth - paddingLeft - paddingRight;
     const step = usableWidth / (chartData.length - 1);
     return paddingLeft + idx * step;
   };
 
-  const points = chartData.map((pt, idx) => ({
-    x: getX(idx),
-    y: getY(pt.revenueLakh),
+  const points = chartData.map((point, index) => ({
+    x: getX(index),
+    y: getY(point.value),
   }));
 
   const pathD = useMemo(() => {
@@ -139,14 +190,33 @@ export default function RevenueTrendChart() {
     return `${pathD} L ${lastX} ${bottomY} L ${firstX} ${bottomY} Z`;
   }, [pathD, points, bottomY]);
 
-  const selectedPt = chartData[selectedMonthIndex] || chartData[4];
-  const selectedX = getX(selectedMonthIndex);
-  const selectedY = getY(selectedPt.revenueLakh);
+  const selectedPoint = focusPoint;
+  const selectedX = focusIndex !== null ? getX(focusIndex) : null;
+  const selectedY = selectedX !== null ? getY(selectedPoint.value) : null;
+  const tooltipWidth = 92;
+  const tooltipHeight = 18;
+  const tooltipPaddingX = 6;
+  const tooltipPaddingY = 2;
+  const tooltipX = selectedX !== null ? Math.min(Math.max(selectedX - tooltipWidth - 8, 16), svgWidth - tooltipWidth - 16) : 0;
+  const tooltipY = selectedY !== null ? Math.max(selectedY - tooltipHeight / 2, 12) : 0;
+  const showTooltip = hoveredIndex !== null || selectedFocusIndex !== null;
+  const selectedDropdownLabel =
+    viewMode === "month" ? `${MONTH_NAMES[selectedMonthIndex]} ${selectedYear}` : `Year ${selectedYear}`;
 
-  const tooltipWidth = 104;
-  const tooltipHeight = 26;
-  const tooltipX = selectedX - tooltipWidth - 8;
-  const tooltipY = selectedY - tooltipHeight / 2;
+  const handleChartSelection = (idx: number) => {
+    setSelectedFocusIndex(idx);
+    setHoveredIndex(null);
+
+    if (viewMode === "month") {
+      setSelectedMonthIndex(idx);
+      return;
+    }
+
+    const yearValue = yearOptions[idx];
+    if (yearValue) {
+      setSelectedYear(yearValue);
+    }
+  };
 
   return (
     <div className={styles.chartCard}>
@@ -155,22 +225,89 @@ export default function RevenueTrendChart() {
         <div className={styles.headerControls}>
           <span className={styles.selectedMonthLegend}>
             <span className={styles.legendDashedLine} />
-            Selected month
+            {viewMode === "month" ? "Selected month" : "Selected year"}
           </span>
-          <div className={styles.monthDropdown}>
-            <span>Month</span>
-            <FiChevronDown />
+
+          <div className={styles.dropdownContainer}>
+            <button
+              type="button"
+              className={styles.monthDropdown}
+              onClick={() => setDropdownOpen((prev) => !prev)}
+            >
+              <span>{selectedDropdownLabel}</span>
+              <FiChevronDown className={styles.chevronIcon} />
+            </button>
+
+            {dropdownOpen && (
+              <div className={styles.dropdownMenu}>
+                <div className={styles.dropdownSection}>View</div>
+                <button
+                  type="button"
+                  className={`${styles.dropdownOption} ${viewMode === "month" ? styles.dropdownOptionActive : ""}`}
+                  onClick={() => {
+                    setViewMode("month");
+                    setDropdownOpen(false);
+                  }}
+                >
+                  Month
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.dropdownOption} ${viewMode === "year" ? styles.dropdownOptionActive : ""}`}
+                  onClick={() => {
+                    setViewMode("year");
+                    setDropdownOpen(false);
+                  }}
+                >
+                  Year
+                </button>
+
+                <div className={styles.dropdownDivider} />
+
+                {viewMode === "month" ? (
+                  MONTH_NAMES.map((month, index) => (
+                    <button
+                      key={month}
+                      type="button"
+                      className={`${styles.dropdownOption} ${selectedMonthIndex === index ? styles.dropdownOptionActive : ""}`}
+                      onClick={() => {
+                        setSelectedMonthIndex(index);
+                        setSelectedFocusIndex(index);
+                        setDropdownOpen(false);
+                      }}
+                    >
+                      {month}
+                    </button>
+                  ))
+                ) : (
+                  yearOptions.map((year) => (
+                    <button
+                      key={year}
+                      type="button"
+                      className={`${styles.dropdownOption} ${selectedYear === year ? styles.dropdownOptionActive : ""}`}
+                      onClick={() => {
+                        setSelectedYear(year);
+                        setSelectedFocusIndex(yearOptions.indexOf(year));
+                        setDropdownOpen(false);
+                      }}
+                    >
+                      {year}
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
 
       <div className={styles.revenueRow}>
         <h2 className={styles.revenueAmount}>
-          {loading ? <span className={styles.skeletonAmount} /> : totalRevenueText}
+          {loading ? <span className={styles.skeletonAmount} /> : displayRevenueText}
         </h2>
         <span className={styles.growthTextWrapper}>
           <span className={styles.growthGreen}>↑ {growthPercent}%</span>
-          <span className={styles.growthMuted}>from last month</span>
+          <span className={styles.growthMuted}>from last {viewMode === "month" ? "month" : "year"}</span>
         </span>
       </div>
 
@@ -222,48 +359,53 @@ export default function RevenueTrendChart() {
             strokeLinejoin="round"
           />
 
-          <line
-            x1={selectedX}
-            y1={topY}
-            x2={selectedX}
-            y2={bottomY}
-            className={styles.verticalIndicator}
-          />
-
-          <circle
-            cx={selectedX}
-            cy={selectedY}
-            r="4.5"
-            className={styles.selectedPointDot}
-          />
-
-          {chartData.map((cd, idx) => {
+          {chartData.map((point, idx) => {
             const x = getX(idx);
-            const isSelected = idx === selectedMonthIndex;
+            const isActive = idx === (hoveredIndex ?? selectedFocusIndex ?? -1);
             return (
-              <text
-                key={cd.month}
-                x={x}
-                y={bottomY + 22}
-                className={`${styles.xAxisText} ${isSelected ? styles.selectedXAxisText : ""}`}
-                onClick={() => setSelectedMonthIndex(idx)}
-              >
-                {cd.month}
-              </text>
+              <g key={`${point.label}-${idx}`}>
+                {isActive && showTooltip && (
+                  <line
+                    x1={x}
+                    y1={topY}
+                    x2={x}
+                    y2={bottomY}
+                    className={styles.verticalIndicator}
+                  />
+                )}
+                {isActive && (
+                  <circle
+                    cx={x}
+                    cy={getY(point.value)}
+                    r={5}
+                    className={styles.selectedPointDot}
+                    onMouseEnter={() => setHoveredIndex(idx)}
+                    onMouseLeave={() => setHoveredIndex(null)}
+                    onClick={() => handleChartSelection(idx)}
+                  />
+                )}
+                <text
+                  key={`${point.label}-axis-${idx}`}
+                  x={x}
+                  y={bottomY + 22}
+                  className={`${styles.xAxisText} ${isActive && showTooltip ? styles.selectedXAxisText : ""}`}
+                  onMouseEnter={() => setHoveredIndex(idx)}
+                  onMouseLeave={() => setHoveredIndex(null)}
+                  onClick={() => handleChartSelection(idx)}
+                >
+                  {point.label}
+                </text>
+              </g>
             );
           })}
 
-          <g transform={`translate(${tooltipX}, ${tooltipY})`}>
-            <rect
-              width={tooltipWidth}
-              height={tooltipHeight}
-              rx="6"
-              className={styles.tooltipRect}
-            />
-            <circle cx="10" cy="13" r="3" className={styles.tooltipDot} />
-            <text x="18" y="17" className={styles.tooltipLabel}>Revenue:</text>
-            <text x="68" y="17" className={styles.tooltipValue}>{selectedPt.revenueFormatted}</text>
-          </g>
+          {showTooltip && selectedX !== null && selectedY !== null && (
+            <g transform={`translate(${tooltipX}, ${tooltipY})`} className={styles.tooltipWrap}>
+              <rect width={tooltipWidth} height={tooltipHeight} rx="4" className={styles.tooltipRect} />
+              <text x={tooltipPaddingX} y={tooltipHeight - tooltipPaddingY - 2} className={styles.tooltipLabel}>{selectedPoint.label}:</text>
+              <text x={tooltipWidth - 45} y={tooltipHeight - tooltipPaddingY - 2} className={styles.tooltipValue}>{selectedPoint.formatted}</text>
+            </g>
+          )}
         </svg>
       </div>
     </div>

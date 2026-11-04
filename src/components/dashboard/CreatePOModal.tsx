@@ -3,6 +3,7 @@ import Image from "next/image";
 import { FiX, FiSearch, FiTrash2, FiFileText, FiCalendar, FiBox, FiCheck, FiMapPin } from "react-icons/fi";
 import { fetchVendorsList, VendorItem, fetchProductsList, ProductItem, createPurchaseOrder, updateProduct } from "@/lib/dashboardApi";
 import CustomSelect from "@/components/ui/CustomSelect";
+import CustomDatePicker from "@/components/dashboard/CustomDatePicker";
 import styles from "@/styles/components/createPOModal.module.css";
 import { toast } from "react-toastify";
 import { ASSETS } from "@/constants/assets";
@@ -220,11 +221,35 @@ export default function CreatePOModal({ isOpen, onClose, onSuccess }: CreatePOMo
                 </div>
                 <div className={styles.formGroup}>
                   <label className={styles.label}>Order Date <span className={styles.required}>*</span></label>
-                  <input type="date" className={styles.input} value={orderDate} onChange={e => setOrderDate(e.target.value)} />
+                  <CustomDatePicker
+                    className={styles.dateField}
+                    value={orderDate ? new Date(orderDate) : undefined}
+                    onChange={(date) => setOrderDate(date.toISOString().split("T")[0])}
+                    variant="default"
+                    icon="calendar"
+                    formatLabel={(date) => {
+                      const month = date.toLocaleString("en-US", { month: "short" });
+                      const day = date.getDate();
+                      const year = date.getFullYear();
+                      return `${month} ${day}, ${year}`;
+                    }}
+                  />
                 </div>
                 <div className={styles.formGroup}>
                   <label className={styles.label}>Expected Delivery Date</label>
-                  <input type="date" className={styles.input} value={deliveryDate} onChange={e => setDeliveryDate(e.target.value)} />
+                  <CustomDatePicker
+                    className={styles.dateField}
+                    value={deliveryDate ? new Date(deliveryDate) : undefined}
+                    onChange={(date) => setDeliveryDate(date.toISOString().split("T")[0])}
+                    variant="default"
+                    icon="calendar"
+                    formatLabel={(date) => {
+                      const month = date.toLocaleString("en-US", { month: "short" });
+                      const day = date.getDate();
+                      const year = date.getFullYear();
+                      return `${month} ${day}, ${year}`;
+                    }}
+                  />
                 </div>
                 <div className={`${styles.formGroup} ${styles.vendorNotesGroup}`}>
                   <label className={styles.label}>Payment Terms <span className={styles.required}>*</span></label>

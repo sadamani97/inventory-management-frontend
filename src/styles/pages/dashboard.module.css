@@ -37,8 +37,11 @@
 .createPoBtn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  padding: 10px 18px;
+  width: 213px;
+  height: 40px;
+  padding: 8px 15px;
   background-color: var(--primary);
   color: var(--text-inverse);
   border: none;
@@ -48,6 +51,13 @@
   cursor: pointer;
   box-shadow: var(--shadow-primary);
   transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.createPoBtn svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2.25;
 }
 
 .createPoBtn:hover {

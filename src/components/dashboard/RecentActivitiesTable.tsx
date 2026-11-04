@@ -3,18 +3,22 @@ import styles from "./RecentActivitiesTable.module.css";
 import Table, { TableColumn } from "@/components/ui/Table";
 import CustomSelect from "@/components/ui/CustomSelect";
 import Pagination from "@/components/ui/Pagination";
-import { fetchRecentActivitiesPaginated, ActivityItem } from "@/lib/dashboardApi";
+import { fetchRecentActivitiesPaginated, ActivityItem, formatActivityTimeLabel } from "@/lib/dashboardApi";
 import { FiSearch } from "react-icons/fi";
 
 const STATUS_OPTIONS = [
   { label: "All Status", value: "All Status" },
-  { label: "Completed", value: "Completed" },
+  { label: "Complete", value: "Completed" },
   { label: "Warning", value: "Warning" },
   { label: "Added", value: "Added" },
   { label: "Delivered", value: "Delivered" },
 ];
 
-export default function RecentActivitiesTable() {
+interface RecentActivitiesTableProps {
+  selectedDate?: Date;
+}
+
+export default function RecentActivitiesTable({ selectedDate = new Date() }: RecentActivitiesTableProps) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All Status");
   const [activities, setActivities] = useState<ActivityItem[]>([]);
@@ -25,7 +29,6 @@ export default function RecentActivitiesTable() {
 
   useEffect(() => {
     let isMounted = true;
-    setLoading(true);
 
     const timer = setTimeout(() => {
       fetchRecentActivitiesPaginated({
@@ -36,8 +39,18 @@ export default function RecentActivitiesTable() {
       })
         .then((res) => {
           if (!isMounted) return;
-          setActivities(res.data);
-          setTotalItems(res.totalItems);
+          const filteredData = res.data.filter((activity) => {
+            const eventDate = new Date(activity.createdAt || activity.time);
+            if (Number.isNaN(eventDate.getTime())) return false;
+
+            return (
+              eventDate.getFullYear() === selectedDate.getFullYear() &&
+              eventDate.getMonth() === selectedDate.getMonth() &&
+              eventDate.getDate() === selectedDate.getDate()
+            );
+          });
+          setActivities(filteredData);
+          setTotalItems(filteredData.length);
           setLoading(false);
         })
         .catch((err) => {
@@ -50,7 +63,7 @@ export default function RecentActivitiesTable() {
       isMounted = false;
       clearTimeout(timer);
     };
-  }, [currentPage, pageSize, search, statusFilter]);
+  }, [currentPage, pageSize, search, statusFilter, selectedDate]);
 
   const handleSearchChange = (val: string) => {
     setSearch(val);
@@ -67,11 +80,13 @@ export default function RecentActivitiesTable() {
     setCurrentPage(1);
   };
 
-  const getStatusClass = (status: ActivityItem["status"]) => {
+  const getStatusClass = (status: ActivityItem["status"] | "Complete" | "Alert") => {
     switch (status) {
       case "Completed":
+      case "Complete":
         return styles.statusCompleted;
       case "Warning":
+      case "Alert":
         return styles.statusWarning;
       case "Added":
         return styles.statusAdded;
@@ -106,23 +121,26 @@ export default function RecentActivitiesTable() {
         key: "qty",
         header: "Qty",
         minWidth: 90,
-        render: (row) => <span className={styles.qtyVal}>{row.qty}</span>,
+        render: (row) => <span className={styles.qtyVal}>{row.qty || "0"}</span>,
       },
       {
         key: "status",
         header: "Status",
         minWidth: 120,
-        render: (row) => (
-          <span className={`${styles.statusBadge} ${getStatusClass(row.status)}`}>
-            {row.status}
-          </span>
-        ),
+        render: (row) => {
+          const normalizedStatus = row.status === "Completed" ? "Complete" : row.status;
+          return (
+            <span className={`${styles.statusBadge} ${getStatusClass(normalizedStatus as ActivityItem["status"] | "Complete" | "Alert")}`}>
+              {normalizedStatus}
+            </span>
+          );
+        },
       },
       {
         key: "time",
         header: "Time",
         minWidth: 120,
-        render: (row) => <span className={styles.timeText}>{row.time}</span>,
+        render: (row) => <span className={styles.timeText}>{formatActivityTimeLabel(row.createdAt || row.time)}</span>,
       },
     ],
     []
@@ -165,7 +183,7 @@ export default function RecentActivitiesTable() {
           skeletonRows={Math.min(pageSize, 8)}
           height="460px"
           minWidth="800px"
-          emptyMessage="No backend activities found."
+          emptyMessage="No activities found for this date."
           rowKey={(row) => row.id}
         />
       </div>

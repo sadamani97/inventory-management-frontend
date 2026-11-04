@@ -18,7 +18,6 @@ export default function TopSellingChart() {
 
   useEffect(() => {
     let isMounted = true;
-    setLoading(true);
 
     fetchCategoryQuantities()
       .then((data) => {
@@ -171,7 +170,7 @@ export default function TopSellingChart() {
                   {/* Category Name on X-Axis */}
                   <text
                     x={xPos + barWidth / 2}
-                    y={bottomY + 20}
+                    y={bottomY + 14}
                     className={styles.xAxisText}
                   >
                     {cat.name}
