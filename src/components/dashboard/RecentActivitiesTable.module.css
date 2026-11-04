@@ -5,7 +5,7 @@
   border: 1px solid var(--border-subtle);
   box-shadow: var(--shadow-sm);
   margin-top: 24px;
-  font-family: 'Manrope', sans-serif;
+  font-family: inherit;
 }
 
 .tableHeader {
@@ -28,7 +28,6 @@
   font-weight: 700;
   color: var(--text);
   margin: 0;
-  font-family: 'Manrope', sans-serif;
 }
 
 .headerActions {
@@ -69,25 +68,81 @@
   pointer-events: none;
 }
 
+.statusSelect {
+  width: 130px;
+}
+
 .activityTableContainer {
+  width: 100%;
+  overflow: auto;
+}
+
+.activityTable {
   width: 100%;
 }
 
-.activityName {
+.activityBadge {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 4px 10px;
+  border-radius: 999px;
   font-weight: 600;
-  color: var(--text);
-  font-size: 14px;
-  font-family: 'Manrope', sans-serif;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.typeStockIn {
+  background-color: var(--success-badge-bg);
+  color: var(--success-dark);
+  border: 1px solid var(--success-border);
+}
+
+.typeStockOut {
+  background-color: var(--danger-light);
+  color: var(--danger);
+  border: 1px solid var(--danger-border);
+}
+
+.typeAdded {
+  background-color: var(--primary-light);
+  color: var(--primary);
+  border: 1px solid var(--primary-border);
+}
+
+.typeOrdered {
+  background-color: var(--tone-indigo-bg, #eef2ff);
+  color: #4338ca;
+  border: 1px solid #c7d2fe;
+}
+
+.typeLowStock {
+  background-color: var(--warning-badge-bg);
+  color: var(--warning);
+  border: 1px solid var(--warning-border);
+}
+
+.typeOutOfStock {
+  background-color: var(--danger-light);
+  color: var(--danger-dark);
+  border: 1px solid var(--danger-border);
+}
+
+.typeDefault,
+.typeWarning {
+  background-color: var(--warning-badge-bg);
+  color: var(--warning);
+  border: 1px solid var(--warning-border);
 }
 
 .productName {
   color: var(--text-body);
   font-size: 14px;
-  font-family: 'Manrope', sans-serif;
 }
 
 .skuCode {
-  font-family: 'Manrope', sans-serif;
   font-size: 14px;
   color: var(--text-subtle);
 }
@@ -95,16 +150,29 @@
 .qtyVal {
   font-weight: 600;
   font-size: 14px;
-  font-family: 'Manrope', sans-serif;
+}
+
+.qtyPositive {
+  color: var(--success-dark);
+}
+
+.qtyNegative {
+  color: var(--danger);
+}
+
+.qtyWarning {
+  color: var(--warning);
+}
+
+.qtyNeutral {
+  color: var(--text-body);
 }
 
 .timeText {
   color: var(--text-subtle);
   font-size: 14px;
-  font-family: 'Manrope', sans-serif;
 }
 
-/* Status Badges */
 .statusBadge {
   display: inline-flex;
   align-items: center;
@@ -115,8 +183,8 @@
 }
 
 .statusCompleted {
-  background-color: #E6FFEFCC;
-  color: #1A8F5A;
+  background-color: var(--success-badge-bg);
+  color: var(--success-dark);
 }
 
 .statusWarning {
@@ -125,28 +193,46 @@
 }
 
 .statusAdded {
-  background-color: #EFF4FFCC;
-  color: #2563EB;
+  background-color: var(--primary-light);
+  color: var(--primary);
 }
 
-.statusDelivered {
-  background-color: #E6FFFDCC;
-  color: #0B9F9A;
-}
+@media (max-width: 374px) {
+  .searchWrapper,
+  .statusSelect {
+    width: 100%;
+  }
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
+  .headerActions {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
   }
 }
 
-.loadingSpinner {
-  display: inline-block;
-  width: 14px;
-  height: 14px;
-  border: 2px solid #cbd5e1;
-  border-top-color: var(--primary);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  vertical-align: middle;
+@media (min-width: 375px) and (max-width: 575px) {
+  .tableHeader {
+    align-items: stretch;
+  }
+
+  .headerActions {
+    width: 100%;
+  }
+
+  .searchWrapper {
+    flex: 1;
+    width: auto;
+  }
+}
+
+@media (min-width: 576px) and (max-width: 767px) {
+  .searchWrapper {
+    width: 180px;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  .searchWrapper {
+    width: 200px;
+  }
 }
