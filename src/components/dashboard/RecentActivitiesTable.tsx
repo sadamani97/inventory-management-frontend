@@ -158,6 +158,8 @@ export default function RecentActivitiesTable({
       {
         key: "activity",
         header: "Activity",
+        width: 150,
+        minWidth: 150,
         render: (row) => {
           const canonicalActivity = normalizeInventoryActivityType(row?.activity);
           return (
@@ -170,6 +172,8 @@ export default function RecentActivitiesTable({
       {
         key: "product",
         header: "Product",
+        width: 220,
+        minWidth: 220,
         render: (row) => (
           <span className={styles.productName}>
             {cleanProductName(row?.product)}
@@ -179,6 +183,8 @@ export default function RecentActivitiesTable({
       {
         key: "sku",
         header: "SKU",
+        width: 150,
+        minWidth: 150,
         render: (row) => (
           <span className={styles.skuCode}>
             {cleanProductSku(row?.sku)}
@@ -188,6 +194,8 @@ export default function RecentActivitiesTable({
       {
         key: "qty",
         header: "Qty",
+        width: 110,
+        minWidth: 110,
         render: (row) => {
           const canonicalActivity = normalizeInventoryActivityType(row?.activity);
           const formattedQty = formatActivityQuantity(
@@ -204,6 +212,8 @@ export default function RecentActivitiesTable({
       {
         key: "status",
         header: "Status",
+        width: 120,
+        minWidth: 120,
         render: (row) => {
           const canonicalActivity = normalizeInventoryActivityType(row?.activity);
           const canonicalStatus = selectActivityStatus(canonicalActivity, row?.status);
@@ -217,6 +227,8 @@ export default function RecentActivitiesTable({
       {
         key: "time",
         header: "Time",
+        width: 110,
+        minWidth: 110,
         render: (row) => (
           <span className={styles.timeText}>
             {formatActivityTimestamp(row?.createdAt ?? row?.time)}
@@ -261,6 +273,7 @@ export default function RecentActivitiesTable({
           data={activities}
           loading={loading}
           skeletonRows={Math.min(pageSize, 8)}
+          minWidth="860px"
           emptyMessage="No activities found for this date."
           rowKey={(row, index) => row?.id ?? `${row?.product ?? "activity"}-${index}`}
           className={styles.activityTable}

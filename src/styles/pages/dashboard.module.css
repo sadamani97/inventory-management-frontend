@@ -67,14 +67,16 @@
 
 .chartsGrid {
   display: grid;
-  grid-template-columns: minmax(0, 747px) 1fr;
+  grid-template-columns: minmax(0, 1fr) 402px;
   gap: 20px;
   margin-bottom: 24px;
   align-items: start;
+  width: 100%;
 }
 
 @media (max-width: 1200px) {
   .chartsGrid {
     grid-template-columns: 1fr;
+    justify-content: stretch;
   }
 }

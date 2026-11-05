@@ -1,14 +1,14 @@
 .chartCard {
   background-color: var(--surface, #ffffff);
   border-radius: 12px;
-  padding: 20px 24px;
+  padding: 18px 20px 16px;
   border: 1px solid var(--border-subtle, #eaecf0);
   box-shadow: var(--shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05));
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   width: 100%;
-  max-width: 747px;
+  max-width: none;
   height: 312px;
   box-sizing: border-box;
   opacity: 1;
@@ -51,6 +51,12 @@
   border-top: 1.5px dashed #334155;
 }
 
+.legendAmount {
+  color: #0f172a;
+  font-weight: 700;
+  margin-left: 2px;
+}
+
 .dropdownContainer {
   position: relative;
 }
@@ -82,7 +88,7 @@
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  min-width: 140px;
+  min-width: 120px;
   background-color: var(--surface, #ffffff);
   border: 1px solid var(--border, #e2e8f0);
   border-radius: 8px;
@@ -125,8 +131,8 @@
 }
 
 .dropdownOptionActive {
-  background-color: var(--hover-bg, #f1f5f9);
-  color: var(--primary, #2563eb);
+  background-color: #eef5ff;
+  color: #1f2937;
   font-weight: 700;
 }
 
@@ -244,29 +250,31 @@
 }
 
 .tooltipWrap {
-  transition: transform 0.2s ease;
+  transition: transform 0.15s ease-out;
   pointer-events: none;
 }
 
 .tooltipRect {
-  fill: rgba(15, 23, 42, 0.96);
-  stroke: rgba(148, 163, 184, 0.5);
+  fill: #FFFFFF;
+  stroke: rgba(148, 163, 184, 0.4);
   stroke-width: 1;
-  filter: drop-shadow(0 3px 8px rgba(15, 23, 42, 0.18));
+  filter: drop-shadow(0 2px 6px rgba(15, 23, 42, 0.12));
+}
+
+.tooltipText {
+  font-family: "Manrope", sans-serif;
+  font-size: 11px;
+  dominant-baseline: central;
 }
 
 .tooltipLabel {
-  font-size: 8.5px;
-  fill: rgba(226, 232, 240, 0.9);
-  font-weight: 600;
-  font-family: inherit;
+  fill: #475569;
+  font-weight: 500;
 }
 
 .tooltipValue {
-  font-size: 8.5px;
-  fill: #ffffff;
+  fill: #0f172a;
   font-weight: 700;
-  font-family: inherit;
 }
 
 @keyframes shimmer {

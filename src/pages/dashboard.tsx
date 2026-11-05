@@ -37,7 +37,7 @@ export default function DashboardPage() {
 
       <div className={styles.chartsGrid}>
         <RevenueTrendChart />
-        <TopSellingChart />
+        <TopSellingChart selectedDate={selectedDate} />
       </div>
 
       <RecentActivitiesTable selectedDate={selectedDate} refreshTrigger={refreshTrigger} />

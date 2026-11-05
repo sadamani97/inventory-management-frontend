@@ -128,20 +128,20 @@ export default function RevenueTrendChart() {
 
   const chartData = viewMode === "month" ? monthlyChartData : yearlyChartData;
   const selectedIndex = viewMode === "month" ? selectedMonthIndex : Math.max(0, yearOptions.indexOf(selectedYear));
-  const focusIndex = hoveredIndex ?? selectedFocusIndex;
-  const activePoint = chartData[selectedIndex] ?? chartData[0] ?? { label: "", value: 0, formatted: "₹0" };
-  const focusPoint = focusIndex !== null ? chartData[focusIndex] ?? activePoint : activePoint;
+  const activeIndex = hoveredIndex ?? selectedFocusIndex ?? selectedIndex;
+  const activePoint = chartData[activeIndex] ?? chartData[selectedIndex] ?? chartData[0] ?? { label: "", value: 0, formatted: "₹0" };
+  const selectedPoint = activePoint;
   const hasRevenue = chartData.some((item) => item.value > 0);
   const displayRevenueText = loading ? "" : `₹ ${Number(activePoint.value).toLocaleString("en-IN")}`;
   const previousPointValue = chartData[Math.max(0, selectedIndex - 1)]?.value ?? 0;
   const growthPercent = hasRevenue && chartData.length > 1 ? Math.max(0, Math.round(((activePoint.value - previousPointValue) / Math.max(1, previousPointValue)) * 100)) : 0;
 
   const svgWidth = 668;
-  const svgHeight = 180;
+  const svgHeight = 168;
   const paddingLeft = 42;
   const paddingRight = 10;
-  const topY = 16;
-  const bottomY = 145;
+  const topY = 14;
+  const bottomY = 146;
 
   const maxChartValue = getNearestNiceMax(Math.max(...chartData.map((point) => point.value), 10000));
   const yAxisTicks = Array.from({ length: 5 }, (_, index) => {
@@ -190,18 +190,17 @@ export default function RevenueTrendChart() {
     return `${pathD} L ${lastX} ${bottomY} L ${firstX} ${bottomY} Z`;
   }, [pathD, points, bottomY]);
 
-  const selectedPoint = focusPoint;
-  const selectedX = focusIndex !== null ? getX(focusIndex) : null;
-  const selectedY = selectedX !== null ? getY(selectedPoint.value) : null;
-  const tooltipWidth = 92;
-  const tooltipHeight = 18;
-  const tooltipPaddingX = 6;
-  const tooltipPaddingY = 2;
-  const tooltipX = selectedX !== null ? Math.min(Math.max(selectedX - tooltipWidth - 8, 16), svgWidth - tooltipWidth - 16) : 0;
-  const tooltipY = selectedY !== null ? Math.max(selectedY - tooltipHeight / 2, 12) : 0;
-  const showTooltip = hoveredIndex !== null || selectedFocusIndex !== null;
-  const selectedDropdownLabel =
-    viewMode === "month" ? `${MONTH_NAMES[selectedMonthIndex]} ${selectedYear}` : `Year ${selectedYear}`;
+  const selectedX = getX(activeIndex);
+  const selectedY = getY(selectedPoint.value);
+  const tooltipWidth = Math.max(98, Math.min(130, Math.round(selectedPoint.formatted.length * 8 + 68)));
+  const tooltipHeight = 24;
+  const tooltipPaddingX = 8;
+  const tooltipX = Math.min(
+    Math.max(selectedX - tooltipWidth / 2, paddingLeft),
+    svgWidth - paddingRight - tooltipWidth
+  );
+  const tooltipY = selectedY - tooltipHeight - 8 < topY ? selectedY + 12 : selectedY - tooltipHeight - 8;
+  const selectedDropdownLabel = viewMode === "month" ? "Month" : "Year";
 
   const handleChartSelection = (idx: number) => {
     setSelectedFocusIndex(idx);
@@ -225,7 +224,7 @@ export default function RevenueTrendChart() {
         <div className={styles.headerControls}>
           <span className={styles.selectedMonthLegend}>
             <span className={styles.legendDashedLine} />
-            {viewMode === "month" ? "Selected month" : "Selected year"}
+            Revenue: <span className={styles.legendAmount}>{selectedPoint.formatted}</span>
           </span>
 
           <div className={styles.dropdownContainer}>
@@ -240,7 +239,6 @@ export default function RevenueTrendChart() {
 
             {dropdownOpen && (
               <div className={styles.dropdownMenu}>
-                <div className={styles.dropdownSection}>View</div>
                 <button
                   type="button"
                   className={`${styles.dropdownOption} ${viewMode === "month" ? styles.dropdownOptionActive : ""}`}
@@ -261,40 +259,6 @@ export default function RevenueTrendChart() {
                 >
                   Year
                 </button>
-
-                <div className={styles.dropdownDivider} />
-
-                {viewMode === "month" ? (
-                  MONTH_NAMES.map((month, index) => (
-                    <button
-                      key={month}
-                      type="button"
-                      className={`${styles.dropdownOption} ${selectedMonthIndex === index ? styles.dropdownOptionActive : ""}`}
-                      onClick={() => {
-                        setSelectedMonthIndex(index);
-                        setSelectedFocusIndex(index);
-                        setDropdownOpen(false);
-                      }}
-                    >
-                      {month}
-                    </button>
-                  ))
-                ) : (
-                  yearOptions.map((year) => (
-                    <button
-                      key={year}
-                      type="button"
-                      className={`${styles.dropdownOption} ${selectedYear === year ? styles.dropdownOptionActive : ""}`}
-                      onClick={() => {
-                        setSelectedYear(year);
-                        setSelectedFocusIndex(yearOptions.indexOf(year));
-                        setDropdownOpen(false);
-                      }}
-                    >
-                      {year}
-                    </button>
-                  ))
-                )}
               </div>
             )}
           </div>
@@ -313,7 +277,7 @@ export default function RevenueTrendChart() {
 
       <div className={styles.chartContainer}>
         <svg
-          viewBox={`0 0 ${svgWidth} ${svgHeight + 25}`}
+          viewBox={`0 0 ${svgWidth} ${svgHeight}`}
           className={styles.svgElement}
           preserveAspectRatio="none"
         >
@@ -359,53 +323,59 @@ export default function RevenueTrendChart() {
             strokeLinejoin="round"
           />
 
+          <line
+            x1={selectedX}
+            y1={topY}
+            x2={selectedX}
+            y2={bottomY}
+            className={styles.verticalIndicator}
+          />
+
+          <circle
+            cx={selectedX}
+            cy={selectedY}
+            r={5}
+            className={styles.selectedPointDot}
+            onMouseEnter={() => setHoveredIndex(activeIndex)}
+            onMouseLeave={() => setHoveredIndex(null)}
+            onClick={() => handleChartSelection(activeIndex)}
+          />
+
           {chartData.map((point, idx) => {
             const x = getX(idx);
-            const isActive = idx === (hoveredIndex ?? selectedFocusIndex ?? -1);
+            const isPointActive = idx === activeIndex;
             return (
-              <g key={`${point.label}-${idx}`}>
-                {isActive && showTooltip && (
-                  <line
-                    x1={x}
-                    y1={topY}
-                    x2={x}
-                    y2={bottomY}
-                    className={styles.verticalIndicator}
-                  />
-                )}
-                {isActive && (
-                  <circle
-                    cx={x}
-                    cy={getY(point.value)}
-                    r={5}
-                    className={styles.selectedPointDot}
-                    onMouseEnter={() => setHoveredIndex(idx)}
-                    onMouseLeave={() => setHoveredIndex(null)}
-                    onClick={() => handleChartSelection(idx)}
-                  />
-                )}
-                <text
-                  key={`${point.label}-axis-${idx}`}
-                  x={x}
-                  y={bottomY + 22}
-                  className={`${styles.xAxisText} ${isActive && showTooltip ? styles.selectedXAxisText : ""}`}
-                  onMouseEnter={() => setHoveredIndex(idx)}
-                  onMouseLeave={() => setHoveredIndex(null)}
-                  onClick={() => handleChartSelection(idx)}
-                >
-                  {point.label}
-                </text>
-              </g>
+              <text
+                key={`${point.label}-axis-${idx}`}
+                x={x}
+                y={bottomY + 15}
+                className={`${styles.xAxisText} ${isPointActive ? styles.selectedXAxisText : ""}`}
+                onMouseEnter={() => setHoveredIndex(idx)}
+                onMouseLeave={() => setHoveredIndex(null)}
+                onClick={() => handleChartSelection(idx)}
+              >
+                {point.label}
+              </text>
             );
           })}
 
-          {showTooltip && selectedX !== null && selectedY !== null && (
-            <g transform={`translate(${tooltipX}, ${tooltipY})`} className={styles.tooltipWrap}>
-              <rect width={tooltipWidth} height={tooltipHeight} rx="4" className={styles.tooltipRect} />
-              <text x={tooltipPaddingX} y={tooltipHeight - tooltipPaddingY - 2} className={styles.tooltipLabel}>{selectedPoint.label}:</text>
-              <text x={tooltipWidth - 45} y={tooltipHeight - tooltipPaddingY - 2} className={styles.tooltipValue}>{selectedPoint.formatted}</text>
-            </g>
-          )}
+          <g transform={`translate(${tooltipX}, ${tooltipY})`} className={styles.tooltipWrap}>
+            <rect
+              width={tooltipWidth}
+              height={tooltipHeight}
+              rx="6"
+              className={styles.tooltipRect}
+            />
+            <text
+              x={tooltipWidth / 2}
+              y={tooltipHeight / 2}
+              textAnchor="middle"
+              className={styles.tooltipText}
+            >
+              <tspan className={styles.tooltipLabel}>Revenue: </tspan>
+              <tspan className={styles.tooltipValue}>{selectedPoint.formatted}</tspan>
+            </text>
+          </g>
         </svg>
       </div>
     </div>

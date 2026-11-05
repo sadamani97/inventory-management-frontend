@@ -1,4 +1,4 @@
-import React, { forwardRef } from "react";
+import React, { forwardRef, useRef } from "react";
 import styles from "./Table.module.css";
 
 export interface TableColumn<T = Record<string, unknown>> {
@@ -105,12 +105,19 @@ function TableInner<T = Record<string, unknown>>(
   }: TableProps<T>,
   ref: React.ForwardedRef<HTMLDivElement>
 ) {
+  const headerWrapRef = useRef<HTMLDivElement>(null);
   const resolvedHeight = typeof height === "number" ? `${height}px` : height;
   const resolvedMinWidth = typeof minWidth === "number" ? `${minWidth}px` : minWidth;
 
   const containerClasses = [styles.container, className].filter(Boolean).join(" ");
   const tableClasses = [styles.table, tableClassName].filter(Boolean).join(" ");
   const shouldUseFixedHeight = data.length > 0 && data.length > 6;
+
+  const handleBodyScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    if (headerWrapRef.current) {
+      headerWrapRef.current.scrollLeft = e.currentTarget.scrollLeft;
+    }
+  };
 
   const renderEmptyState = () => {
     if (emptyMessage && typeof emptyMessage !== "string" && typeof emptyMessage !== "number") {
@@ -244,7 +251,7 @@ function TableInner<T = Record<string, unknown>>(
         children
       ) : columns && columns.length > 0 ? (
         <>
-          <div className={styles.headerTableWrap}>
+          <div ref={headerWrapRef} className={styles.headerTableWrap}>
             <table className={tableClasses} style={{ minWidth: resolvedMinWidth }}>
               {renderHeader()}
             </table>
@@ -252,6 +259,7 @@ function TableInner<T = Record<string, unknown>>(
 
           <div
             className={styles.bodyScroll}
+            onScroll={handleBodyScroll}
             style={{
               maxHeight: shouldUseFixedHeight ? resolvedHeight : "none",
               overflowY: shouldUseFixedHeight ? "auto" : "visible",

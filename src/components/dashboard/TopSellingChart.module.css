@@ -1,112 +1,284 @@
+/* TopSellingChart.module.css */
+
 .chartCard {
   background-color: var(--surface, #ffffff);
   border-radius: 12px;
-  padding: 20px 24px;
+  padding: 18px 20px 16px;
   border: 1px solid var(--border-subtle, #eaecf0);
   box-shadow: var(--shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05));
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
   width: 100%;
+  max-width: 402px;
   height: 312px;
   box-sizing: border-box;
   opacity: 1;
+  font-family: "Manrope", sans-serif;
+  position: relative;
+  overflow: hidden;
 }
 
 .chartHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
+  flex-shrink: 0;
 }
 
 .title {
+  margin: 0;
   font-size: 18px;
   font-weight: 700;
-  color: var(--text, #0f172a);
-  margin: 0;
+  line-height: 27px;
   letter-spacing: -0.2px;
+  color: var(--text, #0f172a);
 }
 
-.chartContainer {
-  position: relative;
-  width: 100%;
+.chartBody {
+  display: flex;
   flex: 1;
-  min-height: 200px;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
 }
 
-.svgElement {
-  width: 100%;
+/* ==================== STICKY Y-AXIS ==================== */
+.yAxisSticky {
+  width: 36px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
   height: 100%;
-  overflow: visible;
+  position: relative;
+  z-index: 10;
+  background: #ffffff;
+  user-select: none;
+}
+
+.yTicksWrapper {
+  flex: 1;
+  height: calc(100% - 24px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding-right: 6px;
+  box-sizing: border-box;
+}
+
+.yTickLabel {
+  font-size: 10.5px;
+  font-weight: 500;
+  line-height: 1;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  font-family: inherit;
+}
+
+/* Spacer on the Y-axis to match the bottom X-axis labels row */
+.yAxisSpacer {
+  height: 24px;
+  flex-shrink: 0;
+}
+
+/* ==================== SCROLL AREA WRAPPER ==================== */
+.scrollAreaWrapper {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Fixed grid lines & baseline spanning the visible chart viewport */
+.pinnedGridBackground {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 24px;
+  pointer-events: none;
+  z-index: 1;
 }
 
 .gridLine {
-  stroke: #f1f5f9;
-  stroke-width: 1;
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #f1f5f9;
 }
 
-.baseLine {
-  stroke: #1e293b;
-  stroke-width: 1.5;
+.pinnedBaseline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1.5px;
+  background: #1e293b;
 }
 
-.yAxisText {
-  font-size: 10.5px;
-  fill: #64748b;
-  font-weight: 500;
-  font-family: inherit;
+/* ==================== HORIZONTALLY SCROLLABLE CONTAINER ==================== */
+.scrollContainer {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
-.xAxisText {
-  font-size: 10px;
-  fill: rgba(31, 41, 55, 0.5);
-  font-weight: 600;
-  text-anchor: middle;
-  font-family: inherit;
-  letter-spacing: 0.01em;
+.scrollContainer::-webkit-scrollbar {
+  display: none;
 }
 
-.barHighlighted {
-  fill: #2563eb;
-  transition: all 0.2s ease;
+.barsTrack {
+  display: flex;
+  align-items: stretch;
+  height: 100%;
+  width: 100%;
+  min-width: max-content;
+  justify-content: space-around;
+  gap: 16px;
+  padding-left: 8px;
+  padding-right: 12px;
+  box-sizing: border-box;
+}
+
+/* ==================== BAR COLUMN ==================== */
+.barColumn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 42px;
+  min-width: 42px;
+  height: 100%;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.barSlot {
+  width: 42px;
+  height: calc(100% - 24px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  position: relative;
   cursor: pointer;
 }
 
-.barDefault {
-  fill: #93c5fd;
-  transition: all 0.2s ease;
+/* Normal color is background: #BFD3FF; */
+.bar {
+  width: 42px;
+  border-radius: 4px;
+  display: block;
+  background: #BFD3FF;
+  transition: background-color 0.2s ease, transform 0.15s ease, filter 0.15s ease;
+  transform-origin: bottom;
   cursor: pointer;
 }
 
+/* While hover only the color will change to blue */
+.bar:hover,
 .barHovered {
-  fill: #1d4ed8;
-  filter: drop-shadow(0 4px 6px rgba(29, 78, 216, 0.25));
+  background: #2563EB;
+  filter: drop-shadow(0 4px 6px rgba(37, 99, 235, 0.25));
 }
 
-.tooltipRect {
-  fill: #0f172a;
-  rx: 4;
-}
-
-.tooltipText {
-  font-size: 10.5px;
-  fill: #ffffff;
+/* ==================== TOOLTIP ==================== */
+.tooltip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #0f172a;
+  color: #ffffff;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
   font-weight: 600;
-  text-anchor: middle;
-  font-family: inherit;
-}
-
-.emptyStateContainer {
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 20;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 200px;
-  color: #94a3b8;
-  font-size: 13px;
-  font-weight: 500;
 }
 
+.tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 4px;
+  border-style: solid;
+  border-color: #0f172a transparent transparent transparent;
+}
+
+.tooltipValue {
+  font-weight: 600;
+  color: #ffffff;
+}
+
+/* ==================== X-AXIS CATEGORY LABEL ==================== */
+.xLabel {
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 14px;
+  color: #64748b;
+  white-space: nowrap;
+  text-align: center;
+  max-width: 64px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-top: 4px;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+/* ==================== EMPTY STATE ==================== */
+.emptyState {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: center;
+  padding: 20px;
+  gap: 6px;
+}
+
+.emptyStateTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.emptyStateSubtitle {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+/* ==================== SKELETON LOADER ==================== */
 @keyframes shimmer {
   0% {
     background-position: -200% 0;
@@ -120,35 +292,62 @@
   display: flex;
   align-items: flex-end;
   justify-content: space-around;
-  height: 190px;
-  padding: 10px 20px;
+  width: 100%;
+  height: 100%;
   gap: 16px;
+  padding: 16px 12px 14px;
+  box-sizing: border-box;
+}
+
+.skeletonColumn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 42px;
+  height: 100%;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 .skeletonBar {
-  flex: 1;
-  border-radius: 6px 6px 0 0;
+  width: 42px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+.skeletonLabel {
+  width: 36px;
+  height: 10px;
+  border-radius: 3px;
   background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
 }
 
 .skeletonBar1 {
-  height: 85%;
+  height: 82%;
 }
 
 .skeletonBar2 {
-  height: 65%;
+  height: 68%;
 }
 
 .skeletonBar3 {
-  height: 60%;
+  height: 56%;
 }
 
 .skeletonBar4 {
-  height: 50%;
+  height: 44%;
 }
 
 .skeletonBar5 {
-  height: 40%;
+  height: 32%;
+}
+
+@media (max-width: 1200px) {
+  .chartCard {
+    max-width: 100%;
+  }
 }

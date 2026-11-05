@@ -439,37 +439,94 @@ export interface CategoryQuantityItem {
   name: string;
   count: number;
   quantity?: number;
+  month?: number;
+  year?: number;
 }
 
-export async function fetchCategoryQuantities(): Promise<CategoryQuantityItem[]> {
+export async function fetchCategoryQuantities(params?: {
+  month?: number;
+  year?: number;
+  date?: string | Date;
+}): Promise<CategoryQuantityItem[]> {
   try {
-    const response = await api.get("/api/reports/category-quantities");
-    if (response?.data?.success && Array.isArray(response?.data?.data) && response.data.data.length > 0) {
-      return response.data.data.map((item: { name?: string; count?: number; quantity?: number }) => ({
+    let queryParams: Record<string, string | number> | undefined;
+    if (params) {
+      queryParams = {};
+      if (params.month !== undefined) {
+        queryParams.month = params.month >= 0 && params.month <= 11 ? params.month + 1 : params.month;
+      }
+      if (params.year !== undefined) {
+        queryParams.year = params.year;
+      }
+      if (params.date) {
+        queryParams.date = params.date instanceof Date ? params.date.toISOString() : String(params.date);
+      }
+    }
+
+    const response = await api.get("/api/reports/category-quantities", { params: queryParams });
+    if (response?.data?.success && Array.isArray(response?.data?.data)) {
+      return response.data.data.map((item: { name?: string; count?: number; quantity?: number; month?: number; year?: number }) => ({
         name: item.name || "General",
         count: Number(item.count ?? item.quantity ?? 0),
         quantity: Number(item.count ?? item.quantity ?? 0),
+        month: item.month,
+        year: item.year,
       }));
     }
-  } catch {
-    // Attempt fallback from products endpoint
+  } catch (err) {
+    console.warn("Backend /api/reports/category-quantities failed, falling back to sales orders calculation:", err);
   }
 
   try {
-    const prods = await fetchProductsList();
-    if (Array.isArray(prods) && prods.length > 0) {
-      const map: Record<string, number> = {};
-      prods.forEach((p) => {
-        const cat = p.category?.categoryName || "General";
-        const qty = Number(p.quantity || 0);
-        map[cat] = (map[cat] || 0) + qty;
+    const orders = await fetchSalesOrdersList();
+    if (Array.isArray(orders)) {
+      let targetMonth: number;
+      let targetYear: number;
+
+      if (params?.date) {
+        const d = new Date(params.date);
+        targetMonth = d.getMonth();
+        targetYear = d.getFullYear();
+      } else if (params?.month !== undefined) {
+        targetMonth = params.month >= 1 && params.month <= 12 ? params.month - 1 : params.month;
+        targetYear = params?.year ?? new Date().getFullYear();
+      } else {
+        const now = new Date();
+        targetMonth = now.getMonth();
+        targetYear = params?.year ?? now.getFullYear();
+      }
+
+      const monthlyOrders = orders.filter((order) => {
+        const dateStr = order.createdAt || order.orderDate;
+        if (!dateStr) return false;
+        const d = new Date(dateStr);
+        if (Number.isNaN(d.getTime())) return false;
+        return d.getMonth() === targetMonth && d.getFullYear() === targetYear;
       });
-      return Object.entries(map)
-        .map(([name, count]) => ({ name, count, quantity: count }))
+
+      const catMap: Record<string, number> = {};
+      monthlyOrders.forEach((order) => {
+        const items = order.items || [];
+        items.forEach((item) => {
+          const prod = (item as any)?.product;
+          const catName = prod?.category?.categoryName || prod?.categoryName || "General";
+          const qty = Number(item.quantity ?? 0);
+          catMap[catName] = (catMap[catName] || 0) + qty;
+        });
+      });
+
+      return Object.entries(catMap)
+        .map(([name, count]) => ({
+          name,
+          count,
+          quantity: count,
+          month: targetMonth,
+          year: targetYear,
+        }))
         .sort((a, b) => b.count - a.count);
     }
   } catch (err) {
-    console.error("Failed to load category quantities:", err);
+    console.error("Failed to calculate category quantities from sales orders fallback:", err);
   }
 
   return [];

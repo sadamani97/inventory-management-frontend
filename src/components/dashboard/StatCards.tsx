@@ -85,7 +85,7 @@ export default function StatCards() {
       ),
     },
     {
-      title: "Out of stock",
+      title: "Out of Stock",
       value: loading ? <span className={styles.skeletonValue} /> : `${outStk}`,
       icon: <TbCoins size={17} strokeWidth={2} />,
       iconClass: styles.iconOutOfStock,

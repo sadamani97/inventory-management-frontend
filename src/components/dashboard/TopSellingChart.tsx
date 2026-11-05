@@ -1,184 +1,261 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import styles from "./TopSellingChart.module.css";
-import { fetchCategoryQuantities, CategoryQuantityItem } from "@/lib/dashboardApi";
+import { fetchCategoryQuantities, type CategoryQuantityItem } from "@/lib/dashboardApi";
 
-// Default categories if database has no category records yet
-const DEFAULT_CATEGORIES: CategoryQuantityItem[] = [
-  { name: "Dairy", count: 920, quantity: 920 },
-  { name: "Grains", count: 750, quantity: 750 },
-  { name: "Snacks", count: 680, quantity: 680 },
-  { name: "Beverages", count: 590, quantity: 590 },
-  { name: "Essentials", count: 510, quantity: 510 },
-];
+export interface CategoryChartItem {
+  name: string;
+  value: number;
+}
 
-export default function TopSellingChart() {
-  const [categories, setCategories] = useState<CategoryQuantityItem[]>([]);
+export interface TopSellingChartProps {
+  selectedDate?: Date | string;
+  className?: string;
+  title?: string;
+}
+
+export const formatCategoryLabel = (value: string): string => {
+  if (!value) return "";
+  return value
+    .trim()
+    .split(/\s+/)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+};
+
+export const getRoundedMaxScale = (maxValue: number): number => {
+  if (!Number.isFinite(maxValue) || maxValue <= 0) return 1000;
+  if (maxValue <= 100) return 100;
+  if (maxValue <= 500) return 500;
+  if (maxValue <= 1000) return 1000;
+  return Math.ceil(maxValue / 1000) * 1000;
+};
+
+export const buildTicks = (maxScale: number): number[] => {
+  return [
+    Math.round(maxScale),
+    Math.round(maxScale * 0.8),
+    Math.round(maxScale * 0.6),
+    Math.round(maxScale * 0.4),
+    Math.round(maxScale * 0.2),
+    0,
+  ];
+};
+
+export const formatTickLabel = (tick: number): string => {
+  if (tick >= 1000) {
+    const inK = tick / 1000;
+    return Number.isInteger(inK) ? `${inK}k+` : `${inK.toFixed(1)}k+`;
+  }
+  return `${Math.round(tick)}`;
+};
+
+export default function TopSellingChart({
+  selectedDate,
+  className,
+  title = "Top Selling Products",
+}: TopSellingChartProps) {
+  const [chartData, setChartData] = useState<CategoryChartItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+
+  const parsedDate = useMemo(() => {
+    if (!selectedDate) return new Date();
+    const d = new Date(selectedDate);
+    return Number.isNaN(d.getTime()) ? new Date() : d;
+  }, [selectedDate]);
 
   useEffect(() => {
     let isMounted = true;
+    setLoading(true);
 
-    fetchCategoryQuantities()
-      .then((data) => {
+    const loadData = async () => {
+      try {
+        const targetMonth = parsedDate.getMonth();
+        const targetYear = parsedDate.getFullYear();
+
+        const rawData: CategoryQuantityItem[] = await fetchCategoryQuantities({
+          month: targetMonth,
+          year: targetYear,
+          date: parsedDate,
+        });
+
         if (!isMounted) return;
-        if (Array.isArray(data) && data.length > 0) {
-          setCategories(data.slice(0, 5));
-        } else {
-          setCategories(DEFAULT_CATEGORIES);
-        }
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error("Error loading category quantities from backend:", err);
+
+        // Aggregate by category name in case of casing differences or multiple entries
+        const aggregatedMap: Record<string, number> = {};
+        (rawData || []).forEach((item) => {
+          const rawName = item?.name || "General";
+          const formatted = formatCategoryLabel(rawName);
+          const qty = Number(item?.quantity ?? item?.count ?? 0);
+          if (qty > 0) {
+            aggregatedMap[formatted] = (aggregatedMap[formatted] || 0) + qty;
+          }
+        });
+
+        // Convert to CategoryChartItem array and sort descending by total quantity sold
+        const sortedItems: CategoryChartItem[] = Object.entries(aggregatedMap)
+          .map(([name, value]) => ({ name, value }))
+          .sort((a, b) => b.value - a.value);
+
+        setChartData(sortedItems);
+      } catch (err) {
+        console.error("Error loading top selling products data:", err);
         if (isMounted) {
-          setCategories(DEFAULT_CATEGORIES);
+          setChartData([]);
+        }
+      } finally {
+        if (isMounted) {
           setLoading(false);
         }
-      });
+      }
+    };
+
+    loadData();
+
+    const handleUpdate = () => {
+      loadData();
+    };
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("inventory-updated", handleUpdate);
+      window.addEventListener("sales-order-updated", handleUpdate);
+    }
 
     return () => {
       isMounted = false;
+      if (typeof window !== "undefined") {
+        window.removeEventListener("inventory-updated", handleUpdate);
+        window.removeEventListener("sales-order-updated", handleUpdate);
+      }
     };
-  }, []);
+  }, [parsedDate]);
 
-  const displayCategories = categories.length > 0 ? categories : DEFAULT_CATEGORIES;
+  // Dynamic scale & grid ticks based on highest sales quantity
+  const maxScale = useMemo(() => {
+    const highest = Math.max(...chartData.map((item) => item.value), 0);
+    return getRoundedMaxScale(highest);
+  }, [chartData]);
 
-  const maxVal = useMemo(() => {
-    const highest = Math.max(...displayCategories.map((c) => c.count || 0), 100);
-    return Math.ceil(highest / 200) * 200;
-  }, [displayCategories]);
-
-  const svgWidth = 360;
-  const svgHeight = 180;
-  const paddingLeft = 36;
-  const paddingRight = 10;
-  const topY = 16;
-  const bottomY = 150;
-  const barWidth = 32;
-
-  const getY = (val: number) => {
-    const ratio = Math.max(0, Math.min(1, val / maxVal));
-    return bottomY - ratio * (bottomY - topY);
-  };
-
-  const yTicks = [
-    maxVal,
-    Math.round(maxVal * 0.8),
-    Math.round(maxVal * 0.6),
-    Math.round(maxVal * 0.4),
-    Math.round(maxVal * 0.2),
-    0,
-  ];
+  const yTicks = useMemo(() => buildTicks(maxScale), [maxScale]);
 
   return (
-    <div className={styles.chartCard}>
+    <div
+      className={`${styles.chartCard} ${className ?? ""}`.trim()}
+      role="region"
+      aria-label="Top Selling Products Chart"
+    >
       <div className={styles.chartHeader}>
-        <h3 className={styles.title}>Top Selling Products</h3>
+        <h3 className={styles.title}>{title}</h3>
       </div>
 
-      <div className={styles.chartContainer}>
+      <div className={styles.chartBody}>
         {loading ? (
-          <div className={styles.skeletonContainer}>
-            <div className={`${styles.skeletonBar} ${styles.skeletonBar1}`} />
-            <div className={`${styles.skeletonBar} ${styles.skeletonBar2}`} />
-            <div className={`${styles.skeletonBar} ${styles.skeletonBar3}`} />
-            <div className={`${styles.skeletonBar} ${styles.skeletonBar4}`} />
-            <div className={`${styles.skeletonBar} ${styles.skeletonBar5}`} />
+          <div className={styles.skeletonContainer} aria-label="Loading chart data">
+            <div className={styles.skeletonColumn}>
+              <div className={`${styles.skeletonBar} ${styles.skeletonBar1}`} />
+              <div className={styles.skeletonLabel} />
+            </div>
+            <div className={styles.skeletonColumn}>
+              <div className={`${styles.skeletonBar} ${styles.skeletonBar2}`} />
+              <div className={styles.skeletonLabel} />
+            </div>
+            <div className={styles.skeletonColumn}>
+              <div className={`${styles.skeletonBar} ${styles.skeletonBar3}`} />
+              <div className={styles.skeletonLabel} />
+            </div>
+            <div className={styles.skeletonColumn}>
+              <div className={`${styles.skeletonBar} ${styles.skeletonBar4}`} />
+              <div className={styles.skeletonLabel} />
+            </div>
+            <div className={styles.skeletonColumn}>
+              <div className={`${styles.skeletonBar} ${styles.skeletonBar5}`} />
+              <div className={styles.skeletonLabel} />
+            </div>
+          </div>
+        ) : chartData.length === 0 ? (
+          <div className={styles.emptyState}>
+            <div className={styles.emptyStateTitle}>No sales data for this month</div>
+            <div className={styles.emptyStateSubtitle}>
+              Try selecting another month in the date picker.
+            </div>
           </div>
         ) : (
-          <svg
-            viewBox={`0 0 ${svgWidth} ${svgHeight + 25}`}
-            className={styles.svgElement}
-            preserveAspectRatio="none"
-          >
-            {/* Horizontal Grid lines & Y Axis Labels */}
-            {yTicks.map((tick) => {
-              const yPos = getY(tick);
-              const label = tick >= 1000 ? `${(tick / 1000).toFixed(0)}k+` : `${tick}`;
-              return (
-                <g key={tick}>
-                  <text x="0" y={yPos + 4} className={styles.yAxisText}>
-                    {label}
-                  </text>
-                  <line
-                    x1={paddingLeft}
-                    y1={yPos}
-                    x2={svgWidth - paddingRight}
-                    y2={yPos}
+          <>
+            {/* Sticky/Pinned Left Y-Axis */}
+            <div className={styles.yAxisSticky} aria-label="Quantity sold axis">
+              <div className={styles.yTicksWrapper}>
+                {yTicks.map((tick) => (
+                  <div key={`y-tick-${tick}`} className={styles.yTickLabel}>
+                    {formatTickLabel(tick)}
+                  </div>
+                ))}
+              </div>
+              <div className={styles.yAxisSpacer} />
+            </div>
+
+            {/* Right Plot Area with Pinned Background and Horizontally Scrollable Bars */}
+            <div className={styles.scrollAreaWrapper}>
+              {/* Pinned horizontal grid lines & baseline */}
+              <div className={styles.pinnedGridBackground} aria-hidden="true">
+                {yTicks.map((tick) => (
+                  <div
+                    key={`grid-${tick}`}
                     className={styles.gridLine}
+                    style={{ bottom: `${maxScale > 0 ? (tick / maxScale) * 100 : 0}%` }}
                   />
-                </g>
-              );
-            })}
+                ))}
+                <div className={styles.pinnedBaseline} />
+              </div>
 
-            {/* Baseline */}
-            <line
-              x1={paddingLeft}
-              y1={bottomY}
-              x2={svgWidth - paddingRight}
-              y2={bottomY}
-              className={styles.baseLine}
-            />
+              {/* Horizontally scrollable bars & x-axis container */}
+              <div
+                className={styles.scrollContainer}
+                tabIndex={0}
+                aria-label="Category bars scroll area"
+              >
+                <div className={styles.barsTrack}>
+                  {chartData.map((item, index) => {
+                    const rawHeight = maxScale > 0 ? (item.value / maxScale) * 100 : 0;
+                    const heightPercent = item.value > 0 ? Math.max(rawHeight, 4) : 0;
+                    const isHovered = hoveredIndex === index;
 
-            {/* Bars for Each Category */}
-            {displayCategories.map((cat, idx) => {
-              const usableWidth = svgWidth - paddingLeft - paddingRight;
-              const step = usableWidth / displayCategories.length;
-              const xPos = paddingLeft + idx * step + step / 2 - barWidth / 2;
-              const yPos = getY(cat.count);
-              const barHeight = Math.max(bottomY - yPos, 4);
-              const isFirst = idx === 0;
-              const isHovered = hoveredIdx === idx;
+                    return (
+                      <div
+                        key={`${item.name}-${index}`}
+                        className={styles.barColumn}
+                        onMouseEnter={() => setHoveredIndex(index)}
+                        onMouseLeave={() => setHoveredIndex(null)}
+                      >
+                        <div className={styles.barSlot}>
+                          {isHovered && (
+                            <div className={styles.tooltip} role="tooltip">
+                              <span className={styles.tooltipValue}>
+                                {item.value.toLocaleString("en-IN")}
+                              </span>
+                            </div>
+                          )}
 
-              let barClass = isFirst ? styles.barHighlighted : styles.barDefault;
-              if (isHovered) {
-                barClass = `${barClass} ${styles.barHovered}`;
-              }
+                          <div
+                            className={`${styles.bar} ${isHovered ? styles.barHovered : ""}`}
+                            style={{ height: `${heightPercent}%` }}
+                            title={`${item.name}: ${item.value} units sold`}
+                            aria-label={`${item.name}: ${item.value} sold`}
+                          />
+                        </div>
 
-              return (
-                <g
-                  key={cat.name + idx}
-                  onMouseEnter={() => setHoveredIdx(idx)}
-                  onMouseLeave={() => setHoveredIdx(null)}
-                >
-                  <rect
-                    x={xPos}
-                    y={yPos}
-                    width={barWidth}
-                    height={barHeight}
-                    rx="4"
-                    className={barClass}
-                  />
-
-                  {/* Quantity Tooltip on hover */}
-                  {isHovered && (
-                    <g transform={`translate(${xPos + barWidth / 2}, ${yPos - 12})`}>
-                      <rect
-                        x="-24"
-                        y="-12"
-                        width="48"
-                        height="18"
-                        className={styles.tooltipRect}
-                      />
-                      <text y="1" className={styles.tooltipText}>
-                        {cat.count}
-                      </text>
-                    </g>
-                  )}
-
-                  {/* Category Name on X-Axis */}
-                  <text
-                    x={xPos + barWidth / 2}
-                    y={bottomY + 14}
-                    className={styles.xAxisText}
-                  >
-                    {cat.name}
-                  </text>
-                </g>
-              );
-            })}
-          </svg>
+                        <span
+                          className={styles.xLabel}
+                          title={item.name}
+                        >
+                          {item.name}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </>
         )}
       </div>
     </div>

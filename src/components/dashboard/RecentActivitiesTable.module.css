@@ -1,20 +1,22 @@
 .tableCard {
   background-color: var(--surface);
-  border-radius: 14px;
-  padding: 24px;
-  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 18px 0 0;
+  border: 1px solid var(--border-subtle, #eaecf0);
   box-shadow: var(--shadow-sm);
   margin-top: 24px;
   font-family: inherit;
+  overflow: hidden;
 }
 
 .tableHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
   flex-wrap: wrap;
   gap: 16px;
+  padding: 0 20px;
 }
 
 .titleWrapper {
@@ -75,6 +77,7 @@
 .activityTableContainer {
   width: 100%;
   overflow: auto;
+  padding: 0 0 0;
 }
 
 .activityTable {
