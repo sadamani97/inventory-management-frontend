@@ -11,13 +11,22 @@ import { FiPlus } from "react-icons/fi";
 
 export default function DashboardPage() {
   const [isPOModalOpen, setIsPOModalOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const handlePOSuccess = () => {
+    setRefreshTrigger((prev) => prev + 1);
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("inventory-updated"));
+    }
+  };
 
   return (
     <DashboardLayout>
       <div className={styles.pageHeader}>
         <h1 className={styles.pageTitle}>Dashboard</h1>
         <div className={styles.headerRight}>
-          <CustomDatePicker />
+          <CustomDatePicker value={selectedDate} onChange={setSelectedDate} />
           <button className={styles.createPoBtn} onClick={() => setIsPOModalOpen(true)}>
             <FiPlus /> Create Purchase Order
           </button>
@@ -28,17 +37,15 @@ export default function DashboardPage() {
 
       <div className={styles.chartsGrid}>
         <RevenueTrendChart />
-        <TopSellingChart />
+        <TopSellingChart selectedDate={selectedDate} />
       </div>
 
-      <RecentActivitiesTable />
+      <RecentActivitiesTable selectedDate={selectedDate} refreshTrigger={refreshTrigger} />
 
       <CreatePOModal
         isOpen={isPOModalOpen}
         onClose={() => setIsPOModalOpen(false)}
-        onSuccess={() => {
-          // Optional: trigger refresh for dashboard data
-        }}
+        onSuccess={handlePOSuccess}
       />
     </DashboardLayout>
   );

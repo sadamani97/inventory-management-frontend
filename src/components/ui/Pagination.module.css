@@ -13,6 +13,7 @@
 .leftSection {
   display: flex;
   align-items: center;
+  gap: 18px;
 }
 
 .rightSection {
@@ -32,6 +33,29 @@
   color: var(--text-muted);
   font-size: 13px;
   font-weight: 500;
+}
+
+.currentPageInfo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: 'Manrope', sans-serif;
+}
+
+.currentPageLabel {
+  color: var(--text-muted);
+}
+
+.currentPageDivider {
+  color: var(--text-muted);
+}
+
+.currentPageValue {
+  color: var(--text-dark);
+  font-weight: 700;
 }
 
 .selectWrapper {

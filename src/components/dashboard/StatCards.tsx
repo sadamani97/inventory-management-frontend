@@ -1,9 +1,7 @@
-import { useEffect, useState } from "react";
-import Image from "next/image";
+import React, { useEffect, useState } from "react";
 import styles from "./StatCards.module.css";
-import { ASSETS } from "@/constants/assets";
 import { fetchProductStats, ProductStatsResponse } from "@/lib/dashboardApi";
-import { FiBox, FiCheckCircle, FiAlertCircle, FiXCircle } from "react-icons/fi";
+import { TbBox, TbAlertSquareRounded, TbCoins } from "react-icons/tb";
 
 export default function StatCards() {
   const [stats, setStats] = useState<ProductStatsResponse | null>(null);
@@ -27,20 +25,19 @@ export default function StatCards() {
     };
   }, []);
 
-  const totalProd = stats ? stats.totalProducts : 0;
-  const addedMonth = stats ? stats.addedThisMonth : 0;
-  const activeStk = stats ? stats.activeStock : 0;
-  const restocked = stats ? stats.unitsRestockedThisMonth : 0;
-  const lowStk = stats ? stats.lowStock : 0;
-  const outStk = stats ? stats.outOfStock : 0;
+  const totalProd = stats?.totalProducts ?? 0;
+  const addedMonth = stats?.addedThisMonth ?? 0;
+  const activeStk = stats?.activeStock ?? 0;
+  const restocked = stats?.unitsRestockedThisMonth ?? 0;
+  const lowStk = stats?.lowStock ?? 0;
+  const outStk = stats?.outOfStock ?? 0;
 
   const cards = [
     {
       title: "Total Products",
-      value: loading ? <span className={styles.skeletonValue} /> : `${totalProd}`,
-      icon: ASSETS.IMAGES.DASHBOARD_PRODUCT.src,
-      fallbackIcon: FiBox,
-      iconClass: styles.iconBlue,
+      value: loading ? <span className={styles.skeletonValue} /> : `${totalProd.toLocaleString("en-IN")}`,
+      icon: <TbBox size={17} strokeWidth={2} />,
+      iconClass: styles.iconTotalProducts,
       footer: (
         <div className={styles.cardFooter}>
           {loading ? (
@@ -48,7 +45,7 @@ export default function StatCards() {
           ) : (
             <>
               <span className={styles.subtextGreen}>Added this month</span>
-              <span className={styles.badgeGreen}>+{addedMonth}</span>
+              <span className={styles.badgeGreen}>+{addedMonth.toLocaleString("en-IN")}</span>
             </>
           )}
         </div>
@@ -56,10 +53,9 @@ export default function StatCards() {
     },
     {
       title: "Active Stock",
-      value: loading ? <span className={styles.skeletonValue} /> : `${activeStk}`,
-      icon: ASSETS.ICONS.ACTIVE_STOCK.src,
-      fallbackIcon: FiCheckCircle,
-      iconClass: styles.iconGreen,
+      value: loading ? <span className={styles.skeletonValue} /> : `${activeStk.toLocaleString("en-IN")}`,
+      icon: <TbBox size={17} strokeWidth={2} />,
+      iconClass: styles.iconActiveStocks,
       footer: (
         <div className={styles.cardFooter}>
           {loading ? (
@@ -67,7 +63,7 @@ export default function StatCards() {
           ) : (
             <>
               <span className={styles.subtextGreen}>Units Restocked</span>
-              <span className={styles.badgeGreen}>+{restocked.toLocaleString()}</span>
+              <span className={styles.badgeGreen}>+{restocked.toLocaleString("en-IN")}</span>
             </>
           )}
         </div>
@@ -75,36 +71,30 @@ export default function StatCards() {
     },
     {
       title: "Low Stock",
-      value: loading ? <span className={styles.skeletonValue} /> : `${lowStk}`,
-      icon: ASSETS.ICONS.LOW_STOCK.src,
-      fallbackIcon: FiAlertCircle,
-      iconClass: styles.iconAmber,
+      value: loading ? <span className={styles.skeletonValue} /> : `${lowStk.toLocaleString("en-IN")}`,
+      icon: <TbAlertSquareRounded size={17} strokeWidth={2} />,
+      iconClass: styles.iconLowStock,
       footer: (
         <div className={styles.cardFooter}>
           {loading ? (
             <span className={styles.skeletonSubtext} />
           ) : (
-            <span className={styles.subtextAmber}>
-              {lowStk > 0 ? `${lowStk} Need Restocking soon` : "Stock levels optimal"}
-            </span>
+            <span className={styles.subtextMuted}>Need Restocking soon</span>
           )}
         </div>
       ),
     },
     {
-      title: "Out of stock",
-      value: loading ? <span className={styles.skeletonValue} /> : `${outStk}`,
-      icon: ASSETS.ICONS.LOW_STOCK_ALT.src,
-      fallbackIcon: FiXCircle,
-      iconClass: styles.iconRed,
+      title: "Out of Stock",
+      value: loading ? <span className={styles.skeletonValue} /> : `${outStk.toLocaleString("en-IN")}`,
+      icon: <TbCoins size={17} strokeWidth={2} />,
+      iconClass: styles.iconOutOfStock,
       footer: (
         <div className={styles.cardFooter}>
           {loading ? (
             <span className={styles.skeletonSubtext} />
           ) : (
-            <span className={styles.subtextMuted}>
-              {outStk > 0 ? `${outStk} Currently unavailable` : "No items out of stock"}
-            </span>
+            <span className={styles.subtextMuted}>Currently unavailable</span>
           )}
         </div>
       ),
@@ -113,34 +103,18 @@ export default function StatCards() {
 
   return (
     <div className={styles.cardsGrid}>
-      {cards.map((card, idx) => {
-        const Fallback = card.fallbackIcon;
-        return (
-          <div key={idx} className={styles.card}>
-            <div className={styles.cardHeader}>
-              <h3 className={styles.cardTitle}>{card.title}</h3>
-              <div className={`${styles.cardIconBox} ${card.iconClass}`}>
-                {card.icon ? (
-                  <Image
-                    src={card.icon}
-                    alt={card.title}
-                    width={22}
-                    height={22}
-                    className={styles.statCardsElement1}
-                    onError={(e) => {
-                      (e.target as HTMLElement).style.display = "none";
-                    }}
-                  />
-                ) : (
-                  <Fallback />
-                )}
-              </div>
+      {cards.map((card, idx) => (
+        <div key={idx} className={styles.card}>
+          <div className={styles.cardHeader}>
+            <h3 className={styles.cardTitle}>{card.title}</h3>
+            <div className={`${styles.cardIconBox} ${card.iconClass}`}>
+              {card.icon}
             </div>
-            <p className={styles.cardValue}>{card.value}</p>
-            {card.footer}
           </div>
-        );
-      })}
+          <p className={styles.cardValue}>{card.value}</p>
+          {card.footer}
+        </div>
+      ))}
     </div>
   );
 }

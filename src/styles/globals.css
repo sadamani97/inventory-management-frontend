@@ -101,6 +101,35 @@
   --color-var-23: rgba(16, 24, 40, 0.05);
   --color-var-24: rgba(0, 0, 0, 0.1);
   --color-var-25: rgba(0, 0, 0, 0.15);
+
+  /* Chart Specific Color Variables */
+  --chart-bar-default: #bfd3ff;
+  --chart-bar-hover: #2563eb;
+  --chart-bar-shadow: rgba(37, 99, 235, 0.25);
+  --chart-baseline: #1e293b;
+  --chart-gridline: #f1f5f9;
+  --chart-tooltip-bg: #0f172a;
+  --chart-tooltip-text: #ffffff;
+  --chart-surface: #ffffff;
+  --chart-area-start: rgba(37, 99, 235, 0.22);
+  --chart-area-mid: rgba(37, 99, 235, 0.02);
+  --chart-area-end: rgba(37, 99, 235, 0.0);
+  --chart-line: #2563eb;
+  --chart-dot-stroke: #ffffff;
+  --chart-dot-point: #93c5fd;
+
+  /* Table Specific Color Variables */
+  --table-header-bg: #f6fbff;
+
+  /* Badge Indigo */
+  --badge-indigo-bg: #eef2ff;
+  --badge-indigo-text: #4338ca;
+  --badge-indigo-border: #c7d2fe;
+
+  /* Shimmer gradient stops */
+  --shimmer-from: #f1f5f9;
+  --shimmer-mid: #e2e8f0;
+  --shimmer-to: #f1f5f9;
 }
 
 * {
