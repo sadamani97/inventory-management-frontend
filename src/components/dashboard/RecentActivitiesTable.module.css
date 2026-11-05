@@ -2,7 +2,7 @@
   background-color: var(--surface);
   border-radius: 12px;
   padding: 18px 0 0;
-  border: 1px solid var(--border-subtle, #eaecf0);
+  border: 1px solid var(--border-subtle);
   box-shadow: var(--shadow-sm);
   margin-top: 24px;
   font-family: inherit;
@@ -84,6 +84,13 @@
   width: 100%;
 }
 
+.activityName {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+}
+
 .activityBadge {
   display: inline-flex;
   align-items: center;
@@ -116,9 +123,9 @@
 }
 
 .typeOrdered {
-  background-color: var(--tone-indigo-bg, #eef2ff);
-  color: #4338ca;
-  border: 1px solid #c7d2fe;
+  background-color: var(--badge-indigo-bg);
+  color: var(--badge-indigo-text);
+  border: 1px solid var(--badge-indigo-border);
 }
 
 .typeLowStock {

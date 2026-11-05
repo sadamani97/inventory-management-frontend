@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useRouter } from "next/router";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { clearAuth } from "@/store/authSlice";
+import { removeAuthToken } from "@/lib/authToken";
 import styles from "./Header.module.css";
 import { FiSearch, FiBell, FiLogOut } from "react-icons/fi";
 
@@ -11,12 +12,20 @@ export default function Header() {
   const user = useAppSelector((state) => state.auth.user);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const userInitial = user?.firstname ? user.firstname.charAt(0).toUpperCase() : "A";
-  const userName = user ? `${user.firstname} ${user.lastname}`.trim() : "Alex Johnson";
+  const userInitial = user?.firstname
+    ? user.firstname.charAt(0).toUpperCase()
+    : user?.email
+    ? user.email.charAt(0).toUpperCase()
+    : "U";
+
+  const userName = user?.firstname
+    ? `${user.firstname} ${user?.lastname ?? ""}`.trim()
+    : user?.email
+    ? user.email.split("@")[0]
+    : "Admin";
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    removeAuthToken();
     dispatch(clearAuth());
     router.push("/login");
   };

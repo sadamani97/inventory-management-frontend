@@ -289,7 +289,7 @@ export default function CreatePOModal({ isOpen, onClose, onSuccess }: CreatePOMo
               <div className={styles.addressCards}>
                 <div className={`${styles.addressCard} ${selectedAddress === 1 ? styles.active : ""}`} onClick={() => setSelectedAddress(1)}>
                   <div className={styles.addressTitle}>
-                    <FiMapPin color={selectedAddress === 1 ? "#2563eb" : "#64748b"} /> Silkmill Shop
+                    <FiMapPin color={selectedAddress === 1 ? "var(--primary)" : "var(--text-subtle)"} /> Silkmill Shop
                   </div>
                   <div className={styles.addressText}>
                     123 Maple Street, APT, Springfield,<br/>IL 62704
@@ -297,7 +297,7 @@ export default function CreatePOModal({ isOpen, onClose, onSuccess }: CreatePOMo
                 </div>
                 <div className={`${styles.addressCard} ${selectedAddress === 2 ? styles.active : ""}`} onClick={() => setSelectedAddress(2)}>
                   <div className={styles.addressTitle}>
-                    <FiMapPin color={selectedAddress === 2 ? "#2563eb" : "#64748b"} /> Silkmill Shop
+                    <FiMapPin color={selectedAddress === 2 ? "var(--primary)" : "var(--text-subtle)"} /> Silkmill Shop
                   </div>
                   <div className={styles.addressText}>
                     123 Maple Street, APT, Springfield,<br/>IL 62704
@@ -348,7 +348,7 @@ export default function CreatePOModal({ isOpen, onClose, onSuccess }: CreatePOMo
               <div className={`${styles.formGroup} ${styles.searchProductGroup}`}>
                 <label className={styles.label}>Product</label>
                 <div className={styles.searchBox}>
-                  <FiSearch color="#94a3b8" />
+                  <FiSearch color="var(--text-light)" />
                   <input 
                     type="text" 
                     placeholder="Search by Product name" 

@@ -244,6 +244,8 @@ export default function RevenueTrendChart() {
                   className={`${styles.dropdownOption} ${viewMode === "month" ? styles.dropdownOptionActive : ""}`}
                   onClick={() => {
                     setViewMode("month");
+                    setSelectedFocusIndex(null);
+                    setHoveredIndex(null);
                     setDropdownOpen(false);
                   }}
                 >
@@ -254,6 +256,8 @@ export default function RevenueTrendChart() {
                   className={`${styles.dropdownOption} ${viewMode === "year" ? styles.dropdownOptionActive : ""}`}
                   onClick={() => {
                     setViewMode("year");
+                    setSelectedFocusIndex(null);
+                    setHoveredIndex(null);
                     setDropdownOpen(false);
                   }}
                 >
@@ -283,9 +287,9 @@ export default function RevenueTrendChart() {
         >
           <defs>
             <linearGradient id="revAreaGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#2563EB" stopOpacity="0.22" />
-              <stop offset="90%" stopColor="#2563EB" stopOpacity="0.02" />
-              <stop offset="100%" stopColor="#2563EB" stopOpacity="0.0" />
+              <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.22" />
+              <stop offset="90%" stopColor="var(--primary)" stopOpacity="0.02" />
+              <stop offset="100%" stopColor="var(--primary)" stopOpacity="0.0" />
             </linearGradient>
           </defs>
 
@@ -317,7 +321,7 @@ export default function RevenueTrendChart() {
           <path
             d={pathD}
             fill="none"
-            stroke="#2563EB"
+            stroke="var(--primary)"
             strokeWidth="2.5"
             strokeLinecap="round"
             strokeLinejoin="round"

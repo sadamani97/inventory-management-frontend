@@ -1,11 +1,11 @@
 /* TopSellingChart.module.css */
 
 .chartCard {
-  background-color: var(--surface, #ffffff);
+  background-color: var(--surface);
   border-radius: 12px;
   padding: 18px 20px 16px;
-  border: 1px solid var(--border-subtle, #eaecf0);
-  box-shadow: var(--shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05));
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-sm);
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -33,7 +33,7 @@
   font-weight: 700;
   line-height: 27px;
   letter-spacing: -0.2px;
-  color: var(--text, #0f172a);
+  color: var(--text);
 }
 
 .chartBody {
@@ -53,7 +53,7 @@
   height: 100%;
   position: relative;
   z-index: 10;
-  background: #ffffff;
+  background: var(--surface);
   user-select: none;
 }
 
@@ -69,10 +69,10 @@
 }
 
 .yTickLabel {
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 500;
   line-height: 1;
-  color: #64748b;
+  color: var(--text-subtle);
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -111,7 +111,7 @@
   left: 0;
   right: 0;
   height: 1px;
-  background: #f1f5f9;
+  background: var(--chart-gridline);
 }
 
 .pinnedBaseline {
@@ -120,7 +120,7 @@
   right: 0;
   bottom: 0;
   height: 1.5px;
-  background: #1e293b;
+  background: var(--chart-baseline);
 }
 
 /* ==================== HORIZONTALLY SCROLLABLE CONTAINER ==================== */
@@ -176,12 +176,12 @@
   cursor: pointer;
 }
 
-/* Normal color is background: #BFD3FF; */
+/* Normal bar color is from CSS variable */
 .bar {
   width: 42px;
   border-radius: 4px;
   display: block;
-  background: #BFD3FF;
+  background: var(--chart-bar-default);
   transition: background-color 0.2s ease, transform 0.15s ease, filter 0.15s ease;
   transform-origin: bottom;
   cursor: pointer;
@@ -190,8 +190,8 @@
 /* While hover only the color will change to blue */
 .bar:hover,
 .barHovered {
-  background: #2563EB;
-  filter: drop-shadow(0 4px 6px rgba(37, 99, 235, 0.25));
+  background: var(--chart-bar-hover);
+  filter: drop-shadow(0 4px 6px var(--chart-bar-shadow));
 }
 
 /* ==================== TOOLTIP ==================== */
@@ -200,8 +200,8 @@
   bottom: calc(100% + 6px);
   left: 50%;
   transform: translateX(-50%);
-  background: #0f172a;
-  color: #ffffff;
+  background: var(--chart-tooltip-bg);
+  color: var(--chart-tooltip-text);
   padding: 3px 8px;
   border-radius: 4px;
   font-size: 11px;
@@ -209,7 +209,7 @@
   white-space: nowrap;
   pointer-events: none;
   z-index: 20;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px -1px var(--color-var-24), 0 2px 4px -2px var(--color-var-24);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -223,12 +223,12 @@
   transform: translateX(-50%);
   border-width: 4px;
   border-style: solid;
-  border-color: #0f172a transparent transparent transparent;
+  border-color: var(--chart-tooltip-bg) transparent transparent transparent;
 }
 
 .tooltipValue {
   font-weight: 600;
-  color: #ffffff;
+  color: var(--chart-tooltip-text);
 }
 
 /* ==================== X-AXIS CATEGORY LABEL ==================== */
@@ -240,7 +240,7 @@
   font-size: 11.5px;
   font-weight: 600;
   line-height: 14px;
-  color: #64748b;
+  color: var(--text-subtle);
   white-space: nowrap;
   text-align: center;
   max-width: 64px;
@@ -259,7 +259,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: #64748b;
+  color: var(--text-subtle);
   font-size: 13px;
   font-weight: 500;
   text-align: center;
@@ -270,12 +270,12 @@
 .emptyStateTitle {
   font-size: 14px;
   font-weight: 600;
-  color: #334155;
+  color: var(--text-body);
 }
 
 .emptyStateSubtitle {
   font-size: 12px;
-  color: #94a3b8;
+  color: var(--text-light);
 }
 
 /* ==================== SKELETON LOADER ==================== */
@@ -312,7 +312,7 @@
 .skeletonBar {
   width: 42px;
   border-radius: 4px;
-  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background: linear-gradient(90deg, var(--shimmer-from) 25%, var(--shimmer-mid) 50%, var(--shimmer-to) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
 }
@@ -321,7 +321,7 @@
   width: 36px;
   height: 10px;
   border-radius: 3px;
-  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background: linear-gradient(90deg, var(--shimmer-from) 25%, var(--shimmer-mid) 50%, var(--shimmer-to) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
 }

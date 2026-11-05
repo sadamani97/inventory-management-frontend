@@ -107,9 +107,9 @@
 }
 
 .pendingBadge {
-  background-color: #fff7ed;
-  color: #ea580c;
-  border: 1px solid #fed7aa;
+  background-color: var(--warning-light);
+  color: var(--warning);
+  border: 1px solid var(--warning-border);
 }
 
 .poSubtitle {

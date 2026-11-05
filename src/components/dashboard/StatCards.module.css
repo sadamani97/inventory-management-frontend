@@ -19,11 +19,11 @@
 }
 
 .card {
-  background-color: var(--surface, #ffffff);
+  background-color: var(--surface);
   border-radius: 12px;
   padding: 18px 18px 16px;
-  border: 1px solid var(--border-subtle, #eaecf0);
-  box-shadow: var(--shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05));
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-sm);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -34,7 +34,7 @@
 
 .card:hover {
   transform: translateY(-2px);
-  box-shadow: var(--shadow-hover, 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06));
+  box-shadow: var(--shadow-hover);
 }
 
 .cardHeader {
@@ -47,7 +47,7 @@
 .cardTitle {
   font-size: 14px;
   font-weight: 500;
-  color: var(--text-subtle, #475569);
+  color: var(--text-subtle);
   margin: 0;
 }
 
@@ -59,31 +59,31 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ffffff;
+  color: var(--text-inverse);
   opacity: 1;
   flex-shrink: 0;
 }
 
 .iconTotalProducts {
-  background: var(--Primary-color, #2563EB);
+  background: var(--primary);
 }
 
 .iconActiveStocks {
-  background: var(--Success, #16A34A);
+  background: var(--success);
 }
 
 .iconLowStock {
-  background: var(--Warning, #F59E0B);
+  background: var(--warning);
 }
 
 .iconOutOfStock {
-  background: #DD1818;
+  background: var(--danger);
 }
 
 .cardValue {
   font-size: 30px;
   font-weight: 700;
-  color: var(--text, #0f172a);
+  color: var(--text);
   margin: 0 0 10px 0;
   line-height: 1;
   letter-spacing: -0.5px;
@@ -97,8 +97,8 @@
 }
 
 .badgeGreen {
-  background-color: #dcfce7;
-  color: #16a34a;
+  background-color: var(--success-badge-bg);
+  color: var(--success);
   font-size: 11.5px;
   font-weight: 700;
   padding: 2px 8px;
@@ -109,13 +109,13 @@
 }
 
 .subtextGreen {
-  color: var(--text-subtle, #64748b);
+  color: var(--text-subtle);
   font-size: 12.5px;
   font-weight: 500;
 }
 
 .subtextMuted {
-  color: var(--text-light, #64748b);
+  color: var(--text-light);
   font-size: 12.5px;
   font-weight: 500;
 }
@@ -134,7 +134,7 @@
   width: 70px;
   height: 30px;
   border-radius: 6px;
-  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background: linear-gradient(90deg, var(--shimmer-from) 25%, var(--shimmer-mid) 50%, var(--shimmer-to) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
 }
@@ -144,7 +144,7 @@
   width: 110px;
   height: 14px;
   border-radius: 4px;
-  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background: linear-gradient(90deg, var(--shimmer-from) 25%, var(--shimmer-mid) 50%, var(--shimmer-to) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
 }

@@ -11,7 +11,6 @@ import {
   formatActivityQuantity,
   formatActivityTimestamp,
   getActivityStatusClassName,
-  getActivityTypeClassName,
   getQuantityClassName,
   isSameCalendarDate,
   normalizeInventoryActivityType,
@@ -163,7 +162,7 @@ export default function RecentActivitiesTable({
         render: (row) => {
           const canonicalActivity = normalizeInventoryActivityType(row?.activity);
           return (
-            <span className={`${styles.activityBadge} ${getActivityTypeClassName(canonicalActivity, styles)}`}>
+            <span className={styles.activityName}>
               {canonicalActivity}
             </span>
           );

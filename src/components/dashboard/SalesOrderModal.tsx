@@ -367,7 +367,7 @@ export default function SalesOrderModal({ isOpen, onClose, onSuccess, mode, orde
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
-                  <FiSearch color="#94a3b8" />
+                  <FiSearch color="var(--text-light)" />
                 </div>
                 
                 {searchQuery && (

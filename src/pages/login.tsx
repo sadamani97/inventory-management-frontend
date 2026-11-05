@@ -7,6 +7,7 @@ import { z } from "zod";
 import { useAppDispatch } from "@/store/hooks";
 import api from "@/lib/api";
 import { setAuthUser, setAuthError } from "@/store/authSlice";
+import { setAuthToken } from "@/lib/authToken";
 import AuthLayout from "@/components/auth/AuthLayout";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
@@ -50,8 +51,7 @@ export default function LoginPage() {
           lastname: result?.data?.lastname ?? "",
           email: result?.data?.email ?? values.email,
         };
-        localStorage.setItem("token", tokenStr);
-        localStorage.setItem("user", JSON.stringify(userData));
+        setAuthToken(tokenStr);
         dispatch(
           setAuthUser({
             user: userData,

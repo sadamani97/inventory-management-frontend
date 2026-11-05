@@ -25,17 +25,17 @@ export default function StatCards() {
     };
   }, []);
 
-  const totalProd = stats ? stats.totalProducts : 1248;
-  const addedMonth = stats ? stats.addedThisMonth : 32;
-  const activeStk = stats ? stats.activeStock : 811;
-  const restocked = stats && stats.unitsRestockedThisMonth > 0 ? stats.unitsRestockedThisMonth : 2450;
-  const lowStk = stats ? stats.lowStock : 312;
-  const outStk = stats ? stats.outOfStock : 125;
+  const totalProd = stats?.totalProducts ?? 0;
+  const addedMonth = stats?.addedThisMonth ?? 0;
+  const activeStk = stats?.activeStock ?? 0;
+  const restocked = stats?.unitsRestockedThisMonth ?? 0;
+  const lowStk = stats?.lowStock ?? 0;
+  const outStk = stats?.outOfStock ?? 0;
 
   const cards = [
     {
       title: "Total Products",
-      value: loading ? <span className={styles.skeletonValue} /> : `${totalProd}`,
+      value: loading ? <span className={styles.skeletonValue} /> : `${totalProd.toLocaleString("en-IN")}`,
       icon: <TbBox size={17} strokeWidth={2} />,
       iconClass: styles.iconTotalProducts,
       footer: (
@@ -45,7 +45,7 @@ export default function StatCards() {
           ) : (
             <>
               <span className={styles.subtextGreen}>Added this month</span>
-              <span className={styles.badgeGreen}>+{addedMonth}</span>
+              <span className={styles.badgeGreen}>+{addedMonth.toLocaleString("en-IN")}</span>
             </>
           )}
         </div>
@@ -53,7 +53,7 @@ export default function StatCards() {
     },
     {
       title: "Active Stock",
-      value: loading ? <span className={styles.skeletonValue} /> : `${activeStk}`,
+      value: loading ? <span className={styles.skeletonValue} /> : `${activeStk.toLocaleString("en-IN")}`,
       icon: <TbBox size={17} strokeWidth={2} />,
       iconClass: styles.iconActiveStocks,
       footer: (
@@ -63,7 +63,7 @@ export default function StatCards() {
           ) : (
             <>
               <span className={styles.subtextGreen}>Units Restocked</span>
-              <span className={styles.badgeGreen}>+{restocked.toLocaleString()}</span>
+              <span className={styles.badgeGreen}>+{restocked.toLocaleString("en-IN")}</span>
             </>
           )}
         </div>
@@ -71,7 +71,7 @@ export default function StatCards() {
     },
     {
       title: "Low Stock",
-      value: loading ? <span className={styles.skeletonValue} /> : `${lowStk}`,
+      value: loading ? <span className={styles.skeletonValue} /> : `${lowStk.toLocaleString("en-IN")}`,
       icon: <TbAlertSquareRounded size={17} strokeWidth={2} />,
       iconClass: styles.iconLowStock,
       footer: (
@@ -86,7 +86,7 @@ export default function StatCards() {
     },
     {
       title: "Out of Stock",
-      value: loading ? <span className={styles.skeletonValue} /> : `${outStk}`,
+      value: loading ? <span className={styles.skeletonValue} /> : `${outStk.toLocaleString("en-IN")}`,
       icon: <TbCoins size={17} strokeWidth={2} />,
       iconClass: styles.iconOutOfStock,
       footer: (
