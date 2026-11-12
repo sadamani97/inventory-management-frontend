@@ -4,21 +4,21 @@
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-color: rgba(15, 23, 42, 0.4);
+  background-color: var(--backdrop);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
+  z-index: var(--z-dialog);
 }
 
 .dialog {
   background-color: var(--surface);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   padding: 24px;
   width: 100%;
   max-width: 400px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-lg);
   text-align: center;
   animation: fadeIn 0.2s ease-out;
 }
@@ -26,7 +26,7 @@
 .iconWrapper {
   width: 48px;
   height: 48px;
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   background-color: var(--danger-light);
   display: flex;
   align-items: center;
@@ -61,7 +61,7 @@
 
 .cancelBtn {
   padding: 10px 20px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--border);
   background-color: var(--surface);
   color: var(--text-body);
@@ -77,10 +77,10 @@
 
 .confirmBtn {
   padding: 10px 20px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   border: none;
   background-color: var(--danger);
-  color: white;
+  color: var(--text-inverse);
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;

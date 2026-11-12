@@ -1,56 +1,361 @@
+/* TopSellingChart.module.css */
+
 .chartCard {
   background-color: var(--surface);
-  border-radius: 14px;
-  padding: 24px;
+  border-radius: 12px;
+  padding: 18px 20px 16px;
   border: 1px solid var(--border-subtle);
   box-shadow: var(--shadow-sm);
   display: flex;
   flex-direction: column;
-  height: 100%;
+  justify-content: flex-start;
+  width: 100%;
+  max-width: 402px;
+  height: 312px;
+  box-sizing: border-box;
+  opacity: 1;
+  font-family: "Manrope", sans-serif;
+  position: relative;
+  overflow: hidden;
+}
+
+.chartHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  flex-shrink: 0;
 }
 
 .title {
-  font-size: 16px;
+  margin: 0;
+  font-size: 18px;
   font-weight: 700;
+  line-height: 27px;
+  letter-spacing: -0.2px;
   color: var(--text);
-  margin: 0 0 24px 0;
 }
 
-.chartContainer {
+.chartBody {
+  display: flex;
+  flex: 1;
+  min-height: 0;
   position: relative;
-  width: 100%;
-  height: 240px;
+  overflow: hidden;
 }
 
-.svgElement {
+/* ==================== STICKY Y-AXIS ==================== */
+.yAxisSticky {
+  width: 36px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
+  z-index: 10;
+  background: var(--surface);
+  user-select: none;
+}
+
+.yTicksWrapper {
+  flex: 1;
+  height: calc(100% - 24px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding-right: 6px;
+  box-sizing: border-box;
+}
+
+.yTickLabel {
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--text-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  font-family: inherit;
+}
+
+/* Spacer on the Y-axis to match the bottom X-axis labels row */
+.yAxisSpacer {
+  height: 24px;
+  flex-shrink: 0;
+}
+
+/* ==================== SCROLL AREA WRAPPER ==================== */
+.scrollAreaWrapper {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Fixed grid lines & baseline spanning the visible chart viewport */
+.pinnedGridBackground {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 24px;
+  pointer-events: none;
+  z-index: var(--z-base);
+}
+
+.pinnedGridSvg {
   width: 100%;
   height: 100%;
-  overflow: visible;
+  display: block;
 }
 
-.gridLine {
-  stroke: var(--border-faint);
+.gridLineSvg {
+  stroke: var(--chart-gridline);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
 }
 
-.yAxisText {
-  font-size: 10px;
-  fill: var(--text-light);
-  font-weight: 500;
+.pinnedBaseline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1.5px;
+  background: var(--chart-baseline);
 }
 
-.xAxisText {
-  font-size: 11px;
-  fill: var(--text-subtle);
-  font-weight: 500;
-  text-anchor: middle;
+/* ==================== HORIZONTALLY SCROLLABLE CONTAINER ==================== */
+.scrollContainer {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
-.bar {
-  transition: all 0.2s ease;
+.scrollContainer::-webkit-scrollbar {
+  display: none;
+}
+
+.barsTrack {
+  display: flex;
+  align-items: stretch;
+  height: 100%;
+  width: 100%;
+  min-width: max-content;
+  justify-content: space-around;
+  gap: 16px;
+  padding-left: 8px;
+  padding-right: 12px;
+  box-sizing: border-box;
+}
+
+/* ==================== BAR COLUMN ==================== */
+.barColumn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 42px;
+  min-width: 42px;
+  height: 100%;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.barSlot {
+  width: 42px;
+  height: calc(100% - 24px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  position: relative;
   cursor: pointer;
 }
 
-.bar:hover {
-  fill: var(--primary-dark);
-  filter: drop-shadow(0 4px 6px var(--color-var-8));
+/* Normal bar color is from CSS variable */
+.barSvg {
+  width: 42px;
+  height: 100%;
+  display: block;
+  overflow: visible;
+  cursor: pointer;
+}
+
+.barRect {
+  fill: var(--chart-bar-default);
+  transition: fill 0.2s ease, filter 0.15s ease;
+  cursor: pointer;
+}
+
+/* While hover only the color will change to blue */
+.barRect:hover,
+.barHovered {
+  fill: var(--chart-bar-hover);
+  filter: drop-shadow(0 4px 6px var(--chart-bar-shadow));
+}
+
+/* ==================== TOOLTIP ==================== */
+.tooltip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--chart-tooltip-bg);
+  color: var(--chart-tooltip-text);
+  padding: 3px 8px;
+  border-radius: var(--radius-xs);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: var(--z-overlay-control);
+  box-shadow: var(--shadow-tooltip);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 4px;
+  border-style: solid;
+  border-color: var(--chart-tooltip-bg) transparent transparent transparent;
+}
+
+.tooltipValue {
+  font-weight: 600;
+  color: var(--chart-tooltip-text);
+}
+
+/* ==================== X-AXIS CATEGORY LABEL ==================== */
+.xLabel {
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 14px;
+  color: var(--text-subtle);
+  white-space: nowrap;
+  text-align: center;
+  max-width: 64px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-top: 4px;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+/* ==================== EMPTY STATE ==================== */
+.emptyState {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-subtle);
+  font-size: 13px;
+  font-weight: 500;
+  text-align: center;
+  padding: 20px;
+  gap: 6px;
+}
+
+.emptyStateTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-body);
+}
+
+.emptyStateSubtitle {
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+/* ==================== SKELETON LOADER ==================== */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeletonContainer {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  width: 100%;
+  height: 100%;
+  gap: 16px;
+  padding: 16px 12px 14px;
+  box-sizing: border-box;
+}
+
+.skeletonColumn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 42px;
+  height: 100%;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.skeletonBar {
+  width: 42px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--shimmer-from) 25%, var(--shimmer-mid) 50%, var(--shimmer-to) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+.skeletonLabel {
+  width: 36px;
+  height: 10px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--shimmer-from) 25%, var(--shimmer-mid) 50%, var(--shimmer-to) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+.skeletonBar1 {
+  height: 82%;
+}
+
+.skeletonBar2 {
+  height: 68%;
+}
+
+.skeletonBar3 {
+  height: 56%;
+}
+
+.skeletonBar4 {
+  height: 44%;
+}
+
+.skeletonBar5 {
+  height: 32%;
+}
+
+@media (max-width: 1200px) {
+  .chartCard {
+    max-width: 100%;
+  }
 }

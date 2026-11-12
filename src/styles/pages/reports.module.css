@@ -83,25 +83,25 @@
   height: 34px;
   min-width: 34px;
   min-height: 34px;
-  border-radius: 9px;
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
   flex-shrink: 0;
-  background: #e5e7eb;
+  background: var(--border-input);
 }
 
 .statCardIconBlue {
-  background: #2563eb;
+  background: var(--primary);
 }
 
 .statCardIconGreen {
-  background: #047857;
+  background: var(--success-forest);
 }
 
 .statCardIconPurple {
-  background: #7c2d92;
+  background: var(--purple-deep);
 }
 
 .statCardIconBox img {
@@ -214,7 +214,7 @@
 .chartTabActive {
   background: var(--primary);
   color: var(--text-inverse);
-  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.2);
+  box-shadow: var(--shadow-primary-xs);
 }
 
 .chartTab:hover:not(.chartTabActive) {
@@ -236,10 +236,10 @@
   font-size: 11px;
   font-weight: 700;
   color: var(--primary);
-  background-color: var(--selected-option-bg, rgba(37, 99, 235, 0.08));
+  background-color: var(--selected-option-bg);
   padding: 3px 8px;
-  border-radius: 6px;
-  border: 1px solid rgba(37, 99, 235, 0.2);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--primary-tint-border);
 }
 
 .totalSalesValue {
@@ -259,7 +259,7 @@
   color: var(--success);
   background: var(--success-badge-bg);
   padding: 3px 10px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
 }
 
 .totalSalesPeriod {
@@ -307,6 +307,26 @@
   stroke-width: 1;
 }
 
+.chartGroup {
+  cursor: pointer;
+}
+
+.xAxisLabelCompact {
+  font-size: 9px;
+}
+
+.svgTooltipRect {
+  fill: var(--text);
+  opacity: 0.95;
+}
+
+.svgTooltipText {
+  fill: var(--text-inverse);
+  font-size: 10px;
+  font-family: var(--font-sans);
+  font-weight: 600;
+}
+
 /* Tooltip */
 .tooltipBox {
   position: absolute;
@@ -315,12 +335,12 @@
   font-size: 11px;
   font-weight: 600;
   padding: 6px 12px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   pointer-events: none;
   transform: translate(-50%, -130%);
   white-space: nowrap;
-  z-index: 10;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  z-index: var(--z-sticky);
+  box-shadow: var(--shadow-tooltip-dark);
 }
 
 .tooltipBox::after {
@@ -365,11 +385,11 @@
 }
 
 .legendDotSales {
-  background-color: #2563eb;
+  background-color: var(--primary);
 }
 
 .legendDotPurchase {
-  background-color: #f59e0b;
+  background-color: var(--warning-accent);
 }
 
 /* ==================== PERFORMANCE TABLE ==================== */
@@ -423,9 +443,9 @@
   height: 36px;
   padding: 0 12px 0 34px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: 13px;
-  font-family: 'Manrope', sans-serif;
+  font-family: var(--font-sans);
   color: var(--text);
   background: var(--surface);
   outline: none;
@@ -434,7 +454,7 @@
 
 .searchInput:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  box-shadow: var(--focus-ring-primary-sm);
 }
 
 .searchInput::placeholder {
@@ -468,7 +488,7 @@
 .filterTabActive {
   background: var(--primary);
   color: var(--text-inverse);
-  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.2);
+  box-shadow: var(--shadow-primary-xs);
 }
 
 .filterTab:hover:not(.filterTabActive) {
@@ -542,15 +562,15 @@
   align-items: center;
   gap: 5px;
   padding: 4px 12px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   font-size: 11px;
   font-weight: 700;
   white-space: nowrap;
 }
 
 .statusFastMoving {
-  background: #dbeafe;
-  color: #1d4ed8;
+  background: var(--primary-subtle);
+  color: var(--primary-dark);
 }
 
 .statusHealthy {
@@ -571,11 +591,11 @@
 .statusDot {
   width: 6px;
   height: 6px;
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
 }
 
 .statusDotFastMoving {
-  background: #1d4ed8;
+  background: var(--primary-dark);
 }
 
 .statusDotHealthy {
@@ -610,8 +630,8 @@
 
 .skeleton {
   display: inline-block;
-  border-radius: 8px;
-  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  border-radius: var(--radius-md);
+  background: var(--shimmer-gradient);
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
 }

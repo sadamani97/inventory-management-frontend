@@ -111,7 +111,7 @@ export default function SalesPurchaseChart({ data, loading }: SalesPurchaseChart
                 key={i}
                 onMouseEnter={() => setHoverIndex(i)}
                 onMouseLeave={() => setHoverIndex(-1)}
-                style={{ cursor: "pointer" }}
+                className={styles.chartGroup}
               >
                 {/* Sales bar */}
                 <rect
@@ -121,7 +121,7 @@ export default function SalesPurchaseChart({ data, loading }: SalesPurchaseChart
                   height={Math.max(salesBarHeight, 2)}
                   rx={4}
                   ry={4}
-                  fill={isHovered ? "#1d4ed8" : "#2563eb"}
+                  fill={isHovered ? "var(--primary-dark)" : "var(--primary)"}
                   opacity={isHovered ? 1 : 0.85}
                 />
 
@@ -133,7 +133,7 @@ export default function SalesPurchaseChart({ data, loading }: SalesPurchaseChart
                   height={Math.max(purchaseBarHeight, 2)}
                   rx={4}
                   ry={4}
-                  fill={isHovered ? "#d97706" : "#f59e0b"}
+                  fill={isHovered ? "var(--warning)" : "var(--warning-accent)"}
                   opacity={isHovered ? 1 : 0.85}
                 />
 
@@ -148,22 +148,29 @@ export default function SalesPurchaseChart({ data, loading }: SalesPurchaseChart
               </g>
             );
           })}
-        </svg>
 
-        {/* Tooltip on hover */}
-        {hoverIndex >= 0 && data[hoverIndex] && (
-          <div
-            className={styles.tooltipBox}
-            style={{
-              left: `${((paddingLeft + (hoverIndex + 0.5) * barGroupWidth) / chartWidth) * 100}%`,
-              top: `${((getY(Math.max(data[hoverIndex].sales, data[hoverIndex].purchase))) / chartHeight) * 100}%`,
-            }}
-          >
-            Sales: <span className={styles.tooltipBold}>₹{data[hoverIndex].sales.toLocaleString()}</span>
-            {" | "}
-            Purchase: <span className={styles.tooltipBold}>₹{data[hoverIndex].purchase.toLocaleString()}</span>
-          </div>
-        )}
+          {hoverIndex >= 0 && data[hoverIndex] && (() => {
+            const labelText = `Sales: ₹${data[hoverIndex].sales.toLocaleString()} | Purchase: ₹${data[hoverIndex].purchase.toLocaleString()}`;
+            const tipWidth = Math.max(150, labelText.length * 5.6 + 18);
+            const rawX = paddingLeft + (hoverIndex + 0.5) * barGroupWidth;
+            const tipX = Math.min(Math.max(rawX - tipWidth / 2, 4), chartWidth - tipWidth - 4);
+            const rawY = getY(Math.max(data[hoverIndex].sales, data[hoverIndex].purchase)) - 30;
+            const tipY = Math.max(rawY, 4);
+            return (
+              <g transform={`translate(${tipX}, ${tipY})`}>
+                <rect width={tipWidth} height={24} rx={6} className={styles.svgTooltipRect} />
+                <text
+                  x={tipWidth / 2}
+                  y={15}
+                  textAnchor="middle"
+                  className={styles.svgTooltipText}
+                >
+                  {labelText}
+                </text>
+              </g>
+            );
+          })()}
+        </svg>
       </div>
     </div>
   );

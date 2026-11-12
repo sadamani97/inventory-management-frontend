@@ -3,7 +3,8 @@ import Image from "next/image";
 import { FiX, FiSearch, FiTrash2, FiFileText, FiCalendar, FiBox, FiCheck, FiMapPin } from "react-icons/fi";
 import { fetchVendorsList, VendorItem, fetchProductsList, ProductItem, createPurchaseOrder, updateProduct } from "@/lib/dashboardApi";
 import CustomSelect from "@/components/ui/CustomSelect";
-import styles from "@/styles/components/createPOModal.module.css";
+import CustomDatePicker from "@/components/dashboard/CustomDatePicker";
+import styles from "./CreatePOModal.module.css";
 import { toast } from "react-toastify";
 import { ASSETS } from "@/constants/assets";
 
@@ -220,11 +221,35 @@ export default function CreatePOModal({ isOpen, onClose, onSuccess }: CreatePOMo
                 </div>
                 <div className={styles.formGroup}>
                   <label className={styles.label}>Order Date <span className={styles.required}>*</span></label>
-                  <input type="date" className={styles.input} value={orderDate} onChange={e => setOrderDate(e.target.value)} />
+                  <CustomDatePicker
+                    className={styles.dateField}
+                    value={orderDate ? new Date(orderDate) : undefined}
+                    onChange={(date) => setOrderDate(date.toISOString().split("T")[0])}
+                    variant="default"
+                    icon="calendar"
+                    formatLabel={(date) => {
+                      const month = date.toLocaleString("en-US", { month: "short" });
+                      const day = date.getDate();
+                      const year = date.getFullYear();
+                      return `${month} ${day}, ${year}`;
+                    }}
+                  />
                 </div>
                 <div className={styles.formGroup}>
                   <label className={styles.label}>Expected Delivery Date</label>
-                  <input type="date" className={styles.input} value={deliveryDate} onChange={e => setDeliveryDate(e.target.value)} />
+                  <CustomDatePicker
+                    className={styles.dateField}
+                    value={deliveryDate ? new Date(deliveryDate) : undefined}
+                    onChange={(date) => setDeliveryDate(date.toISOString().split("T")[0])}
+                    variant="default"
+                    icon="calendar"
+                    formatLabel={(date) => {
+                      const month = date.toLocaleString("en-US", { month: "short" });
+                      const day = date.getDate();
+                      const year = date.getFullYear();
+                      return `${month} ${day}, ${year}`;
+                    }}
+                  />
                 </div>
                 <div className={`${styles.formGroup} ${styles.vendorNotesGroup}`}>
                   <label className={styles.label}>Payment Terms <span className={styles.required}>*</span></label>
@@ -246,7 +271,7 @@ export default function CreatePOModal({ isOpen, onClose, onSuccess }: CreatePOMo
                     height="42px"
                   />
                 </div>
-                <div className={`${styles.formGroup} ${styles.paymentTermsGroup}`} style={{ gridColumn: 'span 2' }}>
+                <div className={`${styles.formGroup} ${styles.paymentTermsGroup}`}>
                   <label className={styles.label}>Note</label>
                   <textarea 
                     className={styles.textarea} 
@@ -264,7 +289,7 @@ export default function CreatePOModal({ isOpen, onClose, onSuccess }: CreatePOMo
               <div className={styles.addressCards}>
                 <div className={`${styles.addressCard} ${selectedAddress === 1 ? styles.active : ""}`} onClick={() => setSelectedAddress(1)}>
                   <div className={styles.addressTitle}>
-                    <FiMapPin color={selectedAddress === 1 ? "#2563eb" : "#64748b"} /> Silkmill Shop
+                    <FiMapPin color={selectedAddress === 1 ? "var(--primary)" : "var(--text-subtle)"} /> Silkmill Shop
                   </div>
                   <div className={styles.addressText}>
                     123 Maple Street, APT, Springfield,<br/>IL 62704
@@ -272,7 +297,7 @@ export default function CreatePOModal({ isOpen, onClose, onSuccess }: CreatePOMo
                 </div>
                 <div className={`${styles.addressCard} ${selectedAddress === 2 ? styles.active : ""}`} onClick={() => setSelectedAddress(2)}>
                   <div className={styles.addressTitle}>
-                    <FiMapPin color={selectedAddress === 2 ? "#2563eb" : "#64748b"} /> Silkmill Shop
+                    <FiMapPin color={selectedAddress === 2 ? "var(--primary)" : "var(--text-subtle)"} /> Silkmill Shop
                   </div>
                   <div className={styles.addressText}>
                     123 Maple Street, APT, Springfield,<br/>IL 62704
@@ -323,7 +348,7 @@ export default function CreatePOModal({ isOpen, onClose, onSuccess }: CreatePOMo
               <div className={`${styles.formGroup} ${styles.searchProductGroup}`}>
                 <label className={styles.label}>Product</label>
                 <div className={styles.searchBox}>
-                  <FiSearch color="#94a3b8" />
+                  <FiSearch color="var(--text-light)" />
                   <input 
                     type="text" 
                     placeholder="Search by Product name" 

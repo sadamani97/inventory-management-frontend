@@ -7,13 +7,14 @@ import { z } from "zod";
 import { useAppDispatch } from "@/store/hooks";
 import api from "@/lib/api";
 import { setAuthUser, setAuthError } from "@/store/authSlice";
+import { setAuthToken } from "@/lib/authToken";
 import AuthLayout from "@/components/auth/AuthLayout";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Link from "next/link";
 import Image from "next/image";
 import { ASSETS } from "@/constants/assets";
-import styles from "@/styles/pages/login.module.css";
+import styles from "@/styles/pages/auth.module.css";
 import { toast } from "react-toastify";
 
 const loginSchema = z.object({
@@ -50,8 +51,7 @@ export default function LoginPage() {
           lastname: result?.data?.lastname ?? "",
           email: result?.data?.email ?? values.email,
         };
-        localStorage.setItem("token", tokenStr);
-        localStorage.setItem("user", JSON.stringify(userData));
+        setAuthToken(tokenStr);
         dispatch(
           setAuthUser({
             user: userData,
@@ -86,7 +86,6 @@ export default function LoginPage() {
     >
       <form className={styles.authForm} onSubmit={handleSubmit(onSubmit)}>
         <Input
-          wrapperClassName={styles.inputGroup}
           className={styles.inputBox}
           label="Email"
           type="email"
@@ -95,7 +94,6 @@ export default function LoginPage() {
           error={errors.email?.message?.toString()}
         />
         <Input
-          wrapperClassName={styles.inputGroup}
           className={styles.inputBox}
           label="Password"
           type="password"
@@ -104,12 +102,12 @@ export default function LoginPage() {
           error={errors.password?.message?.toString()}
         />
 
-        <div className="login-options-row">
-          <label className="checkbox-container">
-            <input type="checkbox" className="checkbox-input" />
+        <div className={styles.loginOptionsRow}>
+          <label className={styles.checkboxContainer}>
+            <input type="checkbox" className={styles.checkboxInput} />
             <span>Remember me</span>
           </label>
-          <Link href="#" className="forgot-password-link">
+          <Link href="#" className={styles.forgotPasswordLink}>
             Forgot password?
           </Link>
         </div>
@@ -120,22 +118,22 @@ export default function LoginPage() {
           {isSubmitting ? "Signing in..." : "Login"}
         </Button>
 
-        <div className="social-login-separator">or create with</div>
+        <div className={styles.socialLoginSeparator}>or create with</div>
 
-        <div className="social-btn-group">
-          <button type="button" className="social-btn">
+        <div className={styles.socialBtnGroup}>
+          <button type="button" className={styles.socialBtn}>
             <Image {...ASSETS.LOGOS.GOOGLE} alt={ASSETS.LOGOS.GOOGLE.alt} />
             Google
           </button>
-          <button type="button" className="social-btn">
+          <button type="button" className={styles.socialBtn}>
             <Image {...ASSETS.LOGOS.APPLE} alt={ASSETS.LOGOS.APPLE.alt} />
             Apple
           </button>
         </div>
 
-        <p className="auth-redirect-text">
+        <p className={styles.authRedirectText}>
           Don’t have an account?{" "}
-          <Link href="/signup" className="auth-redirect-link">
+          <Link href="/signup" className={styles.authRedirectLink}>
             Register now
           </Link>
         </p>

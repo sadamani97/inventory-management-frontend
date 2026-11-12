@@ -238,7 +238,7 @@ export default function PurchaseOrdersPage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={4} className={styles.purchaseOrdersElement5}>
+                    <td colSpan={4} className={styles.emptyCellCenter}>
                       No recent activity.
                     </td>
                   </tr>
@@ -294,7 +294,7 @@ export default function PurchaseOrdersPage() {
                   })
                 ) : (
                   <tr>
-                    <td colSpan={4} className={styles.purchaseOrdersElement6}>
+                    <td colSpan={4} className={styles.emptyCellCenter}>
                       No items require refill.
                     </td>
                   </tr>
@@ -351,7 +351,7 @@ export default function PurchaseOrdersPage() {
             </div>
           </div>
 
-          <div className={styles.purchaseOrdersElement7}>
+          <div className={styles.tableScroll}>
             <table className={styles?.tableList}>
               <thead>
                 <tr>
@@ -369,7 +369,7 @@ export default function PurchaseOrdersPage() {
                 {tableLoading ? (
                   Array.from({ length: pageSize > 10 ? 10 : pageSize }).map((_, idx) => (
                     <tr key={`po-skel-${idx}`} className={styles.skeletonRow}>
-                      <td><div className={`${styles.skeletonBone} ${styles.purchaseOrdersElement10 || ""}`} /></td>
+                      <td><div className={styles.skeletonBone} /></td>
                       <td><div className={styles.skeletonBone} /></td>
                       <td><div className={styles.skeletonBone} /></td>
                       <td><div className={styles.skeletonBone} /></td>
@@ -382,7 +382,7 @@ export default function PurchaseOrdersPage() {
                 ) : orders?.length > 0 ? (
                   orders.map((po, idx) => (
                     <tr key={String(po?.id)}>
-                      <td className={styles.purchaseOrdersElement9}>
+                      <td className={styles.poNumberCell}>
                         {String(po?.poNumber || `PO-100${idx + 1}`)}
                       </td>
                       <td>
@@ -471,7 +471,7 @@ export default function PurchaseOrdersPage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={8} className={styles.purchaseOrdersElement10}>
+                    <td colSpan={8} className={styles.emptyTableCell}>
                       No purchase orders found matching your criteria.
                     </td>
                   </tr>

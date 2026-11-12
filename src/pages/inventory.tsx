@@ -324,7 +324,7 @@ export default function InventoryPage() {
 
     setOrderVendorName(targetVendor);
     setShowReorderModal(false);
-    showSuccessToast("Added New Order", "New Order will be added to your orders list", <FiSend size={44} color="#0f172a" strokeWidth={1.5} />);
+    showSuccessToast("Added New Order", "New Order will be added to your orders list", <FiSend size={44} className={styles.toastIcon} strokeWidth={1.5} />);
   };
 
   // Calculations for Summary Box
@@ -433,7 +433,7 @@ export default function InventoryPage() {
                       y1={y}
                       x2="540"
                       y2={y}
-                      stroke="#f1f5f9"
+                      stroke="var(--chart-gridline)"
                       strokeDasharray="3 3"
                     />
                   ))}
@@ -474,7 +474,7 @@ export default function InventoryPage() {
                       <g
                         key={idx}
                         onMouseEnter={() => setActiveHoverIdx(idx)}
-                        className={styles.inventoryElement1}
+                        className={styles.clickableGroup}
                       >
                         {/* Stock Added (Blue at bottom) */}
                         {addedHeight > 0 && (
@@ -483,7 +483,7 @@ export default function InventoryPage() {
                             y={yAdded}
                             width={barWidth}
                             height={addedHeight}
-                            fill={isHighlight ? "#93c5fd" : "#e5e7eb"}
+                            fill={isHighlight ? "var(--chart-dot-point)" : "var(--border-input)"}
                             rx={0}
                           />
                         )}
@@ -494,7 +494,7 @@ export default function InventoryPage() {
                             y={ySold}
                             width={barWidth}
                             height={soldHeight}
-                            fill={isHighlight ? "#f87171" : "#d1d5db"}
+                            fill={isHighlight ? "var(--danger-soft)" : "var(--border-neutral)"}
                             rx={0}
                           />
                         )}
@@ -505,7 +505,7 @@ export default function InventoryPage() {
                             y1={yAdded}
                             x2={x + barWidth}
                             y2={yAdded}
-                            stroke="#2563eb"
+                            stroke="var(--primary)"
                             strokeWidth="1.5"
                           />
                         )}
@@ -518,17 +518,17 @@ export default function InventoryPage() {
                               width="100"
                               height="38"
                               rx="5"
-                              fill="#ffffff"
-                              stroke="#cbd5e1"
-                              filter="drop-shadow(0px 2px 6px rgba(0,0,0,0.08))"
+                              fill="var(--surface)"
+                              stroke="var(--border-hover)"
+                              filter="drop-shadow(0px 2px 6px var(--hover-tint-subtle))"
                             />
-                            <circle cx="10" cy="14" r="3" fill="#93c5fd" />
+                            <circle cx="10" cy="14" r="3" fill="var(--chart-dot-point)" />
                             <text
                               x="18"
                               y="17"
                               fontSize="9"
                               fontWeight="600"
-                              fill="#475569"
+                              fill="var(--text-muted)"
                             >
                               Stock Added:
                             </text>
@@ -537,19 +537,19 @@ export default function InventoryPage() {
                               y="17"
                               fontSize="9"
                               fontWeight="700"
-                              fill="#0f172a"
+                              fill="var(--text)"
                               textAnchor="end"
                             >
                               {item.stockAdded.toLocaleString()}
                             </text>
 
-                            <circle cx="10" cy="27" r="3" fill="#f87171" />
+                            <circle cx="10" cy="27" r="3" fill="var(--danger-soft)" />
                             <text
                               x="18"
                               y="30"
                               fontSize="9"
                               fontWeight="600"
-                              fill="#475569"
+                              fill="var(--text-muted)"
                             >
                               Stock Sold:
                             </text>
@@ -558,7 +558,7 @@ export default function InventoryPage() {
                               y="30"
                               fontSize="9"
                               fontWeight="700"
-                              fill="#0f172a"
+                              fill="var(--text)"
                               textAnchor="end"
                             >
                               {item.stockSold.toLocaleString()}
@@ -572,7 +572,7 @@ export default function InventoryPage() {
                           textAnchor="middle"
                           fontSize="11"
                           fontWeight={isHighlight ? "800" : "500"}
-                          fill={isHighlight ? "#0f172a" : "#64748b"}
+                          fill={isHighlight ? "var(--text)" : "var(--text-subtle)"}
                         >
                           {item.day}
                         </text>
@@ -605,12 +605,22 @@ export default function InventoryPage() {
                     <span className={styles.stockColVal}>{lowStockCount}</span>
                   </div>
                   <div className={styles.barTrack}>
-                    <div
-                      className={styles.barFillYellow}
-                      style={{
-                        height: `${Math.min(100, Math.max(25, (lowStockCount / maxStockVal) * 100))}%`,
-                      }}
-                    />
+                    {(() => {
+                      const barPct = Math.min(100, Math.max(25, (lowStockCount / maxStockVal) * 100));
+                      return (
+                        <svg className={styles.stockBarSvg} viewBox="0 0 80 100" preserveAspectRatio="none" aria-hidden="true">
+                          <rect
+                            x="0"
+                            y={100 - barPct}
+                            width="80"
+                            height={barPct}
+                            rx="10"
+                            ry="12"
+                            className={styles.barFillYellow}
+                          />
+                        </svg>
+                      );
+                    })()}
                   </div>
                 </div>
 
@@ -623,12 +633,22 @@ export default function InventoryPage() {
                     </span>
                   </div>
                   <div className={styles.barTrack}>
-                    <div
-                      className={styles.barFillRed}
-                      style={{
-                        height: `${Math.min(100, Math.max(25, (outOfStockCount / maxStockVal) * 100))}%`,
-                      }}
-                    />
+                    {(() => {
+                      const barPct = Math.min(100, Math.max(25, (outOfStockCount / maxStockVal) * 100));
+                      return (
+                        <svg className={styles.stockBarSvg} viewBox="0 0 80 100" preserveAspectRatio="none" aria-hidden="true">
+                          <rect
+                            x="0"
+                            y={100 - barPct}
+                            width="80"
+                            height={barPct}
+                            rx="10"
+                            ry="12"
+                            className={styles.barFillRed}
+                          />
+                        </svg>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>
@@ -672,19 +692,19 @@ export default function InventoryPage() {
           <div className={styles.tableWrapper}>
             <table className={styles.table}>
               <colgroup>
-                <col  className={styles.inventoryElement2} />
-                <col  className={styles.inventoryElement3} />
-                <col  className={styles.inventoryElement4} />
-                <col  className={styles.inventoryElement5} />
-                <col  className={styles.inventoryElement6} />
+                <col className={styles.colProductName} />
+                <col className={styles.colSku} />
+                <col className={styles.colCategory} />
+                <col className={styles.colStock} />
+                <col className={styles.colAction} />
               </colgroup>
               <thead>
                 <tr>
-                  <th className={styles.inventoryElement7}>Product name</th>
-                  <th className={styles.inventoryElement8}>SKU</th>
-                  <th className={styles.inventoryElement9}>Category</th>
-                  <th className={styles.inventoryElement10}>Current Stock</th>
-                  <th className={styles.inventoryElement11}>
+                  <th className={styles.thLeft}>Product name</th>
+                  <th className={styles.thLeft}>SKU</th>
+                  <th className={styles.thLeft}>Category</th>
+                  <th className={styles.thLeft}>Current Stock</th>
+                  <th className={styles.thActionRight}>
                     Action
                   </th>
                 </tr>
@@ -694,18 +714,18 @@ export default function InventoryPage() {
                   Array.from({ length: Math.min(pageSize, 6) }).map((_, idx) => (
                     <tr key={`skeleton-${idx}`} className={styles.skeletonRow}>
                       <td>
-                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                          <div className={styles.skeletonBone} style={{ width: 36, height: 36, borderRadius: 8, flexShrink: 0 }} />
-                          <div className={styles.skeletonBone} style={{ width: "60%" }} />
+                        <div className={styles.skeletonProductCell}>
+                          <div className={`${styles.skeletonBone} ${styles.skeletonThumb}`} />
+                          <div className={`${styles.skeletonBone} ${styles.skeletonW60}`} />
                         </div>
                       </td>
-                      <td><div className={styles.skeletonBone} style={{ width: "50%" }} /></td>
-                      <td><div className={styles.skeletonBone} style={{ width: "45%" }} /></td>
+                      <td><div className={`${styles.skeletonBone} ${styles.skeletonW50}`} /></td>
+                      <td><div className={`${styles.skeletonBone} ${styles.skeletonW45}`} /></td>
                       <td>
-                        <div className={styles.skeletonBone} style={{ width: "70%", height: 14, marginBottom: 4 }} />
-                        <div className={styles.skeletonBone} style={{ width: "100%", height: 6, borderRadius: 4 }} />
+                        <div className={`${styles.skeletonBone} ${styles.skeletonW70}`} />
+                        <div className={`${styles.skeletonBone} ${styles.skeletonBar}`} />
                       </td>
-                      <td><div className={styles.skeletonBone} style={{ width: "30%" }} /></td>
+                      <td><div className={`${styles.skeletonBone} ${styles.skeletonW30}`} /></td>
                     </tr>
                   ))
                 ) : paginatedProducts.length > 0 ? (
@@ -744,7 +764,7 @@ export default function InventoryPage() {
                         onClick={() =>
                           p.id && router.push(`/products/add?id=${p.id}`)
                         }
-                        className={styles.inventoryElement13}
+                        className={styles.clickableRow}
                         title="Click to view/edit product details"
                       >
                         <td>
@@ -756,8 +776,7 @@ export default function InventoryPage() {
                               height={36}
                               className={styles.productImg}
                               onError={(e) => {
-                                (e.target as HTMLElement).style.display =
-                                  "none";
+                                e.currentTarget.classList.add(styles.hidden);
                               }}
                             />
                             <span className={styles.productName}>{name}</span>
@@ -777,12 +796,12 @@ export default function InventoryPage() {
                                 - {statusLabel}
                               </span>
                             </div>
-                            <div className={styles.progressBarBg}>
-                              <div
-                                className={fillClass}
-                                style={{ width: `${fillPct}%` }}
-                              />
-                            </div>
+                            <progress
+                              className={`${styles.stockProgressBar} ${fillClass}`}
+                              value={fillPct}
+                              max={100}
+                              aria-label={`${name} stock level`}
+                            />
                           </div>
                         </td>
                         <td className={styles.actionCell}>
@@ -838,12 +857,12 @@ export default function InventoryPage() {
                   <tr>
                     <td
                       colSpan={5}
-                     className={styles.inventoryElement14}>
-                      <p
-                       className={styles.inventoryElement15}>
+                      className={styles.emptyTableCell}
+                    >
+                      <p className={styles.emptyTableTitle}>
                         No inventory records found.
                       </p>
-                      <p className={styles.inventoryElement16}>
+                      <p className={styles.emptyTableSubtitle}>
                         Products added to the backend database will
                         automatically display here.
                       </p>
@@ -911,7 +930,7 @@ export default function InventoryPage() {
                     height={48}
                     className={styles.productPreviewImg}
                     onError={(e) => {
-                      (e.target as HTMLElement).style.display = "none";
+                      e.currentTarget.classList.add(styles.hidden);
                     }}
                   />
                   <div>
@@ -942,7 +961,7 @@ export default function InventoryPage() {
             <div className={styles.reorderFormGrid}>
               {/* Select Product */}
               <div
-                className={`${styles.formGroup} ${styles.inventoryElement17}`}
+                className={`${styles.formGroup} ${styles.fullWidthGroup}`}
               >
                 <label className={styles.formLabel}>Select Product</label>
                 <CustomSelect
@@ -1062,7 +1081,7 @@ export default function InventoryPage() {
 
               {/* Note (Full Width) */}
               <div
-                className={`${styles.formGroup} ${styles.inventoryElement18}`}
+                className={`${styles.formGroup} ${styles.fullWidthGroup}`}
               >
                 <label className={styles.formLabel}>Note</label>
                 <textarea
@@ -1100,12 +1119,12 @@ export default function InventoryPage() {
               <hr className={styles.summaryDivider} />
               <div className={styles.summaryRow}>
                 <span
-                  className={`${styles.summaryLabel} ${styles.inventoryElement19}`}
+                  className={`${styles.summaryLabel} ${styles.summaryTotalLabel}`}
                 >
                   Total
                 </span>
                 <span
-                  className={`${styles.summaryVal} ${styles.inventoryElement20}`}
+                  className={`${styles.summaryVal} ${styles.summaryTotalValue}`}
                 >
                   ₹
                   {total.toLocaleString("en-IN", {

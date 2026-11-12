@@ -2,7 +2,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 9999px;
+  border-radius: var(--radius-pill);
   padding: 4px 10px;
   font-size: 11px;
   line-height: 1;
@@ -17,7 +17,7 @@
   justify-content: center;
   min-height: 24px;
   padding: 4px 10px;
-  border-radius: 9999px;
+  border-radius: var(--radius-pill);
   font-size: 11px;
   line-height: 1;
   font-weight: 600;

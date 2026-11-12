@@ -1,13 +1,14 @@
 import React from "react";
+import styles from "./Button.module.css";
 
 type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: "primary" | "secondary" | "outline";
 };
 
 const variantClass = {
-  primary: "button-primary",
-  secondary: "button-secondary",
-  outline: "button-outline",
+  primary: styles.primary,
+  secondary: styles.secondary,
+  outline: styles.outline,
 };
 
 export default function Button({
@@ -17,7 +18,7 @@ export default function Button({
   ...props
 }: ButtonProps) {
   return (
-    <button className={`button-base ${variantClass[variant]} ${className}`} {...props}>
+    <button className={`${styles.buttonBase} ${variantClass[variant]} ${className}`.trim()} {...props}>
       {children}
     </button>
   );

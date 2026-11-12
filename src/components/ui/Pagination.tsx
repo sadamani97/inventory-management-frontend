@@ -46,6 +46,8 @@ export default function Pagination({
   };
 
   const pageNumbers = getPageNumbers();
+  const startItem = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const endItem = totalItems === 0 ? 0 : Math.min(currentPage * pageSize, totalItems);
 
   return (
     <div className={styles.paginationContainer}>
@@ -71,6 +73,14 @@ export default function Pagination({
             </div>
           </div>
         )}
+
+        <div className={styles.currentPageInfo} aria-live="polite">
+          <span className={styles.currentPageLabel}>Showing </span>
+          <span className={styles.currentPageValue}>{startItem}–{endItem}</span>
+          <span className={styles.currentPageDivider}>of</span>
+          <span className={styles.currentPageValue}>{totalItems}</span>
+          <span className={styles.currentPageLabel}>entries</span>
+        </div>
       </div>
 
       <div className={styles.rightSection}>

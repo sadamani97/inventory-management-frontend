@@ -14,21 +14,22 @@
 
 .pageBody {
   flex: 1;
-  padding: 28px 32px 40px 32px;
-  max-width: 1400px;
+  padding: 18px 18px 24px;
+  max-width: 1248px;
   width: 100%;
+  margin: 0 auto;
 }
 
-.dashboardLayoutElement1 {
+.authLoadingContainer {
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background-color: #f8fafc;
+  background-color: var(--background);
 }
 
-.dashboardLayoutElement2 {
-  color: #64748b;
+.authLoadingText {
+  color: var(--text-subtle);
   font-weight: 500;
 }
 

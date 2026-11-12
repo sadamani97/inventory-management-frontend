@@ -1,0 +1,142 @@
+.authForm {
+  display: grid;
+  gap: 20px;
+}
+
+.inputRow {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.statusBox {
+  border: 1px solid var(--border);
+  background: var(--surface-muted);
+  color: var(--text-body);
+  padding: 14px 16px;
+  border-radius: var(--radius-2xl);
+}
+
+.inputBox {
+  width: 100%;
+}
+
+.loginOptionsRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  font-size: 14px;
+  margin-top: -4px;
+}
+
+.checkboxContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.checkboxInput {
+  width: 18px;
+  height: 18px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--border);
+  cursor: pointer;
+  accent-color: var(--primary);
+}
+
+.checkboxLink {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.checkboxLink:hover {
+  text-decoration: underline;
+}
+
+.forgotPasswordLink {
+  color: var(--primary);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.forgotPasswordLink:hover {
+  text-decoration: underline;
+}
+
+.socialLoginSeparator {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 14px;
+  margin: 16px 0;
+}
+
+.socialLoginSeparator::before,
+.socialLoginSeparator::after {
+  content: "";
+  flex: 1;
+  border-bottom: 1px solid var(--border);
+}
+
+.socialLoginSeparator:not(:empty)::before {
+  margin-right: 0.5em;
+}
+
+.socialLoginSeparator:not(:empty)::after {
+  margin-left: 0.5em;
+}
+
+.socialBtnGroup {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.socialBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 50px;
+  border-radius: var(--radius-xl);
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--text);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.socialBtn:hover {
+  background-color: var(--background);
+}
+
+.authRedirectText {
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-top: 24px;
+}
+
+.authRedirectLink {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.authRedirectLink:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 640px) {
+  .inputRow {
+    grid-template-columns: 1fr;
+  }
+}

@@ -242,9 +242,9 @@ export default function AddProductPage() {
 
       if (result && result.success) {
         if (isEditMode) {
-          showSuccessToast("Updated Product", "Product has been updated in your product list", <FiEdit size={44} color="#0f172a" strokeWidth={1.5} />);
+          showSuccessToast("Updated Product", "Product has been updated in your product list", <FiEdit size={44} className={styles.toastIcon} strokeWidth={1.5} />);
         } else {
-          showSuccessToast("Added New Product", "New Product will be added to your product list", <FiPackage size={44} color="#0f172a" strokeWidth={1.5} />);
+          showSuccessToast("Added New Product", "New Product will be added to your product list", <FiPackage size={44} className={styles.toastIcon} strokeWidth={1.5} />);
         }
         setTimeout(() => {
           router.push("/products");
@@ -438,7 +438,8 @@ export default function AddProductPage() {
                 ref={fileInputRef}
                 accept="image/*"
                 onChange={handleImageFileChange}
-               className={styles.addElement1} />
+                className={styles.hiddenFileInput}
+              />
 
               <div className={styles.dropzoneGrid}>
                 <div
@@ -452,7 +453,7 @@ export default function AddProductPage() {
                 </div>
 
                 {images.map((imgSrc, idx) => (
-                  <div key={idx} className={styles.addElement2}>
+                  <div key={idx} className={styles.imagePreviewItem}>
                     <Image
                       src={imgSrc}
                       alt="Uploaded preview"
@@ -486,7 +487,7 @@ export default function AddProductPage() {
                 </button>
               </div>
               {addVarient ? (
-                <div className={styles.addElement3}>
+                <div className={styles.selectedVariantText}>
                   Selected variant: {addVarient}
                 </div>
               ) : null}

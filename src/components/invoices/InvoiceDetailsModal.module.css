@@ -1,11 +1,11 @@
 .detailsOverlay {
   position: fixed;
   inset: 0;
-  background: var(--color-var-18, rgba(15, 23, 42, 0.42));
+  background: var(--backdrop-medium);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: var(--z-modal);
   padding: 24px;
 }
 

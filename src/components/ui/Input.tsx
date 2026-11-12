@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import { ASSETS } from "@/constants/assets";
+import styles from "./Input.module.css";
 
 type InputProps = React.InputHTMLAttributes<HTMLInputElement> & {
   label: string;
@@ -23,17 +24,17 @@ export default function Input({
   const inputType = isPassword ? (showPassword ? "text" : "password") : type;
 
   return (
-    <div className={`input-group ${wrapperClassName}`}>
-      <div className="input-label-row">
-        <span className="input-label">{label}</span>
+    <div className={`${styles.inputGroup} ${wrapperClassName}`.trim()}>
+      <div className={styles.inputLabelRow}>
+        <span className={styles.inputLabel}>{label}</span>
         {labelAction}
       </div>
-      <div className="input-control-wrapper">
-        <input className={`input-control ${className}`} type={inputType} {...props} />
+      <div className={styles.inputControlWrapper}>
+        <input className={`${styles.inputControl} ${className}`.trim()} type={inputType} {...props} />
         {isPassword && (
           <button
             type="button"
-            className="password-toggle-btn"
+            className={styles.passwordToggleBtn}
             onClick={() => setShowPassword(!showPassword)}
             tabIndex={-1}
           >
@@ -41,7 +42,7 @@ export default function Input({
           </button>
         )}
       </div>
-      {error ? <span className="error-text">{error}</span> : null}
+      {error ? <span className={styles.errorText}>{error}</span> : null}
     </div>
   );
 }

@@ -5,7 +5,8 @@ import Header from "./Header";
 import styles from "./DashboardLayout.module.css";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { setAuthUser } from "@/store/authSlice";
-import { toast } from "react-toastify";
+import { getAuthToken, removeAuthToken } from "@/lib/authToken";
+import api from "@/lib/api";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -19,40 +20,51 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const token = localStorage.getItem("token");
-      const storedUser = localStorage.getItem("user");
+      const token = getAuthToken();
 
       if (!token) {
         router.replace("/login");
+        return;
+      }
+
+      if (!user) {
+        // Hit backend API to verify session and fetch live authenticated user details
+        api.get("/users")
+          .then((res) => {
+            const users = res?.data?.data;
+            if (Array.isArray(users) && users.length > 0) {
+              const activeUser = users[0];
+              dispatch(
+                setAuthUser({
+                  user: {
+                    firstname: activeUser?.firstname ?? "",
+                    lastname: activeUser?.lastname ?? "",
+                    email: activeUser?.email ?? "",
+                  },
+                  token,
+                })
+              );
+            }
+          })
+          .catch((err) => {
+            if (err?.response?.status === 401) {
+              removeAuthToken();
+              router.replace("/login");
+            }
+          })
+          .finally(() => {
+            setCheckingAuth(false);
+          });
       } else {
-        if (!user && storedUser) {
-          try {
-            const parsed = JSON.parse(storedUser);
-            dispatch(
-              setAuthUser({
-                user: {
-                  firstname: parsed.firstname || "",
-                  lastname: parsed.lastname || "",
-                  email: parsed.email || "",
-                },
-                token,
-              })
-            );
-          } catch {
-            toast.error("Failed to restore user session");
-          }
-        }
-        queueMicrotask(() => {
-          setCheckingAuth(false);
-        });
+        setCheckingAuth(false);
       }
     }
   }, [router, dispatch, user]);
 
   if (checkingAuth) {
     return (
-      <div className={styles.dashboardLayoutElement1}>
-        <p className={styles.dashboardLayoutElement2}>Checking authentication...</p>
+      <div className={styles.authLoadingContainer}>
+        <p className={styles.authLoadingText}>Checking authentication...</p>
       </div>
     );
   }

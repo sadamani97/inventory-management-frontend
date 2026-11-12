@@ -143,7 +143,7 @@
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 2px 4px var(--color-var-8);
+  box-shadow: var(--shadow-primary-xs);
   transition: background-color 0.15s ease;
 }
 
@@ -307,14 +307,14 @@
   flex: 1;
   height: 6px;
   background-color: var(--hover-bg);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   overflow: hidden;
 }
 
 .barFill {
   height: 100%;
   background-color: var(--text);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
 }
 
 .breakdownCount {
@@ -458,12 +458,12 @@
 }
 
 .statusLowStock {
-  color: var(--color-f59e0b);
+  color: var(--warning-accent);
   font-weight: 600;
 }
 
 .statusInactive {
-  color: var(--color-ef4444);
+  color: var(--danger-accent);
   font-weight: 600;
 }
 
@@ -486,91 +486,70 @@
   }
 }
 
-.idElement1 {
+.starIconActive {
+  fill: var(--warning-accent);
+  color: var(--warning-accent);
+}
+
+.stateMessageBox {
   padding: 40px;
   text-align: center;
   color: var(--text-subtle);
 }
 
-.idElement2 {
-  padding: 40px;
-  text-align: center;
-  color: var(--text-subtle);
-}
-
-.idElement3 {
+.stateBackBtn {
   margin-top: 16px;
   padding: 8px 16px;
   background-color: var(--primary);
   color: var(--surface);
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
 }
 
-.idElement4 {
+.bankDetailsSection {
   margin-top: 24px;
 }
 
-.idElement5 {
+.ratingsTitle {
   margin: 0;
 }
 
-.idElement6 {
-  width: 75%;
-}
+.ratingBar5 { width: 75%; }
+.ratingBar4 { width: 35%; }
+.ratingBar3 { width: 35%; }
+.ratingBar2 { width: 25%; }
+.ratingBar1 { width: 10%; }
 
-.idElement7 {
-  width: 35%;
-}
-
-.idElement8 {
-  width: 35%;
-}
-
-.idElement9 {
-  width: 25%;
-}
-
-.idElement10 {
-  width: 10%;
-}
-
-.idElement11 {
+.searchInputIcon {
   color: var(--text-light);
 }
 
-.idElement12 {
+.tableScrollWrap {
   overflow-x: auto;
 }
 
-.idElement13 {
-  text-align: center;
-  color: var(--text-subtle);
-  padding: 24px;
-}
-
-.idElement14 {
+.tableScrollWrapSpaced {
   overflow-x: auto;
   margin-top: 12px;
 }
 
-.idElement15 {
+.emptyTableCell {
   text-align: center;
   color: var(--text-subtle);
   padding: 24px;
 }
 
-.idElement16 {
+.poNumberCell {
   font-weight: 600;
   color: var(--primary);
 }
 
-.idElement17 {
+.amountCell {
   font-weight: 600;
 }
 
-.idElement18 {
+.reviewsEmptyState {
   padding: 24px;
   color: var(--text-subtle);
   font-size: 14px;

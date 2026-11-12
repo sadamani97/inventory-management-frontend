@@ -1,164 +1,284 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import styles from "./RecentActivitiesTable.module.css";
+import Table, { TableColumn } from "@/components/ui/Table";
 import CustomSelect from "@/components/ui/CustomSelect";
 import Pagination from "@/components/ui/Pagination";
-import { fetchRecentActivities, fetchRecentActivitiesPaginated, fetchProductsList, ActivityItem, ProductItem, formatRelativeTime } from "@/lib/dashboardApi";
+import { fetchRecentActivitiesPaginated, type ActivityItem } from "@/lib/dashboardApi";
+import {
+  aggregateDailyStockOut,
+  cleanProductName,
+  cleanProductSku,
+  formatActivityQuantity,
+  formatActivityTimestamp,
+  getActivityStatusClassName,
+  getQuantityClassName,
+  isSameCalendarDate,
+  normalizeInventoryActivityType,
+  paginateItems,
+  selectActivityStatus,
+  toDateQueryParam,
+} from "@/lib/activityHelpers";
 import { FiSearch } from "react-icons/fi";
 
-export default function RecentActivitiesTable() {
+const STATUS_OPTIONS = [
+  { label: "All Status", value: "All Status" },
+  { label: "Completed", value: "Completed" },
+  { label: "Warning", value: "Warning" },
+  { label: "Added", value: "Added" },
+];
+
+interface RecentActivitiesTableProps {
+  selectedDate?: Date;
+  refreshTrigger?: number;
+}
+
+export default function RecentActivitiesTable({
+  selectedDate = new Date(),
+  refreshTrigger = 0,
+}: RecentActivitiesTableProps) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All Status");
   const [activities, setActivities] = useState<ActivityItem[]>([]);
-  const [totalItems, setTotalItems] = useState<number>(0);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [totalItems, setTotalItems] = useState(0);
+  const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  // Fetch paginated activities directly from backend API
-  useEffect(() => {
-    let isMounted = true;
+  const fetchActivities = useCallback(() => {
     setLoading(true);
 
-    const timer = setTimeout(() => {
-      fetchRecentActivitiesPaginated({
-        page: currentPage,
-        limit: pageSize,
-        search: search.trim() || undefined,
-        status: statusFilter !== "All Status" ? statusFilter : undefined,
-      })
-        .then((res) => {
-          if (!isMounted) return;
-          setActivities(res.data);
-          setTotalItems(res.totalItems);
-          setLoading(false);
-        })
-        .catch((err) => {
-          console.error("Error fetching activities from backend:", err);
-          if (isMounted) setLoading(false);
+    fetchRecentActivitiesPaginated({
+      page: 1,
+      limit: 200,
+      search: search.trim() || undefined,
+      status: statusFilter !== "All Status" ? statusFilter : undefined,
+      date: toDateQueryParam(selectedDate),
+    })
+      .then((result) => {
+        const rawRows = result?.data ?? [];
+
+        // Ensure rows match the selected calendar date
+        const dateMatchedRows = rawRows.filter((activity) => {
+          const timestamp = activity?.createdAt ?? activity?.time;
+          if (!timestamp) return true;
+          const parsed = new Date(timestamp);
+          if (Number.isNaN(parsed.getTime())) return true;
+          return isSameCalendarDate(parsed, selectedDate);
         });
-    }, 200); // 200ms debounce for search input
+
+        // Compute cumulative sales daily delta per product for the selected date
+        const aggregated = aggregateDailyStockOut(dateMatchedRows, selectedDate);
+
+        // Apply client-side status filter if status was selected
+        const filtered =
+          statusFilter !== "All Status"
+            ? aggregated.filter((item) => {
+                const s = selectActivityStatus(item.activity, item.status);
+                return s.toLowerCase() === statusFilter.toLowerCase();
+              })
+            : aggregated;
+
+        setTotalItems(filtered.length);
+        setActivities(paginateItems(filtered, currentPage, pageSize));
+      })
+      .catch((error: unknown) => {
+        console.error("Error fetching activities from backend API:", error);
+        setActivities([]);
+        setTotalItems(0);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [currentPage, pageSize, search, statusFilter, selectedDate]);
+
+  // Debounced fetch on search / filter / date change
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      fetchActivities();
+    }, 200);
 
     return () => {
-      isMounted = false;
-      clearTimeout(timer);
+      window.clearTimeout(timer);
     };
-  }, [currentPage, pageSize, search, statusFilter]);
+  }, [fetchActivities, refreshTrigger]);
 
-  const handleSearchChange = (val: string) => {
-    setSearch(val);
-    setCurrentPage(1); // Reset to page 1 on new search
+  // Dynamic state/cache updates reflecting inventory changes made in the database
+  useEffect(() => {
+    const handleDynamicUpdate = () => {
+      fetchActivities();
+    };
+
+    window.addEventListener("inventory-updated", handleDynamicUpdate);
+    window.addEventListener("focus", handleDynamicUpdate);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        fetchActivities();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    // Periodic background sync (every 25 seconds when visible)
+    const intervalTimer = window.setInterval(() => {
+      if (document.visibilityState === "visible") {
+        fetchActivities();
+      }
+    }, 25000);
+
+    return () => {
+      window.removeEventListener("inventory-updated", handleDynamicUpdate);
+      window.removeEventListener("focus", handleDynamicUpdate);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.clearInterval(intervalTimer);
+    };
+  }, [fetchActivities]);
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setCurrentPage(1);
   };
 
-  const handleStatusFilterChange = (val: string) => {
-    setStatusFilter(val);
-    setCurrentPage(1); // Reset to page 1 on new filter
+  const handleStatusFilterChange = (value: string) => {
+    setStatusFilter(value);
+    setCurrentPage(1);
   };
 
-  const handlePageSizeChange = (newSize: number) => {
-    setPageSize(newSize);
-    setCurrentPage(1); // Reset to page 1 on limit change
+  const handlePageSizeChange = (size: number) => {
+    setPageSize(size);
+    setCurrentPage(1);
   };
 
-  const getStatusClass = (status: ActivityItem["status"]) => {
-    switch (status) {
-      case "Completed":
-        return styles.statusCompleted;
-      case "Warning":
-        return styles.statusWarning;
-      case "Added":
-        return styles.statusAdded;
-      case "Delivered":
-        return styles.statusDelivered;
-      default:
-        return "";
-    }
-  };
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedDate]);
+
+  const columns: TableColumn<ActivityItem>[] = useMemo(
+    () => [
+      {
+        key: "activity",
+        header: "Activity",
+        width: 150,
+        minWidth: 150,
+        render: (row) => {
+          const canonicalActivity = normalizeInventoryActivityType(row?.activity);
+          return (
+            <span className={styles.activityName}>
+              {canonicalActivity}
+            </span>
+          );
+        },
+      },
+      {
+        key: "product",
+        header: "Product",
+        width: 220,
+        minWidth: 220,
+        render: (row) => (
+          <span className={styles.productName}>
+            {cleanProductName(row?.product)}
+          </span>
+        ),
+      },
+      {
+        key: "sku",
+        header: "SKU",
+        width: 150,
+        minWidth: 150,
+        render: (row) => (
+          <span className={styles.skuCode}>
+            {cleanProductSku(row?.sku)}
+          </span>
+        ),
+      },
+      {
+        key: "qty",
+        header: "Qty",
+        width: 110,
+        minWidth: 110,
+        render: (row) => {
+          const canonicalActivity = normalizeInventoryActivityType(row?.activity);
+          const formattedQty = formatActivityQuantity(
+            canonicalActivity,
+            row?.quantityValue !== undefined ? row.quantityValue : row?.qty
+          );
+          return (
+            <span className={`${styles.qtyVal} ${getQuantityClassName(canonicalActivity, formattedQty, styles)}`}>
+              {formattedQty}
+            </span>
+          );
+        },
+      },
+      {
+        key: "status",
+        header: "Status",
+        width: 120,
+        minWidth: 120,
+        render: (row) => {
+          const canonicalActivity = normalizeInventoryActivityType(row?.activity);
+          const canonicalStatus = selectActivityStatus(canonicalActivity, row?.status);
+          return (
+            <span className={`${styles.statusBadge} ${getActivityStatusClassName(canonicalStatus, styles)}`}>
+              {canonicalStatus}
+            </span>
+          );
+        },
+      },
+      {
+        key: "time",
+        header: "Time",
+        width: 110,
+        minWidth: 110,
+        render: (row) => (
+          <span className={styles.timeText}>
+            {formatActivityTimestamp(row?.createdAt ?? row?.time)}
+          </span>
+        ),
+      },
+    ],
+    []
+  );
 
   return (
     <div className={styles.tableCard}>
       <div className={styles.tableHeader}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        <div className={styles.titleWrapper}>
           <h3 className={styles.title}>Recent Activities</h3>
-          {loading && <span className={styles.loadingSpinner} title="Fetching from backend API..." />}
         </div>
         <div className={styles.headerActions}>
-          <div className={styles.searchWrapper}>
+          <label className={styles.searchWrapper}>
             <input
               type="text"
               placeholder="Search Activities"
               value={search}
-              onChange={(e) => handleSearchChange(e.target.value)}
+              onChange={(event) => handleSearchChange(event.target.value)}
               className={styles.searchInput}
             />
             <FiSearch className={styles.searchIcon} />
-          </div>
+          </label>
 
           <CustomSelect
-            options={[
-              { label: "All Status", value: "All Status" },
-              { label: "Completed", value: "Completed" },
-              { label: "Warning", value: "Warning" },
-              { label: "Added", value: "Added" },
-              { label: "Delivered", value: "Delivered" },
-            ]}
+            options={STATUS_OPTIONS}
             value={statusFilter}
             onChange={handleStatusFilterChange}
-            width="130px"
-            height="36px"
+            size="sm"
+            className={styles.statusSelect}
           />
         </div>
       </div>
 
-      <div className={styles.tableContainer}>
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th>Activity</th>
-              <th>Product</th>
-              <th>SKU</th>
-              <th>Qty</th>
-              <th>Status</th>
-              <th>Time</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              // Modern skeleton loading animation rows
-              Array.from({ length: Math.min(pageSize, 8) }).map((_, idx) => (
-                <tr key={`skeleton-${idx}`} className={styles.skeletonRow}>
-                  <td><div className={styles.skeletonBone} style={{ width: "85%" }} /></td>
-                  <td><div className={styles.skeletonBone} style={{ width: "70%" }} /></td>
-                  <td><div className={styles.skeletonBone} style={{ width: "55%" }} /></td>
-                  <td><div className={styles.skeletonBone} style={{ width: "40%" }} /></td>
-                  <td><div className={styles.skeletonBadge} /></td>
-                  <td><div className={styles.skeletonBone} style={{ width: "65%" }} /></td>
-                </tr>
-              ))
-            ) : activities.length > 0 ? (
-              activities.map((act) => (
-                <tr key={act.id}>
-                  <td className={styles.activityName}>{act.activity}</td>
-                  <td className={styles.productName}>{act.product}</td>
-                  <td className={styles.skuCode}>{act.sku}</td>
-                  <td className={styles.qtyVal}>{act.qty}</td>
-                  <td>
-                    <span className={`${styles.statusBadge} ${getStatusClass(act.status)}`}>
-                      {act.status}
-                    </span>
-                  </td>
-                  <td className={styles.timeText}>{act.time}</td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={6} className={styles.recentActivitiesTableElement2}>
-                  No backend products or activities found.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+      <div className={styles.activityTableContainer}>
+        <Table<ActivityItem>
+          columns={columns}
+          data={activities}
+          loading={loading}
+          skeletonRows={Math.min(pageSize, 8)}
+          minWidth="860px"
+          emptyMessage="No activities found for this date."
+          rowKey={(row, index) => row?.id ?? `${row?.product ?? "activity"}-${index}`}
+          className={styles.activityTable}
+        />
       </div>
+
       <Pagination
         currentPage={currentPage}
         totalItems={totalItems}

@@ -1,4 +1,5 @@
 import axios from "axios";
+import { getAuthToken, removeAuthToken } from "./authToken";
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000",
@@ -10,7 +11,7 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     if (typeof window !== "undefined") {
-      const token = localStorage.getItem("token");
+      const token = getAuthToken();
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
@@ -24,8 +25,7 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error?.response?.status === 401 && typeof window !== "undefined") {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
+      removeAuthToken();
       if (window.location.pathname !== "/login" && window.location.pathname !== "/signup") {
         window.location.href = "/login";
       }

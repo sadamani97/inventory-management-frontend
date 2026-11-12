@@ -11,6 +11,12 @@
   margin-bottom: 4px;
 }
 
+.titleGroup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .title {
   font-size: 24px;
   font-weight: 800;
@@ -32,7 +38,7 @@
   padding: 9px 16px;
   background-color: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: 13px;
   font-weight: 600;
   color: var(--text-body);
@@ -53,7 +59,7 @@
   background-color: var(--primary);
   color: var(--text-inverse);
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
@@ -68,7 +74,7 @@
 
 .tableCard {
   background-color: var(--surface);
-  border-radius: 14px;
+  border-radius: var(--radius-card);
   border: 1px solid var(--border-subtle);
   box-shadow: var(--shadow-sm);
   padding: 24px;
@@ -101,7 +107,7 @@
   padding: 8px 36px 8px 14px;
   background-color: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: 13px;
   color: var(--text-secondary);
   outline: none;
@@ -109,7 +115,7 @@
 
 .searchInput:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--color-var-9);
+  box-shadow: var(--focus-ring-primary-sm);
 }
 
 .searchIcon {
@@ -129,7 +135,7 @@
   padding: 8px 14px;
   background-color: var(--primary);
   color: var(--text-inverse);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: 12.5px;
   font-weight: 600;
   cursor: pointer;
@@ -171,6 +177,10 @@
   background-color: var(--background);
 }
 
+.clickableRow {
+  cursor: pointer;
+}
+
 .productCell {
   display: flex;
   align-items: center;
@@ -180,11 +190,15 @@
 .productImg {
   width: 44px;
   height: 44px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   object-fit: cover;
   background-color: var(--hover-bg);
   border: 1px solid var(--border-subtle);
   flex-shrink: 0;
+}
+
+.hidden {
+  display: none;
 }
 
 .productInfo {
@@ -248,7 +262,7 @@
 
 .rowsSelect {
   padding: 4px 8px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background-color: var(--surface);
   font-size: 12px;
@@ -269,7 +283,7 @@
   min-width: 32px;
   height: 32px;
   padding: 0 10px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background-color: var(--surface);
   font-size: 12.5px;
@@ -290,30 +304,20 @@
   border-color: var(--primary);
 }
 
-.productsElement1 {
-  text-align: center;
-  padding: 32px;
-  color: var(--text-subtle);
-}
-
-.productsElement2 {
-  cursor: pointer;
-}
-
-.productsElement3 {
+.emptyCell {
   text-align: center;
   padding: 40px;
   color: var(--text-light);
 }
 
-.productsElement4 {
+.emptyTitle {
   font-size: 15px;
   font-weight: 700;
   color: var(--text-muted);
   margin: 0 0 6px 0;
 }
 
-.productsElement5 {
+.emptySubtitle {
   font-size: 13px;
   margin: 0;
 }
@@ -331,21 +335,54 @@
   padding: 14px 16px;
 }
 
+.skeletonProductCell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.skeletonThumb {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+}
+
+.skeletonTextGroup {
+  flex: 1;
+}
+
 .skeletonBone {
   height: 16px;
-  border-radius: 6px;
-  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  border-radius: var(--radius-sm);
+  background: var(--shimmer-gradient);
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
 }
+
+.skeletonTitle {
+  width: 70%;
+  height: 16px;
+  margin-bottom: 6px;
+}
+
+.skeletonSubtitle {
+  width: 40%;
+  height: 12px;
+}
+
+.skeletonW60 { width: 60%; }
+.skeletonW50 { width: 50%; }
+.skeletonW45 { width: 45%; }
+.skeletonW55 { width: 55%; }
 
 .loadingSpinner {
   display: inline-block;
   width: 16px;
   height: 16px;
-  border: 2px solid #cbd5e1;
+  border: 2px solid var(--border-hover);
   border-top-color: var(--primary);
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   animation: spin 0.8s linear infinite;
   margin-left: 10px;
   vertical-align: middle;

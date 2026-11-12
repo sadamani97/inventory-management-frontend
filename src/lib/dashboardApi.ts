@@ -1,5 +1,16 @@
 import api from "./api";
 import { toast } from "react-toastify";
+import {
+  cleanProductName,
+  cleanProductSku,
+  formatActivityQuantity,
+  formatActivityTimestamp,
+  normalizeInventoryActivityType,
+  parseQuantityValue,
+  resolveDisplayText,
+  selectActivityStatus,
+  type ActivityItem,
+} from "@/lib/activityHelpers";
 
 export interface ProductStatsResponse {
   totalProducts: number;
@@ -10,15 +21,7 @@ export interface ProductStatsResponse {
   unitsRestockedThisMonth: number;
 }
 
-export interface ActivityItem {
-  id: string;
-  activity: string;
-  product: string;
-  sku: string;
-  qty: string;
-  status: "Completed" | "Warning" | "Added" | "Delivered";
-  time: string;
-}
+export type { ActivityItem } from "@/lib/activityHelpers";
 
 export interface SalesAnalyticsResponse {
   totalSales: number;
@@ -432,6 +435,103 @@ export async function fetchSalesAnalytics(): Promise<SalesAnalyticsResponse> {
   };
 }
 
+export interface CategoryQuantityItem {
+  name: string;
+  count: number;
+  quantity?: number;
+  month?: number;
+  year?: number;
+}
+
+export async function fetchCategoryQuantities(params?: {
+  month?: number;
+  year?: number;
+  date?: string | Date;
+}): Promise<CategoryQuantityItem[]> {
+  try {
+    let queryParams: Record<string, string | number> | undefined;
+    if (params) {
+      queryParams = {};
+      if (params.month !== undefined) {
+        queryParams.month = params.month >= 0 && params.month <= 11 ? params.month + 1 : params.month;
+      }
+      if (params.year !== undefined) {
+        queryParams.year = params.year;
+      }
+      if (params.date) {
+        queryParams.date = params.date instanceof Date ? params.date.toISOString() : String(params.date);
+      }
+    }
+
+    const response = await api.get("/api/reports/category-quantities", { params: queryParams });
+    if (response?.data?.success && Array.isArray(response?.data?.data)) {
+      return response.data.data.map((item: { name?: string; count?: number; quantity?: number; month?: number; year?: number }) => ({
+        name: item.name || "General",
+        count: Number(item.count ?? item.quantity ?? 0),
+        quantity: Number(item.count ?? item.quantity ?? 0),
+        month: item.month,
+        year: item.year,
+      }));
+    }
+  } catch (err) {
+    console.warn("Backend /api/reports/category-quantities failed, falling back to sales orders calculation:", err);
+  }
+
+  try {
+    const orders = await fetchSalesOrdersList();
+    if (Array.isArray(orders)) {
+      let targetMonth: number;
+      let targetYear: number;
+
+      if (params?.date) {
+        const d = new Date(params.date);
+        targetMonth = d.getMonth();
+        targetYear = d.getFullYear();
+      } else if (params?.month !== undefined) {
+        targetMonth = params.month >= 1 && params.month <= 12 ? params.month - 1 : params.month;
+        targetYear = params?.year ?? new Date().getFullYear();
+      } else {
+        const now = new Date();
+        targetMonth = now.getMonth();
+        targetYear = params?.year ?? now.getFullYear();
+      }
+
+      const monthlyOrders = orders.filter((order) => {
+        const dateStr = order.createdAt || order.orderDate;
+        if (!dateStr) return false;
+        const d = new Date(dateStr);
+        if (Number.isNaN(d.getTime())) return false;
+        return d.getMonth() === targetMonth && d.getFullYear() === targetYear;
+      });
+
+      const catMap: Record<string, number> = {};
+      monthlyOrders.forEach((order) => {
+        const items = order.items || [];
+        items.forEach((item) => {
+          const prod = (item as any)?.product;
+          const catName = prod?.category?.categoryName || prod?.categoryName || "General";
+          const qty = Number(item.quantity ?? 0);
+          catMap[catName] = (catMap[catName] || 0) + qty;
+        });
+      });
+
+      return Object.entries(catMap)
+        .map(([name, count]) => ({
+          name,
+          count,
+          quantity: count,
+          month: targetMonth,
+          year: targetYear,
+        }))
+        .sort((a, b) => b.count - a.count);
+    }
+  } catch (err) {
+    console.error("Failed to calculate category quantities from sales orders fallback:", err);
+  }
+
+  return [];
+}
+
 export function formatRelativeTime(dateStr?: string | Date): string {
   if (!dateStr) return "Just now";
 
@@ -459,6 +559,21 @@ export function formatRelativeTime(dateStr?: string | Date): string {
   return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
+export function formatEventTime(dateStr?: string | Date): string {
+  if (!dateStr) return "--:--";
+
+  const date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) return String(dateStr);
+
+  return date.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
+
+export { formatActivityTimestamp as formatActivityTimeLabel } from "@/lib/activityHelpers";
+
 export interface PaginatedResult<T> {
   data: T[];
   totalItems: number;
@@ -467,31 +582,140 @@ export interface PaginatedResult<T> {
   totalPages: number;
 }
 
+function getActivityValue(record: ApiRecord, keys: string[]): unknown {
+  if (!record || typeof record !== "object") return undefined;
+
+  for (const key of keys) {
+    const value = getNestedValue(record, key);
+    if (value !== undefined && value !== null && value !== "") return value;
+  }
+
+  const nestedCandidates = [
+    getValue(record, "product"),
+    getValue(record, "item"),
+    getValue(record, "inventoryItem"),
+    getValue(record, "stockItem"),
+  ];
+
+  for (const candidate of nestedCandidates) {
+    if (candidate && typeof candidate === "object") {
+      const nestedValue = getActivityValue(candidate as ApiRecord, keys);
+      if (nestedValue !== undefined && nestedValue !== null && nestedValue !== "") return nestedValue;
+    }
+  }
+
+  return undefined;
+}
+
+function mapRecentActivityRecord(raw: Record<string, unknown>): ActivityItem {
+  const productRecord = (typeof raw?.product === "object" && raw?.product !== null) ? (raw.product as ApiRecord) : undefined;
+  const itemRecord = (typeof raw?.item === "object" && raw?.item !== null) ? (raw.item as ApiRecord) : undefined;
+  const inventoryRecord = (typeof raw?.inventoryItem === "object" && raw?.inventoryItem !== null) ? (raw.inventoryItem as ApiRecord) : undefined;
+
+  const rawTimestamp = getTextValue(
+    getActivityValue(raw, ["createdAt", "timestamp", "time", "date", "updatedAt"]),
+    getActivityValue(productRecord, ["createdAt", "timestamp", "time", "date"]),
+    getActivityValue(itemRecord, ["createdAt", "timestamp", "time", "date"]),
+    getActivityValue(inventoryRecord, ["createdAt", "timestamp", "time", "date"]),
+  );
+
+  const activityType = normalizeInventoryActivityType(
+    getFirstDefinedValue(
+      typeof raw?.activity === "string" ? raw.activity : undefined,
+      getActivityValue(raw, ["activity", "activityType", "eventType", "event", "action", "type", "title", "label"]),
+      getActivityValue(productRecord, ["activity", "type", "title", "label"]),
+      getActivityValue(itemRecord, ["activity", "type", "title", "label"]),
+      getActivityValue(inventoryRecord, ["activity", "type", "title", "label"]),
+      getTextValue(getValue(raw, "activity")),
+    ),
+  );
+
+  const qtySource = getFirstDefinedValue(
+    getActivityValue(raw, ["quantity", "qty", "stock", "remainingQty", "remainingQuantity", "availableQty", "actualQty", "delta", "change", "count", "soldQty", "addedQty", "orderedQty", "units"]),
+    getActivityValue(productRecord, ["quantity", "qty", "stock", "remainingQty", "remainingQuantity", "availableQty", "actualQty", "delta", "change"]),
+    getActivityValue(itemRecord, ["quantity", "qty", "stock", "remainingQty", "remainingQuantity", "availableQty", "actualQty", "delta", "change"]),
+    getActivityValue(inventoryRecord, ["quantity", "qty", "stock", "remainingQty", "remainingQuantity", "availableQty", "actualQty", "delta", "change"]),
+  );
+
+  const productName = cleanProductName(
+    getFirstDefinedValue(
+      typeof raw?.product === "string" ? raw.product : undefined,
+      getActivityValue(raw, ["productName", "product_name", "itemName", "item_name", "title"]),
+      getActivityValue(productRecord, ["productName", "product_name", "name", "itemName", "title"]),
+      getActivityValue(itemRecord, ["productName", "product_name", "name", "itemName", "title"]),
+      getActivityValue(inventoryRecord, ["productName", "product_name", "name", "itemName", "title"]),
+    ),
+  );
+
+  const sku = cleanProductSku(
+    getFirstDefinedValue(
+      typeof raw?.sku === "string" ? raw.sku : undefined,
+      getActivityValue(raw, ["sku", "productSku", "stockKeepingUnit", "itemSku", "SKU"]),
+      getActivityValue(productRecord, ["sku", "productSku", "stockKeepingUnit", "itemSku"]),
+      getActivityValue(itemRecord, ["sku", "productSku", "stockKeepingUnit", "itemSku"]),
+      getActivityValue(inventoryRecord, ["sku", "productSku", "stockKeepingUnit", "itemSku"]),
+    ),
+  );
+
+  const backendStatus = getTextValue(
+    getActivityValue(raw, ["status", "state", "alertStatus"]),
+    getActivityValue(productRecord, ["status", "state"]),
+  );
+
+  const productId = getTextValue(
+    getActivityValue(raw, ["productId", "product_id", "inventoryItemId"]),
+    getActivityValue(productRecord, ["id", "productId"]),
+  );
+
+  const recordId = getTextValue(
+    getActivityValue(raw, ["id", "activityId", "eventId", "_id"]),
+    productId,
+    rawTimestamp,
+  );
+
+  return {
+    id: recordId ?? `${activityType}-${productName}-${sku}`,
+    activity: activityType,
+    product: productName,
+    sku,
+    qty: formatActivityQuantity(activityType, qtySource),
+    quantityValue: parseQuantityValue(qtySource),
+    productId,
+    status: selectActivityStatus(activityType, backendStatus),
+    createdAt: rawTimestamp,
+    time: formatActivityTimestamp(rawTimestamp),
+  };
+}
+
 export async function fetchRecentActivitiesPaginated(params: {
   page?: number;
   limit?: number;
   search?: string;
   status?: string;
+  date?: string;
 }): Promise<PaginatedResult<ActivityItem>> {
   try {
     const response = await api.get("/api/reports/recent-activities", { params });
-    if (response?.data?.success) {
-      const rows = Array.isArray(response.data.data) ? response.data.data : [];
+    const payload = response?.data;
+    const rows = Array.isArray(payload?.data)
+      ? payload.data
+      : Array.isArray(payload)
+        ? payload
+        : [];
+
+    if (payload?.success || rows.length > 0) {
       return {
-        data: rows.map((it: Record<string, unknown>) => ({
-          ...(it as Record<string, unknown>),
-          time: formatRelativeTime(getTextValue(it.time, it.createdAt) || getTextValue(it.createdAt)),
-        })),
-        totalItems: response.data.totalItems ?? rows.length,
-        page: response.data.page ?? (params.page || 1),
-        limit: response.data.limit ?? (params.limit || 10),
-        totalPages: response.data.totalPages ?? 1,
+        data: rows.map((it: Record<string, unknown>) => mapRecentActivityRecord(it)),
+        totalItems: payload?.totalItems ?? rows.length,
+        page: payload?.page ?? (params.page ?? 1),
+        limit: payload?.limit ?? (params.limit ?? 10),
+        totalPages: payload?.totalPages ?? 1,
       };
     }
   } catch (err) {
     console.error("Failed to load recent activity data from backend:", err);
   }
-  return { data: [], totalItems: 0, page: params.page || 1, limit: params.limit || 10, totalPages: 1 };
+  return { data: [], totalItems: 0, page: params.page ?? 1, limit: params.limit ?? 10, totalPages: 1 };
 }
 
 export async function fetchRecentActivities(): Promise<ActivityItem[]> {
