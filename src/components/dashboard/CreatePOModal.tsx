@@ -4,7 +4,7 @@ import { FiX, FiSearch, FiTrash2, FiFileText, FiCalendar, FiBox, FiCheck, FiMapP
 import { fetchVendorsList, VendorItem, fetchProductsList, ProductItem, createPurchaseOrder, updateProduct } from "@/lib/dashboardApi";
 import CustomSelect from "@/components/ui/CustomSelect";
 import CustomDatePicker from "@/components/dashboard/CustomDatePicker";
-import styles from "@/styles/components/createPOModal.module.css";
+import styles from "./CreatePOModal.module.css";
 import { toast } from "react-toastify";
 import { ASSETS } from "@/constants/assets";
 
@@ -271,7 +271,7 @@ export default function CreatePOModal({ isOpen, onClose, onSuccess }: CreatePOMo
                     height="42px"
                   />
                 </div>
-                <div className={`${styles.formGroup} ${styles.paymentTermsGroup}`} style={{ gridColumn: 'span 2' }}>
+                <div className={`${styles.formGroup} ${styles.paymentTermsGroup}`}>
                   <label className={styles.label}>Note</label>
                   <textarea 
                     className={styles.textarea} 

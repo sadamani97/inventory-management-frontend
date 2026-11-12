@@ -13,7 +13,7 @@ import Input from "@/components/ui/Input";
 import Link from "next/link";
 import Image from "next/image";
 import { ASSETS } from "@/constants/assets";
-import styles from "@/styles/pages/signup.module.css";
+import styles from "@/styles/pages/auth.module.css";
 import { toast } from "react-toastify";
 
 const signupSchema = z
@@ -95,7 +95,6 @@ export default function SignupPage() {
       <form className={styles.authForm} onSubmit={handleSubmit(onSubmit)}>
         <div className={styles.inputRow}>
           <Input
-            wrapperClassName={styles.inputGroup}
             className={styles.inputBox}
             label="First name"
             placeholder="Enter first name"
@@ -103,7 +102,6 @@ export default function SignupPage() {
             error={errors.firstname?.message?.toString()}
           />
           <Input
-            wrapperClassName={styles.inputGroup}
             className={styles.inputBox}
             label="Last name"
             placeholder="Enter last name"
@@ -112,7 +110,6 @@ export default function SignupPage() {
           />
         </div>
         <Input
-          wrapperClassName={styles.inputGroup}
           className={styles.inputBox}
           label="Email"
           type="email"
@@ -121,7 +118,6 @@ export default function SignupPage() {
           error={errors.email?.message?.toString()}
         />
         <Input
-          wrapperClassName={styles.inputGroup}
           className={styles.inputBox}
           label="Password"
           type="password"
@@ -129,12 +125,12 @@ export default function SignupPage() {
           {...register("password")}
           error={errors.password?.message?.toString()}
         />
-              <div className="login-options-row">
-          <label className="checkbox-container">
-            <input type="checkbox" className="checkbox-input" required />
+        <div className={styles.loginOptionsRow}>
+          <label className={styles.checkboxContainer}>
+            <input type="checkbox" className={styles.checkboxInput} required />
             <span>
-              I agree to the Stockflow <Link href="#" className="checkbox-link">terms</Link> and{" "}
-              <Link href="#" className="checkbox-link">conditions</Link>
+              I agree to the Stockflow <Link href="#" className={styles.checkboxLink}>terms</Link> and{" "}
+              <Link href="#" className={styles.checkboxLink}>conditions</Link>
             </span>
           </label>
         </div>
@@ -145,22 +141,22 @@ export default function SignupPage() {
           {isSubmitting ? "Creating account..." : "Create Account"}
         </Button>
 
-        <div className="social-login-separator">or create with</div>
+        <div className={styles.socialLoginSeparator}>or create with</div>
 
-        <div className="social-btn-group">
-          <button type="button" className="social-btn">
+        <div className={styles.socialBtnGroup}>
+          <button type="button" className={styles.socialBtn}>
             <Image {...ASSETS.LOGOS.GOOGLE} alt={ASSETS.LOGOS.GOOGLE.alt} />
             Google
           </button>
-          <button type="button" className="social-btn">
+          <button type="button" className={styles.socialBtn}>
             <Image {...ASSETS.LOGOS.APPLE} alt={ASSETS.LOGOS.APPLE.alt} />
             Apple
           </button>
         </div>
 
-        <p className="auth-redirect-text">
+        <p className={styles.authRedirectText}>
           Already have an account?{" "}
-          <Link href="/login" className="auth-redirect-link">
+          <Link href="/login" className={styles.authRedirectLink}>
             Login Now
           </Link>
         </p>

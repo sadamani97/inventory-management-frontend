@@ -167,7 +167,7 @@ export default function VendorDetailPage() {
   if (loading) {
     return (
       <DashboardLayout>
-        <div className={styles.idElement1}>Loading vendor details...</div>
+        <div className={styles.stateMessageBox}>Loading vendor details...</div>
       </DashboardLayout>
     );
   }
@@ -175,11 +175,11 @@ export default function VendorDetailPage() {
   if (!vendor) {
     return (
       <DashboardLayout>
-        <div className={styles.idElement2}>
+        <div className={styles.stateMessageBox}>
           <h3>Vendor not found</h3>
           <button
             onClick={() => router.push("/vendors")}
-            className={styles.idElement3}
+            className={styles.stateBackBtn}
           >
             Back to Vendors
           </button>
@@ -361,10 +361,7 @@ export default function VendorDetailPage() {
               }}
             >
               <FiStar
-                style={{
-                  fill: vendorObj.isStarred ? "#f59e0b" : "none",
-                  color: vendorObj.isStarred ? "#f59e0b" : undefined,
-                }}
+                className={vendorObj.isStarred ? styles.starIconActive : undefined}
               />
             </button>
             <button
@@ -487,7 +484,7 @@ export default function VendorDetailPage() {
 
             {/* Bank Details */}
             {vendorObj.bankDetails && vendorObj.bankDetails.length > 0 && (
-              <div className={styles.idElement4}>
+              <div className={styles.bankDetailsSection}>
                 <div className={styles.sectionHeaderTitle}>Bank Details</div>
                 <div className={styles.supplierDetailsList}>
                   <div className={styles.detailRow}>
@@ -549,7 +546,7 @@ export default function VendorDetailPage() {
             <div className={styles.ratingsSection}>
               <div className={styles.ratingsTopRow}>
                 <span
-                  className={`${styles.sectionHeaderTitle} ${styles.idElement5}`}
+                  className={`${styles.sectionHeaderTitle} ${styles.ratingsTitle}`}
                 >
                   Ratings
                 </span>
@@ -578,7 +575,7 @@ export default function VendorDetailPage() {
                   <span className={styles.breakdownLabel}>5 - Excellent</span>
                   <div className={styles.barTrack}>
                     <div
-                      className={`${styles.barFill} ${styles.idElement6}`}
+                      className={`${styles.barFill} ${styles.ratingBar5}`}
                     />
                   </div>
                   <span className={styles.breakdownCount}>2,200</span>
@@ -588,7 +585,7 @@ export default function VendorDetailPage() {
                   <span className={styles.breakdownLabel}>4 - Good</span>
                   <div className={styles.barTrack}>
                     <div
-                      className={`${styles.barFill} ${styles.idElement7}`}
+                      className={`${styles.barFill} ${styles.ratingBar4}`}
                     />
                   </div>
                   <span className={styles.breakdownCount}>550</span>
@@ -598,7 +595,7 @@ export default function VendorDetailPage() {
                   <span className={styles.breakdownLabel}>3 - Okay</span>
                   <div className={styles.barTrack}>
                     <div
-                      className={`${styles.barFill} ${styles.idElement8}`}
+                      className={`${styles.barFill} ${styles.ratingBar3}`}
                     />
                   </div>
                   <span className={styles.breakdownCount}>550</span>
@@ -610,7 +607,7 @@ export default function VendorDetailPage() {
                   </span>
                   <div className={styles.barTrack}>
                     <div
-                      className={`${styles.barFill} ${styles.idElement9}`}
+                      className={`${styles.barFill} ${styles.ratingBar2}`}
                     />
                   </div>
                   <span className={styles.breakdownCount}>407</span>
@@ -620,7 +617,7 @@ export default function VendorDetailPage() {
                   <span className={styles.breakdownLabel}>1 - Terrible</span>
                   <div className={styles.barTrack}>
                     <div
-                      className={`${styles.barFill} ${styles.idElement10}`}
+                      className={`${styles.barFill} ${styles.ratingBar1}`}
                     />
                   </div>
                   <span className={styles.breakdownCount}>100</span>
@@ -659,7 +656,7 @@ export default function VendorDetailPage() {
               <>
                 <div className={styles.searchFilterRow}>
                   <div className={styles.searchInputBox}>
-                    <FiSearch className={styles.idElement11} />
+                    <FiSearch className={styles.searchInputIcon} />
                     <input
                       type="text"
                       placeholder="Search"
@@ -681,7 +678,7 @@ export default function VendorDetailPage() {
                   </select>
                 </div>
 
-                <div className={styles.idElement12}>
+                <div className={styles.tableScrollWrap}>
                   <table className={styles.catalogTable}>
                     <thead>
                       <tr>
@@ -696,7 +693,7 @@ export default function VendorDetailPage() {
                     <tbody>
                       {filteredProducts.length === 0 ? (
                         <tr>
-                          <td colSpan={6} className={styles.idElement13}>
+                          <td colSpan={6} className={styles.emptyTableCell}>
                             No products found in catalog.
                           </td>
                         </tr>
@@ -760,7 +757,7 @@ export default function VendorDetailPage() {
             )}
 
             {activeTab === "transaction" && (
-              <div className={styles.idElement14}>
+              <div className={styles.tableScrollWrapSpaced}>
                 <table className={styles.catalogTable}>
                   <thead>
                     <tr>
@@ -774,14 +771,14 @@ export default function VendorDetailPage() {
                   <tbody>
                     {purchaseOrders.length === 0 ? (
                       <tr>
-                        <td colSpan={5} className={styles.idElement15}>
+                        <td colSpan={5} className={styles.emptyTableCell}>
                           No transactions found for this vendor.
                         </td>
                       </tr>
                     ) : (
                       purchaseOrders.map((po, idx) => (
                         <tr key={po.id || idx}>
-                          <td className={styles.idElement16}>
+                          <td className={styles.poNumberCell}>
                             {po.poNumber ||
                               po.orderNumber ||
                               `PO-#100${idx + 1}`}
@@ -807,7 +804,7 @@ export default function VendorDetailPage() {
                                 ? `${po.items.length} Packs`
                                 : "Bulk Order")}
                           </td>
-                          <td className={styles.idElement17}>
+                          <td className={styles.amountCell}>
                             ₹
                             {(
                               po.totalAmount ||
@@ -830,7 +827,7 @@ export default function VendorDetailPage() {
             )}
 
             {activeTab === "reviews" && (
-              <div className={styles.idElement18}>
+              <div className={styles.reviewsEmptyState}>
                 Customer reviews and seller feedbacks section.
               </div>
             )}

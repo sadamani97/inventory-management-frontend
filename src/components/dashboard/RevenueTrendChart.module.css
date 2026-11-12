@@ -81,7 +81,7 @@
 
 .monthDropdown:hover {
   border-color: var(--border-hover);
-  box-shadow: 0 4px 10px var(--color-var-6);
+  box-shadow: var(--shadow-hover-sm);
 }
 
 .dropdownMenu {
@@ -91,10 +91,10 @@
   min-width: 120px;
   background-color: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  box-shadow: 0 8px 18px var(--color-var-5);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-hover-md);
   padding: 6px 0;
-  z-index: 20;
+  z-index: var(--z-overlay-control);
   overflow: hidden;
 }
 
@@ -258,7 +258,7 @@
   fill: var(--surface);
   stroke: var(--border-translucent);
   stroke-width: 1;
-  filter: drop-shadow(0 2px 6px var(--color-var-5));
+  filter: drop-shadow(0 2px 6px var(--hover-tint-subtle));
 }
 
 .tooltipText {

@@ -4,9 +4,9 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(15, 23, 42, 0.4);
+  background: var(--backdrop);
   backdrop-filter: blur(4px);
-  z-index: 1000;
+  z-index: var(--z-modal);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -15,14 +15,14 @@
 
 .modal {
   background: var(--surface);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   width: 702px;
   height: 984px;
   max-width: 100%;
   max-height: 95vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-lg);
   overflow: hidden;
   position: relative;
   opacity: 1;
@@ -505,10 +505,10 @@
 }
 
 .badgeDraft {
-  background: #fef3c7;
-  color: #d97706;
+  background: var(--warning-badge-bg);
+  color: var(--warning);
   padding: 4px 12px;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   font-size: 11px;
   font-weight: 700;
 }

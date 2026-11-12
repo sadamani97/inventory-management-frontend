@@ -150,8 +150,8 @@
   display: inline-block;
   width: 8px;
   height: 8px;
-  border-radius: 50%;
-  background-color: var(--color-93c5fd);
+  border-radius: var(--radius-circle);
+  background-color: var(--chart-dot-point);
   margin-right: 6px;
 }
 
@@ -159,8 +159,8 @@
   display: inline-block;
   width: 8px;
   height: 8px;
-  border-radius: 50%;
-  background-color: var(--color-f87171);
+  border-radius: var(--radius-circle);
+  background-color: var(--danger-soft);
   margin-right: 6px;
 }
 
@@ -262,24 +262,33 @@
   align-items: flex-end;
 }
 
+.stockBarSvg {
+  width: 100%;
+  height: 100px;
+  display: block;
+}
+
 .barFillGreen {
   width: 100%;
-  background-color: var(--color-78d596);
-  border-radius: 12px;
+  background-color: var(--success-bar-fill);
+  fill: var(--success-bar-fill);
+  border-radius: var(--radius-lg);
   transition: height 0.3s ease;
 }
 
 .barFillYellow {
   width: 100%;
-  background-color: var(--color-f8c876);
-  border-radius: 12px;
+  background-color: var(--warning-bar-fill);
+  fill: var(--warning-bar-fill);
+  border-radius: var(--radius-lg);
   transition: height 0.3s ease;
 }
 
 .barFillRed {
   width: 100%;
-  background-color: var(--color-f18787);
-  border-radius: 12px;
+  background-color: var(--danger-bar-fill);
+  fill: var(--danger-bar-fill);
+  border-radius: var(--radius-lg);
   transition: height 0.3s ease;
 }
 
@@ -336,7 +345,7 @@
 
 .searchInput:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--color-var-9);
+  box-shadow: var(--focus-ring-primary-sm);
 }
 
 .searchIcon {
@@ -475,37 +484,59 @@
 }
 
 .statusLow {
-  color: var(--color-ca8a04);
+  color: var(--warning-gold);
 }
 
 .statusOut {
   color: var(--danger);
 }
 
-.progressBarBg {
+.stockProgressBar {
   width: 100%;
   height: 4px;
+  border: none;
+  border-radius: var(--radius-pill);
   background-color: var(--border);
-  border-radius: 999px;
   overflow: hidden;
+  appearance: none;
+  display: block;
 }
 
-.progressFillHigh {
-  height: 100%;
+.stockProgressBar::-webkit-progress-bar {
+  background-color: var(--border);
+  border-radius: var(--radius-pill);
+}
+
+.stockProgressBar::-webkit-progress-value {
+  border-radius: var(--radius-pill);
+}
+
+.stockProgressBar::-moz-progress-bar {
+  border-radius: var(--radius-pill);
+}
+
+.progressFillHigh::-webkit-progress-value {
   background-color: var(--success);
-  border-radius: 999px;
 }
 
-.progressFillLow {
-  height: 100%;
-  background-color: var(--color-eab308);
-  border-radius: 999px;
+.progressFillHigh::-moz-progress-bar {
+  background-color: var(--success);
 }
 
-.progressFillOut {
-  height: 100%;
+.progressFillLow::-webkit-progress-value {
+  background-color: var(--warning-yellow);
+}
+
+.progressFillLow::-moz-progress-bar {
+  background-color: var(--warning-yellow);
+}
+
+.progressFillOut::-webkit-progress-value {
   background-color: var(--danger);
-  border-radius: 999px;
+}
+
+.progressFillOut::-moz-progress-bar {
+  background-color: var(--danger);
 }
 
 .actionMenuBtn {
@@ -542,14 +573,14 @@
   height: 58px;
   background-color: var(--surface);
   border: 1px solid var(--border-subtle);
-  border-radius: 8px;
-  box-shadow: 0 4px 16px var(--color-var-5);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-hover-sm);
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   padding: 4px 0;
-  z-index: 100;
+  z-index: var(--z-popover);
   animation: fadeIn 0.12s ease-out;
 }
 
@@ -630,8 +661,8 @@
 .modalOverlay {
   position: fixed;
   inset: 0;
-  z-index: 999;
-  background-color: var(--color-var-18);
+  z-index: var(--z-drawer);
+  background-color: var(--backdrop);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
@@ -706,8 +737,8 @@
 /* Create Reorder Modal Container */
 .reorderModalBox {
   background-color: var(--surface);
-  border-radius: 16px;
-  box-shadow: 0 20px 40px var(--color-var-19);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-popover);
   width: 580px;
   max-width: 95vw;
   max-height: 90vh;
@@ -831,9 +862,9 @@
 .badgeInStock {
   background-color: var(--warning-badge-bg);
   color: var(--warning);
-  border: 1px solid var(--color-fde68a);
+  border: 1px solid var(--warning-border);
   padding: 6px 12px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: 12px;
   font-weight: 700;
 }
@@ -1030,11 +1061,11 @@
   background-color: var(--primary);
   color: var(--surface);
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 4px 12px var(--color-var-3);
+  box-shadow: var(--shadow-primary);
   transition: all 0.15s ease;
 }
 
@@ -1042,95 +1073,64 @@
   background-color: var(--primary-dark);
 }
 
-.inventoryElement1 {
+.clickableGroup,
+.clickableRow {
   cursor: pointer;
 }
 
-.inventoryElement2 {
-  width: 28%;
+.hidden {
+  display: none;
 }
 
-.inventoryElement3 {
-  width: 20%;
+.toastIcon {
+  color: var(--text);
 }
 
-.inventoryElement4 {
-  width: 18%;
-}
+.colProductName { width: 28%; }
+.colSku { width: 20%; }
+.colCategory { width: 18%; }
+.colStock { width: 22%; }
+.colAction { width: 12%; }
 
-.inventoryElement5 {
-  width: 22%;
-}
-
-.inventoryElement6 {
-  width: 12%;
-}
-
-.inventoryElement7 {
+.thLeft {
   text-align: left;
 }
 
-.inventoryElement8 {
-  text-align: left;
-}
-
-.inventoryElement9 {
-  text-align: left;
-}
-
-.inventoryElement10 {
-  text-align: left;
-}
-
-.inventoryElement11 {
+.thActionRight {
   text-align: right;
   padding-right: 28px;
 }
 
-.inventoryElement12 {
-  text-align: center;
-  padding: 32px;
-  color: #64748b;
-}
-
-.inventoryElement13 {
-  cursor: pointer;
-}
-
-.inventoryElement14 {
+.emptyTableCell {
   text-align: center;
   padding: 40px;
-  color: #94a3b8;
+  color: var(--text-light);
 }
 
-.inventoryElement15 {
+.emptyTableTitle {
   font-size: 15px;
   font-weight: 700;
-  color: #475569;
+  color: var(--text-muted);
   margin: 0 0 6px 0;
 }
 
-.inventoryElement16 {
+.emptyTableSubtitle {
   font-size: 13px;
   margin: 0;
 }
 
-.inventoryElement17 {
+.fullWidthGroup {
   grid-column: 1 / -1;
 }
 
-.inventoryElement18 {
-  grid-column: 1 / -1;
-}
-
-.inventoryElement19 {
+.summaryTotalLabel {
   font-weight: 700;
-  color: #0f172a;
+  color: var(--text);
 }
 
-.inventoryElement20 {
+.summaryTotalValue {
   font-size: 15px;
-  color: #0f172a;
+  color: var(--text);
 }
 
 @keyframes shimmer {
@@ -1146,21 +1146,41 @@
   padding: 14px 16px;
 }
 
+.skeletonProductCell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.skeletonThumb {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+}
+
 .skeletonBone {
   height: 16px;
-  border-radius: 6px;
-  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  border-radius: var(--radius-sm);
+  background: var(--shimmer-gradient);
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
 }
+
+.skeletonW60 { width: 60%; }
+.skeletonW50 { width: 50%; }
+.skeletonW45 { width: 45%; }
+.skeletonW70 { width: 70%; height: 14px; margin-bottom: 4px; }
+.skeletonBar { width: 100%; height: 6px; border-radius: var(--radius-xs); }
+.skeletonW30 { width: 30%; }
 
 .loadingSpinner {
   display: inline-block;
   width: 16px;
   height: 16px;
-  border: 2px solid #cbd5e1;
+  border: 2px solid var(--border-hover);
   border-top-color: var(--primary);
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   animation: spin 0.8s linear infinite;
   margin-left: 10px;
   vertical-align: middle;

@@ -22,6 +22,25 @@ interface CustomSelectProps {
   addNewPlaceholder?: string;
 }
 
+const WIDTH_CLASS_MAP: Record<string, string> = {
+  "100%": styles.widthFull,
+  "120px": styles.width120,
+  "130px": styles.width130,
+  "140px": styles.width140,
+  "145px": styles.width145,
+  "150px": styles.width150,
+  "160px": styles.width160,
+  "170px": styles.width170,
+};
+
+const HEIGHT_CLASS_MAP: Record<string, string> = {
+  "32px": styles.height32,
+  "34px": styles.height34,
+  "36px": styles.height36,
+  "40px": styles.height40,
+  "42px": styles.height42,
+};
+
 export default function CustomSelect({
   options,
   value,
@@ -81,20 +100,23 @@ export default function CustomSelect({
     }
   };
 
+  const widthClass = width ? WIDTH_CLASS_MAP[width] || "" : "";
+  const heightClass = height ? HEIGHT_CLASS_MAP[height] || "" : "";
+
   const containerClassName = [
     styles.selectContainer,
     size === "sm" ? styles.sizeSm : "",
+    widthClass,
     className,
   ]
     .filter(Boolean)
     .join(" ");
 
   return (
-    <div className={containerClassName} ref={containerRef} style={width ? { width } : undefined}>
+    <div className={containerClassName} ref={containerRef}>
       <button
         type="button"
-        className={`${styles.triggerBtn} ${isOpen ? styles.triggerActive : ""}`}
-        style={height ? { height } : undefined}
+        className={`${styles.triggerBtn} ${isOpen ? styles.triggerActive : ""} ${heightClass}`.trim()}
         onClick={() => setIsOpen(!isOpen)}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
@@ -104,7 +126,7 @@ export default function CustomSelect({
       </button>
 
       {isOpen && (
-        <div className={styles.dropdownMenu} style={width ? { width } : undefined} role="listbox">
+        <div className={`${styles.dropdownMenu} ${widthClass}`.trim()} role="listbox">
           <div className={styles.optionsList}>
             {options.map((option, index) => {
               const isSelected = String(option.value) === String(value);
@@ -156,7 +178,7 @@ export default function CustomSelect({
                   className={styles.addBtnAction}
                   onClick={() => setIsAdding(true)}
                 >
-                  <FiPlus  className={styles.customSelectElement1} /> {addNewButtonText.replace(/^\+\s*/, "")}
+                  <FiPlus className={styles.addBtnIcon} /> {addNewButtonText.replace(/^\+\s*/, "")}
                 </button>
               )}
             </div>

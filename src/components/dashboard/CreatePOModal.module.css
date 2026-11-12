@@ -1,11 +1,11 @@
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.12);
+  background: var(--backdrop-light);
   display: flex;
   justify-content: flex-end;
   align-items: flex-start;
-  z-index: 1000;
+  z-index: var(--z-modal);
 }
 
 .modal {
@@ -15,12 +15,12 @@
   max-width: 95vw;
   height: calc(100vh - 24px);
   max-height: 980px;
-  border: 1px solid rgba(31, 41, 55, 0.3);
-  border-radius: 12px;
+  border: 1px solid var(--border-dark-translucent);
+  border-radius: var(--radius-lg);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.12);
+  box-shadow: var(--shadow-modal-soft);
   margin-top: 20px;
   margin-right: 0;
 }
@@ -30,7 +30,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+  border-bottom: 1px solid var(--border-translucent-faint);
 }
 
 .headerTitleWrapper {
@@ -43,11 +43,11 @@
   width: 48px;
   height: 48px;
   background-color: var(--primary);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: var(--text-inverse);
   font-size: 24px;
 }
 

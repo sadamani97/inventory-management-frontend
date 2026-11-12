@@ -191,12 +191,12 @@ export default function TotalSalesChart({
         >
           <defs>
             <linearGradient id="salesAreaGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#2563eb" stopOpacity="0.25" />
-              <stop offset="100%" stopColor="#2563eb" stopOpacity="0.02" />
+              <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.25" />
+              <stop offset="100%" stopColor="var(--primary)" stopOpacity="0.02" />
             </linearGradient>
             <linearGradient id="singleDayBarGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#2563eb" stopOpacity="0.5" />
-              <stop offset="100%" stopColor="#2563eb" stopOpacity="0.1" />
+              <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.5" />
+              <stop offset="100%" stopColor="var(--primary)" stopOpacity="0.1" />
             </linearGradient>
           </defs>
 
@@ -239,7 +239,7 @@ export default function TotalSalesChart({
                   rx={8}
                   ry={8}
                   fill="url(#singleDayBarGradient)"
-                  stroke="#2563eb"
+                  stroke="var(--primary)"
                   strokeWidth="1.5"
                 />
 
@@ -249,7 +249,7 @@ export default function TotalSalesChart({
                   y1={cy}
                   x2={cx}
                   y2={baseY}
-                  stroke="#2563eb"
+                  stroke="var(--primary)"
                   strokeDasharray="3 3"
                   strokeWidth="1.5"
                 />
@@ -259,8 +259,8 @@ export default function TotalSalesChart({
                   cx={cx}
                   cy={cy}
                   r={6}
-                  fill="#ffffff"
-                  stroke="#2563eb"
+                  fill="var(--surface)"
+                  stroke="var(--primary)"
                   strokeWidth={3}
                 />
 
@@ -272,16 +272,16 @@ export default function TotalSalesChart({
                     width={104}
                     height={24}
                     rx={6}
-                    fill="#1e293b"
+                    fill="var(--text-secondary)"
                     opacity="0.95"
                   />
                   <text
                     x={cx}
                     y={Math.max(cy - 18, 20)}
-                    fill="#ffffff"
+                    fill="var(--text-inverse)"
                     textAnchor="middle"
                     fontSize="11"
-                    fontFamily="Manrope, sans-serif"
+                    fontFamily="var(--font-sans)"
                     fontWeight="700"
                   >
                     ₹ {dp.sales.toLocaleString()}
@@ -312,7 +312,7 @@ export default function TotalSalesChart({
               <path
                 d={pathD}
                 fill="none"
-                stroke="#2563eb"
+                stroke="var(--primary)"
                 strokeWidth="2.5"
                 strokeLinecap="round"
               />
@@ -324,7 +324,7 @@ export default function TotalSalesChart({
                   y1={activeY}
                   x2={activeX}
                   y2={paddingTop + drawHeight}
-                  stroke="#2563eb"
+                  stroke="var(--primary)"
                   strokeDasharray="3 3"
                   strokeWidth="1.5"
                 />
@@ -336,14 +336,14 @@ export default function TotalSalesChart({
                 const cy = getY(dp.sales);
                 const isActive = i === activeIdx;
                 const dotRadius = chartData.length > 8 ? (isActive ? 4.5 : 3) : (isActive ? 5 : 3.5);
-                const fontSize = chartData.length > 8 ? "9px" : "10px";
+                const isCompact = chartData.length > 8;
 
                 return (
                   <g
                     key={i}
                     onMouseEnter={() => setHoverIndex(i)}
                     onMouseLeave={() => setHoverIndex(-1)}
-                    style={{ cursor: "pointer" }}
+                    className={styles.chartGroup}
                   >
                     {/* Hit area */}
                     <circle cx={cx} cy={cy} r="14" fill="transparent" />
@@ -351,37 +351,43 @@ export default function TotalSalesChart({
                       cx={cx}
                       cy={cy}
                       r={dotRadius}
-                      fill={isActive ? "#fff" : "#2563eb"}
-                      stroke="#2563eb"
+                      fill={isActive ? "var(--surface)" : "var(--primary)"}
+                      stroke="var(--primary)"
                       strokeWidth={isActive ? 3 : 1.5}
                     />
                     <text
                       x={cx}
                       y={chartHeight - 8}
-                      className={`${styles.xAxisLabel} ${isActive ? styles.xAxisLabelActive : ""}`}
-                      style={{ fontSize }}
+                      className={`${styles.xAxisLabel} ${isActive ? styles.xAxisLabelActive : ""} ${isCompact ? styles.xAxisLabelCompact : ""}`}
                     >
                       {dp.date}
                     </text>
                   </g>
                 );
               })}
+
+              {activePoint && hoverIndex >= 0 && (() => {
+                const labelText = `${activePoint.date}: ₹ ${activePoint.sales.toLocaleString()}`;
+                const tipWidth = Math.max(96, labelText.length * 6 + 18);
+                const tipX = Math.min(Math.max(activeX - tipWidth / 2, 4), chartWidth - tipWidth - 4);
+                const tipY = Math.max(activeY - 32, 4);
+                return (
+                  <g transform={`translate(${tipX}, ${tipY})`}>
+                    <rect width={tipWidth} height={24} rx={6} className={styles.svgTooltipRect} />
+                    <text
+                      x={tipWidth / 2}
+                      y={15}
+                      textAnchor="middle"
+                      className={styles.svgTooltipText}
+                    >
+                      {labelText}
+                    </text>
+                  </g>
+                );
+              })()}
             </>
           )}
         </svg>
-
-        {/* Tooltip for multi-day */}
-        {!isSingleDay && activePoint && hoverIndex >= 0 && (
-          <div
-            className={styles.tooltipBox}
-            style={{
-              left: `${(activeX / chartWidth) * 100}%`,
-              top: `${(activeY / chartHeight) * 100}%`,
-            }}
-          >
-            {activePoint.date}: <span className={styles.tooltipBold}>₹ {activePoint.sales.toLocaleString()}</span>
-          </div>
-        )}
       </div>
     </div>
   );

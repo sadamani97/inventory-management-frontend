@@ -197,13 +197,21 @@ export default function TopSellingChart({
             <div className={styles.scrollAreaWrapper}>
               {/* Pinned horizontal grid lines & baseline */}
               <div className={styles.pinnedGridBackground} aria-hidden="true">
-                {yTicks.map((tick) => (
-                  <div
-                    key={`grid-${tick}`}
-                    className={styles.gridLine}
-                    style={{ bottom: `${maxScale > 0 ? (tick / maxScale) * 100 : 0}%` }}
-                  />
-                ))}
+                <svg className={styles.pinnedGridSvg} viewBox="0 0 100 100" preserveAspectRatio="none">
+                  {yTicks.map((tick) => {
+                    const yPos = maxScale > 0 ? 100 - (tick / maxScale) * 100 : 100;
+                    return (
+                      <line
+                        key={`grid-${tick}`}
+                        x1="0"
+                        y1={yPos}
+                        x2="100"
+                        y2={yPos}
+                        className={styles.gridLineSvg}
+                      />
+                    );
+                  })}
+                </svg>
                 <div className={styles.pinnedBaseline} />
               </div>
 
@@ -235,12 +243,23 @@ export default function TopSellingChart({
                             </div>
                           )}
 
-                          <div
-                            className={`${styles.bar} ${isHovered ? styles.barHovered : ""}`}
-                            style={{ height: `${heightPercent}%` }}
-                            title={`${item.name}: ${item.value} units sold`}
+                          <svg
+                            className={styles.barSvg}
+                            viewBox="0 0 42 100"
+                            preserveAspectRatio="none"
                             aria-label={`${item.name}: ${item.value} sold`}
-                          />
+                          >
+                            <title>{`${item.name}: ${item.value} units sold`}</title>
+                            <rect
+                              x="0"
+                              y={100 - heightPercent}
+                              width="42"
+                              height={heightPercent}
+                              rx="4"
+                              ry="2"
+                              className={`${styles.barRect} ${isHovered ? styles.barHovered : ""}`}
+                            />
+                          </svg>
                         </div>
 
                         <span

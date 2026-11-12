@@ -4,23 +4,23 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(15, 23, 42, 0.4);
+  background-color: var(--backdrop);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
+  z-index: var(--z-dialog);
   padding: 20px;
 }
 
 .modalContent {
   background-color: var(--surface);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   width: 100%;
   max-width: 600px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-lg);
   animation: fadeIn 0.2s ease-out;
   padding: 30px;
 }
@@ -280,8 +280,8 @@
   padding: 10px 24px;
   border: none;
   background-color: var(--primary);
-  color: white;
-  border-radius: 8px;
+  color: var(--text-inverse);
+  border-radius: var(--radius-md);
   font-weight: 600;
   cursor: pointer;
   display: flex;
@@ -292,6 +292,11 @@
 
 .btnPrimary:hover {
   background-color: var(--primary-dark);
+}
+
+.emptyRowCell {
+  text-align: center;
+  padding: 20px;
 }
 
 .btnIcon {

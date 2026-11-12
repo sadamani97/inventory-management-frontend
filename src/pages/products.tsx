@@ -87,7 +87,7 @@ export default function ProductsPage() {
       <div className={styles.pageContainer}>
         {/* Top Header Row */}
         <div className={styles.topRow}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <div className={styles.titleGroup}>
             <h1 className={styles.title}>Product Management</h1>
             {loading && <span className={styles.loadingSpinner} title="Loading products from backend..." />}
           </div>
@@ -143,18 +143,18 @@ export default function ProductsPage() {
                   Array.from({ length: Math.min(pageSize, 8) }).map((_, idx) => (
                     <tr key={`skeleton-${idx}`} className={styles.skeletonRow}>
                       <td>
-                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                          <div className={styles.skeletonBone} style={{ width: 44, height: 44, borderRadius: 8, flexShrink: 0 }} />
-                          <div style={{ flex: 1 }}>
-                            <div className={styles.skeletonBone} style={{ width: "70%", height: 16, marginBottom: 6 }} />
-                            <div className={styles.skeletonBone} style={{ width: "40%", height: 12 }} />
+                        <div className={styles.skeletonProductCell}>
+                          <div className={`${styles.skeletonBone} ${styles.skeletonThumb}`} />
+                          <div className={styles.skeletonTextGroup}>
+                            <div className={`${styles.skeletonBone} ${styles.skeletonTitle}`} />
+                            <div className={`${styles.skeletonBone} ${styles.skeletonSubtitle}`} />
                           </div>
                         </div>
                       </td>
-                      <td><div className={styles.skeletonBone} style={{ width: "60%" }} /></td>
-                      <td><div className={styles.skeletonBone} style={{ width: "50%" }} /></td>
-                      <td><div className={styles.skeletonBone} style={{ width: "45%" }} /></td>
-                      <td><div className={styles.skeletonBone} style={{ width: "55%" }} /></td>
+                      <td><div className={`${styles.skeletonBone} ${styles.skeletonW60}`} /></td>
+                      <td><div className={`${styles.skeletonBone} ${styles.skeletonW50}`} /></td>
+                      <td><div className={`${styles.skeletonBone} ${styles.skeletonW45}`} /></td>
+                      <td><div className={`${styles.skeletonBone} ${styles.skeletonW55}`} /></td>
                     </tr>
                   ))
                 ) : products.length > 0 ? (
@@ -170,7 +170,7 @@ export default function ProductsPage() {
                       <tr
                         key={p.id || idx}
                         onClick={() => p.id && router.push(`/products/add?id=${p.id}`)}
-                        className={styles.productsElement2}
+                        className={styles.clickableRow}
                       >
                         <td>
                           <div className={styles.productCell}>
@@ -181,7 +181,7 @@ export default function ProductsPage() {
                               height={44}
                               className={styles.productImg}
                               onError={(e) => {
-                                (e.target as HTMLElement).style.display = "none";
+                                e.currentTarget.classList.add(styles.hidden);
                               }}
                             />
                             <div className={styles.productInfo}>
@@ -209,11 +209,11 @@ export default function ProductsPage() {
                   })
                 ) : (
                   <tr>
-                    <td colSpan={5} className={styles.productsElement3}>
-                      <p className={styles.productsElement4}>
+                    <td colSpan={5} className={styles.emptyCell}>
+                      <p className={styles.emptyTitle}>
                         No products stored in database.
                       </p>
-                      <p className={styles.productsElement5}>
+                      <p className={styles.emptySubtitle}>
                         Click <strong>&quot;+ New Product&quot;</strong> to add products to your backend database.
                       </p>
                     </td>

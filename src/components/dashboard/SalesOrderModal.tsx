@@ -4,7 +4,7 @@ import { FiX, FiSearch, FiTrash2, FiFileText, FiUploadCloud } from "react-icons/
 import { fetchProductsList, ProductItem, createSalesOrder, updateSalesOrder, SalesOrderItem, fetchSalesOrdersList } from "@/lib/dashboardApi";
 import CustomSelect from "@/components/ui/CustomSelect";
 import ExportDialog from "@/components/ui/ExportDialog";
-import styles from "@/styles/components/salesOrderModal.module.css";
+import styles from "./SalesOrderModal.module.css";
 import { toast } from "react-toastify";
 import { ASSETS } from "@/constants/assets";
 

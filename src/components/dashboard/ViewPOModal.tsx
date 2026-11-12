@@ -129,7 +129,7 @@ export default function ViewPOModal({ isOpen, onClose, order }: ViewPOModalProps
                 </tr>
               ) : (
                 <tr>
-                  <td colSpan={4} style={{ textAlign: "center", padding: "20px" }}>No items found</td>
+                  <td colSpan={4} className={styles.emptyRowCell}>No items found</td>
                 </tr>
               )}
             </tbody>

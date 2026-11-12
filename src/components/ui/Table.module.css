@@ -49,7 +49,7 @@
   border-collapse: separate;
   border-spacing: 0;
   background: var(--surface);
-  font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-sans);
   text-align: left;
   table-layout: fixed;
 }
@@ -67,7 +67,7 @@
   font-weight: 700;
   color: var(--primary);
   white-space: nowrap;
-  font-family: 'Manrope', sans-serif;
+  font-family: var(--font-sans);
 }
 
 .table td {
@@ -78,7 +78,7 @@
   font-size: 14px;
   line-height: 1.4;
   color: var(--text-dark);
-  font-family: 'Manrope', sans-serif;
+  font-family: var(--font-sans);
 }
 
 .table tbody tr {
@@ -94,11 +94,11 @@
 }
 
 .clickableRow:hover td {
-  background-color: var(--color-var-1);
+  background-color: var(--hover-tint-faint);
 }
 
 .selectedRow td {
-  background-color: var(--color-var-4) !important;
+  background-color: var(--primary-tint-md) !important;
 }
 
 .alignLeft {
@@ -134,14 +134,14 @@
 .emptyIcon {
   width: 50px;
   height: 50px;
-  border-radius: 12px;
-  background: var(--color-var-9);
+  border-radius: var(--radius-lg);
+  background: var(--primary-soft-bg);
   color: var(--primary);
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 14px;
-  border: 1px solid var(--color-var-6);
+  border: 1px solid var(--hover-tint-subtle);
 }
 
 .emptyIconSvg {
@@ -176,10 +176,60 @@
 .skeletonBone {
   width: 100%;
   height: 16px;
-  border-radius: 6px;
-  background: linear-gradient(90deg, var(--shimmer-from) 25%, var(--shimmer-mid) 50%, var(--shimmer-to) 75%);
+  border-radius: var(--radius-sm);
+  background: var(--shimmer-gradient);
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
+}
+
+.fixedHeight {
+  height: 520px;
+  min-height: 520px;
+  max-height: 520px;
+}
+
+.autoHeight {
+  height: auto;
+  min-height: auto;
+  max-height: none;
+}
+
+.bodyScrollFixed {
+  max-height: 520px;
+  overflow-y: auto;
+}
+
+.bodyScrollAuto {
+  max-height: none;
+  overflow-y: visible;
+}
+
+.minWidth860 {
+  min-width: 860px;
+}
+
+.minWidth1000 {
+  min-width: 1000px;
+}
+
+.colW110 {
+  width: 110px;
+  min-width: 110px;
+}
+
+.colW120 {
+  width: 120px;
+  min-width: 120px;
+}
+
+.colW150 {
+  width: 150px;
+  min-width: 150px;
+}
+
+.colW220 {
+  width: 220px;
+  min-width: 220px;
 }
 
 @keyframes shimmer {

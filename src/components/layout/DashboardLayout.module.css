@@ -20,16 +20,16 @@
   margin: 0 auto;
 }
 
-.dashboardLayoutElement1 {
+.authLoadingContainer {
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background-color: #f8fafc;
+  background-color: var(--background);
 }
 
-.dashboardLayoutElement2 {
-  color: #64748b;
+.authLoadingText {
+  color: var(--text-subtle);
   font-weight: 500;
 }
 

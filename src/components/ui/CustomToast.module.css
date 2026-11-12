@@ -26,11 +26,11 @@
 
 .toastContainer {
   background-color: var(--surface);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   border: 1px solid var(--hover-bg);
   width: 429px;
   height: 245px;
-  box-shadow: 0px 24px 64px var(--color-var-10);
+  box-shadow: var(--shadow-toast);
   display: flex;
   flex-direction: column;
   justify-content: center;
